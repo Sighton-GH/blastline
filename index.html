@@ -1,44 +1,70 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <meta name="theme-color" content="#07121f" />
-  <meta name="description" content="BLASTLINE — multiply your squad, stack wild upgrades, and survive the red swarm in a fast browser arcade shooter." />
-  <title>BLASTLINE — Multiply. Upgrade. Survive.</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>BLASTLINE</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main id="app" aria-label="BLASTLINE browser game">
-    <canvas id="game" aria-label="BLASTLINE game canvas"></canvas>
-    <div id="hud" aria-hidden="true">
-      <div class="hud-left"><img src="assets/logo.svg" alt="" /><span id="levelLabel">LEVEL 1</span></div>
-      <div class="hud-center"><div id="levelBar"><i></i></div><span id="levelName">FIRST CONTACT</span></div>
-      <div class="hud-right"><span id="scoreLabel">0</span><small>BEST <b id="bestLabel">0</b></small></div>
+  <div id="app">
+    <canvas id="game"></canvas>
+
+    <header id="hud" class="panel hidden">
+      <div class="hud-left">
+        <img id="portrait" src="assets/portrait.webp" alt="Commander portrait" />
+        <div class="chips">
+          <div class="chip coin"><span class="icon">🪙</span><b id="coinLabel">0</b><span class="plus">+</span></div>
+          <div class="chip gem"><span class="icon">💎</span><b id="gemLabel">0</b><span class="plus">+</span></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="wave-pill"><span id="waveLabel">WAVE 1/6</span></div>
+        <button id="pauseBtn" class="icon-btn" aria-label="Pause">❚❚</button>
+      </div>
+    </header>
+
+    <div id="floatingStats" class="panel hidden">
+      <div class="stat"><span>TROOPS</span><b id="troopsLabel">12</b></div>
+      <div class="stat"><span>POWER</span><b id="powerLabel">1</b></div>
+      <div class="stat"><span>BEST</span><b id="bestLabel">0</b></div>
     </div>
-    <section id="menu" class="panel visible" aria-label="Start game">
-      <img class="hero-logo" src="assets/logo.svg" alt="BLASTLINE" />
-      <p class="tagline">MULTIPLY. UPGRADE. SURVIVE.</p>
-      <button id="playBtn" class="primary">PLAY</button>
-      <p class="controls"><b>PC</b> move with mouse or A/D · <b>PHONE</b> drag anywhere</p>
-      <div class="badges"><span>NO LOGIN</span><span>INSTANT PLAY</span><span>ENDLESS RUNS</span></div>
+
+    <section id="menu" class="overlay visible">
+      <div class="card hero-card">
+        <p class="eyebrow">THE REAL GATE RUNNER</p>
+        <h1>BLASTLINE</h1>
+        <p class="sub">Choose a lane, grow your army, blast through enemy waves, and beat the boss bridge by bridge.</p>
+        <div class="controls">
+          <span>Move: drag, mouse, A/D, ←/→</span>
+          <span>Shoot: automatic</span>
+        </div>
+        <button id="playBtn" class="primary">PLAY NOW</button>
+      </div>
     </section>
-    <section id="upgradePanel" class="panel" aria-label="Choose an upgrade">
-      <p class="eyebrow">LEVEL CLEARED</p>
-      <h2>Pick one upgrade</h2>
-      <div id="upgradeCards"></div>
+
+    <section id="upgradePanel" class="overlay">
+      <div class="card">
+        <p class="eyebrow">WAVE CLEAR</p>
+        <h2>Pick your upgrade</h2>
+        <div id="upgradeCards" class="upgrade-grid"></div>
+      </div>
     </section>
-    <section id="gameOverPanel" class="panel" aria-label="Game over">
-      <p class="eyebrow">RUN OVER</p>
-      <h2 id="gameOverTitle">The red line broke through.</h2>
-      <div class="result-grid"><div><strong id="finalScore">0</strong><span>SCORE</span></div><div><strong id="finalLevel">1</strong><span>LEVEL</span></div><div><strong id="finalBest">0</strong><span>BEST</span></div></div>
-      <button id="retryBtn" class="primary">RUN IT BACK</button>
+
+    <section id="gameOverPanel" class="overlay">
+      <div class="card">
+        <p class="eyebrow">MISSION ENDED</p>
+        <h2>Bridge lost</h2>
+        <div class="results">
+          <div><span>Coins</span><b id="finalScore">0</b></div>
+          <div><span>Wave</span><b id="finalWave">1</b></div>
+          <div><span>Best</span><b id="finalBest">0</b></div>
+        </div>
+        <button id="retryBtn" class="primary">RUN IT BACK</button>
+      </div>
     </section>
-    <button id="soundBtn" aria-label="Toggle sound" title="Toggle sound">♪</button>
-    <div id="rotateHint">Best in landscape — but portrait works too.</div>
-    <div id="telemetry" hidden data-state="menu" data-level="1" data-score="0"></div>
-  </main>
+  </div>
+
   <script type="module" src="src/game.js"></script>
 </body>
 </html>
