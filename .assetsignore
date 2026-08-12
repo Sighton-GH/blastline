@@ -1,0 +1,13 @@
+node_modules/
+.git/
+.github/
+docs/
+tests/
+README.md
+package.json
+package-lock.json
+bun.lock
+bun.lockb
+wrangler.jsonc
+wrangler.toml
+*.log
