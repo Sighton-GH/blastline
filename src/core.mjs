@@ -37,7 +37,7 @@ export function makeGatePair(rng, level){
     {kind:'rate', value:.2, label:()=>'+20%'}
   ];
   const negative = [
-    {kind:'troops', value:4 + Math.floor(rng()*6) + level, label:v=>`-${v}`},
+    {kind:'troops', value:-(4 + Math.floor(rng()*6) + level), label:v=>`-${Math.abs(v)}`},
     {kind:'slow', value:.15, label:()=>'-15%'}
   ];
   const good = positive[Math.floor(rng()*positive.length)];

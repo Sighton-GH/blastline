@@ -1,0 +1,1 @@
+Section 3 visual audit completed from real Chromium screenshots. See the local evidence package for before/after captures and validation results.
