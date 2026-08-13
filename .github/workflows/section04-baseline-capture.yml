@@ -42,5 +42,7 @@ jobs:
           git push
       - uses: actions/upload-artifact@v4
         with:
-          name: batch12-baseline-screenshots
-          path: docs/visual-audit/full-fidelity/baseline
+          name: batch12-baseline-with-references
+          path: |
+            docs/visual-audit/full-fidelity/baseline
+            docs/art-reference
