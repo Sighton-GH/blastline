@@ -32,14 +32,12 @@
 
     <section id="menu" class="overlay visible">
       <div class="card hero-card">
-        <p class="eyebrow">THE REAL GATE RUNNER</p>
-        <h1>BLASTLINE</h1>
-        <p class="sub">Choose a lane, grow your army, blast through enemy waves, and beat the boss bridge by bridge.</p>
-        <div class="controls">
-          <span>Move: drag, mouse, A/D, ←/→</span>
-          <span>Shoot: automatic</span>
-        </div>
-        <button id="playBtn" class="primary">PLAY NOW</button>
+        <img class="menu-logo" src="assets/logo.svg" alt="BLASTLINE" />
+        <p class="eyebrow">BRIDGE ASSAULT</p>
+        <h1 class="sr-only">BLASTLINE</h1>
+        <p class="sub">Build the squad. Pick the lane. Break through the line.</p>
+        <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span></div>
+        <button id="playBtn" class="primary">PLAY</button>
       </div>
     </section>
 
@@ -48,6 +46,19 @@
         <p class="eyebrow">WAVE CLEAR</p>
         <h2>Pick your upgrade</h2>
         <div id="upgradeCards" class="upgrade-grid"></div>
+      </div>
+    </section>
+
+    <section id="victoryPanel" class="overlay victory-overlay">
+      <div class="card victory-card">
+        <div class="victory-stars" aria-hidden="true">★ ★ ★</div>
+        <p class="eyebrow victory-eyebrow">BRIDGE SECURED</p>
+        <h2>VICTORY!</h2>
+        <div class="results victory-results">
+          <div><span>Score</span><b id="victoryScore">0</b></div>
+          <div><span>Best</span><b id="victoryBest">0</b></div>
+        </div>
+        <button id="continueBtn" class="primary victory-button">RUN AGAIN</button>
       </div>
     </section>
 

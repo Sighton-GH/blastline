@@ -1,5 +1,6 @@
 import { clamp, lerp, format, LEVELS, initialPlayer, makeGatePair, applyGate, gateText, pickUpgradeSet, applyUpgrade, mulberry32, visibleSquadCount, squadColumnCount } from './core.mjs';
 import { drawEnemyCombatant } from './enemy-render.mjs';
+import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
@@ -8,6 +9,10 @@ const hud = document.querySelector('#hud');
 const floatingStats = document.querySelector('#floatingStats');
 const upgradePanel = document.querySelector('#upgradePanel');
 const gameOverPanel = document.querySelector('#gameOverPanel');
+const victoryPanel = document.querySelector('#victoryPanel');
+const continueBtn = document.querySelector('#continueBtn');
+const victoryScore = document.querySelector('#victoryScore');
+const victoryBest = document.querySelector('#victoryBest');
 const playBtn = document.querySelector('#playBtn');
 const retryBtn = document.querySelector('#retryBtn');
 const pauseBtn = document.querySelector('#pauseBtn');
@@ -67,6 +72,7 @@ function setState(next){
   menu.classList.toggle('visible', next === 'menu');
   upgradePanel.classList.toggle('visible', next === 'upgrade');
   gameOverPanel.classList.toggle('visible', next === 'over');
+  victoryPanel?.classList.toggle('visible', next === 'victory');
   hud.classList.toggle('hidden', next !== 'playing');
   floatingStats.classList.toggle('hidden', next !== 'playing');
 }
@@ -139,7 +145,7 @@ function fireBurst(){
   shotSerial=(shotSerial+1)%Math.max(1,frontRow.length);
 }
 
-function sceneHorizon(){ return H * (W < H ? 0.18 : 0.16); }
+function sceneHorizon(){ return H * (W < H ? 0.205 : 0.18); }
 function depthCurve(y){
   if(y <= 0) return y * 0.30;
   return Math.pow(Math.min(y, 1.08), 1.28);
@@ -245,7 +251,7 @@ function update(dt){
     if(b.dead) continue;
     if(boss){
       const dx = b.x - boss.x, dy = b.y - boss.y;
-      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; boss.hitFlash=.10; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; setState('upgrade'); showUpgrades(); updateHud(); return; } }
+      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; boss.hitFlash=.10; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; if(wave >= LEVELS.length-1){ victory(); }else{ setState('upgrade'); showUpgrades(); } updateHud(); return; } }
     }
     for(const e of enemies){
       if(e.dead || b.dead) continue;
@@ -281,9 +287,16 @@ function showUpgrades(){
     const btn = document.createElement('button');
     btn.className = 'upgrade-card';
     btn.innerHTML = `<strong>${item.icon}</strong><b>${item.title}</b><span>${item.desc}</span>`;
-    btn.onclick = () => { player = applyUpgrade(player, item.id); wave = (wave + 1) % LEVELS.length; startWave(); updateHud(); };
+    btn.onclick = () => { player = applyUpgrade(player, item.id); wave += 1; startWave(); updateHud(); };
     upgradeCards.append(btn);
   }
+}
+
+function victory(){
+  best = Math.max(best, player.coins + score); localStorage.setItem('blastline-best', best);
+  if(victoryScore) victoryScore.textContent = format(player.coins + score);
+  if(victoryBest) victoryBest.textContent = format(best);
+  setState('victory');
 }
 
 function gameOver(){
@@ -297,10 +310,10 @@ function gameOver(){
 function drawBackground(){
   const horizon = sceneHorizon();
   const deckBottom = Math.min(H * 1.02, perspectiveY(1));
-  const bridgeRed = '#d94a43';
-  const bridgeRedDark = '#9f282b';
-  const bridgeRedDeep = '#762127';
-  const bridgeRedLight = '#ee6a58';
+  const bridgeRed = '#e34a40';
+  const bridgeRedDark = '#a52b2c';
+  const bridgeRedDeep = '#711f25';
+  const bridgeRedLight = '#f47a61';
 
   function sidePoint(side, y, factor=1){
     return { x: W/2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) };
@@ -319,23 +332,23 @@ function drawBackground(){
   }
   function towerHeight(y){
     const t = Math.pow(clamp(y,0,1),0.72);
-    return lerp(H*0.105, Math.min(H*0.255,210), t);
+    return lerp(H*0.115, Math.min(H*0.285,224), t);
   }
   function towerX(side,y){ return sidePoint(side,y,1.045).x; }
 
   // Sky: bright, slightly hazy toward the water line.
   const sky = ctx.createLinearGradient(0,0,0,horizon + H*0.08);
-  sky.addColorStop(0,'#67c9f7');
-  sky.addColorStop(.56,'#8ad8f6');
-  sky.addColorStop(1,'#d0edf4');
+  sky.addColorStop(0,'#70c9ee');
+  sky.addColorStop(.56,'#9edcf1');
+  sky.addColorStop(1,'#d9eef1');
   ctx.fillStyle = sky;
   ctx.fillRect(0,0,W,horizon + H*0.08);
 
   // Ocean: one continuous body of water, with a real horizon instead of blue wedges to the top edge.
   const water = ctx.createLinearGradient(0,horizon,0,H);
-  water.addColorStop(0,'#55b9d9');
-  water.addColorStop(.28,'#2fa7d3');
-  water.addColorStop(1,'#0b79ad');
+  water.addColorStop(0,'#55c1dd');
+  water.addColorStop(.28,'#28acd2');
+  water.addColorStop(1,'#087da9');
   ctx.fillStyle = water;
   ctx.fillRect(0,horizon,W,H-horizon);
 
@@ -406,8 +419,8 @@ function drawBackground(){
   for(let i=28;i>=0;i--){const y=i/28,p=sidePoint(1,y);ctx.lineTo(p.x,p.y);}
   ctx.closePath();
   const shoulderGrad=ctx.createLinearGradient(0,horizon,0,H);
-  shoulderGrad.addColorStop(0,'#c7c7c1');
-  shoulderGrad.addColorStop(1,'#a6a7a7');
+  shoulderGrad.addColorStop(0,'#b9c0bf');
+  shoulderGrad.addColorStop(1,'#8e999b');
   ctx.fillStyle=shoulderGrad;ctx.fill();
 
   // Road surface with one coherent sun direction and subtle foreground darkening.
@@ -419,9 +432,9 @@ function drawBackground(){
   for(let i=28;i>=0;i--){const y=i/28,p=roadPoint(1,y);ctx.lineTo(p.x,p.y);}
   ctx.closePath();
   const roadGrad=ctx.createLinearGradient(W*.30,horizon,W*.72,H);
-  roadGrad.addColorStop(0,'#a8aaa8');
-  roadGrad.addColorStop(.52,'#909391');
-  roadGrad.addColorStop(1,'#7d8282');
+  roadGrad.addColorStop(0,'#616a6e');
+  roadGrad.addColorStop(.52,'#4d565b');
+  roadGrad.addColorStop(1,'#343d43');
   ctx.fillStyle=roadGrad;ctx.fill();
 
   // Shoulder-edge value breaks make the deck read as layered rather than one trapezoid.
@@ -467,7 +480,7 @@ function drawBackground(){
     ctx.beginPath();for(let i=0;i<=30;i++){const y=i/30,p=sidePoint(side,y,1.005);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}ctx.stroke();ctx.globalAlpha=1;
   }
 
-  const towers=[0.10,0.39];
+  const towers=[0.09,0.405];
   function cableY(y){
     const far=towers[0],near=towers[1];
     const railY=railTop(1,y).y;
@@ -688,7 +701,7 @@ function drawEnemies(){
     if(e.hitFlash>0){ctx.globalAlpha=clamp(e.hitFlash/.09,0,1)*.55;ctx.fillStyle='#fff0c7';ctx.beginPath();ctx.arc(scr.x,scr.y-h*.38,Math.max(2,h*.10),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
   }
   if(boss){
-    const scr=worldToScreen(boss.x,boss.y);drawBossFigure(scr,bossHeightAt(boss.y),boss.hitFlash||0);
+    const scr=worldToScreen(boss.x,boss.y);drawBossCombatant(ctx,scr,bossHeightAt(boss.y),boss.hitFlash||0,waveTime);
     const bw = Math.min(360, W*0.42), bh = 12;
     ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(W/2-bw/2, H*0.14, bw, bh);
     ctx.fillStyle='#ff5959'; ctx.fillRect(W/2-bw/2, H*0.14, bw * clamp(boss.hp / boss.maxHp,0,1), bh);
@@ -699,8 +712,8 @@ function drawEnemies(){
 function drawBullets(){
   for(const b of bullets){
     const scr = worldToScreen(b.x, b.y);
-    const len = 24; ctx.strokeStyle = frenzyTimer>0 ? '#9ee6ff' : '#ffd06c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(scr.x, scr.y); ctx.lineTo(scr.x - b.vx*len, scr.y + 14); ctx.stroke();
-    ctx.fillStyle = '#fff4ba'; ctx.beginPath(); ctx.arc(scr.x, scr.y, 2.5, 0, Math.PI*2); ctx.fill();
+    const len = 28; ctx.save(); ctx.shadowColor='#55d9ff'; ctx.shadowBlur=7; ctx.strokeStyle = frenzyTimer>0 ? '#d9f8ff' : '#69ddff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(scr.x, scr.y); ctx.lineTo(scr.x - b.vx*len, scr.y + 14); ctx.stroke();
+    ctx.fillStyle = '#f2fdff'; ctx.beginPath(); ctx.arc(scr.x, scr.y, 2.7, 0, Math.PI*2); ctx.fill(); ctx.restore();
   }
 }
 
@@ -744,7 +757,7 @@ function drawPlayer(){
   for(const slot of slots){
     const world=squadSlotWorld(slot);
     const scr=worldToScreen(world.x,world.y);
-    drawForwardSoldier(scr,soldierHeightAt(slot.y),slot.phase,activeFlashes.has(slot.index),player._visualLean||0);
+    drawBlueSoldier(ctx,scr,soldierHeightAt(slot.y),waveTime,slot.phase,activeFlashes.has(slot.index),player._visualLean||0);
   }
   const label=worldToScreen(player.x,.957);
   ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=4;ctx.font=`900 ${Math.min(34,Math.max(21,W*0.04))}px system-ui`;ctx.textAlign='center';
@@ -774,7 +787,7 @@ function pointerMove(clientX){ const laneFrac = laneHalfWidth(0.88) / W; const n
 canvas.addEventListener('pointerdown', e => { controlsActive = true; pointerMove(e.clientX); });
 canvas.addEventListener('pointermove', e => { if(controlsActive || e.pointerType === 'mouse') pointerMove(e.clientX); });
 addEventListener('pointerup', () => { controlsActive = false; });
-playBtn.onclick = () => resetRun(); retryBtn.onclick = () => resetRun(); pauseBtn.onclick = () => { paused = !paused; pauseBtn.textContent = paused ? '▶' : '❚❚'; };
+playBtn.onclick = () => resetRun(); retryBtn.onclick = () => resetRun(); if(continueBtn) continueBtn.onclick = () => resetRun(); pauseBtn.onclick = () => { paused = !paused; pauseBtn.textContent = paused ? '▶' : '❚❚'; };
 
 if(navigator.webdriver){
   globalThis.__blastlineTest={
@@ -782,6 +795,10 @@ if(navigator.webdriver){
     setPower(value){player.power=Math.max(1,Number(value)||1);updateHud();},
     setPlayerX(value){player.x=player.targetX=clamp(Number(value)||0,-.78,.78);updateHud();return player.x;},
     setWaveTime(value){waveTime=Math.max(0,Number(value)||0);return waveTime;},
+    setWave(value){wave=clamp(Math.round(Number(value)||1)-1,0,LEVELS.length-1);updateHud();return wave+1;},
+    forceUpgrade(){setState('upgrade');showUpgrades();return state;},
+    forceVictory(){victory();return state;},
+    forceGameOver(){player.troops=0;gameOver();return state;},
     setGatePair(left,right,y=.52){
       const specs=[left,right],xs=[-.35,.35];
       gates=specs.map((spec,i)=>({x:xs[i],y,w:.68,h:.14,kind:spec.kind,value:spec.value,label:()=>spec.text,color:spec.color||(String(spec.text).startsWith('-')?'red':'blue'),hit:false}));
@@ -797,5 +814,10 @@ function loop(ts){ const dt = Math.min(.033, (ts - last) / 1000 || 0); last = ts
 
 await loadAssets();
 updateHud();
-setState('menu');
+const captureMode=navigator.webdriver?new URLSearchParams(location.search).get('capture'):null;
+if(captureMode==='upgrade'){setState('upgrade');showUpgrades();}
+else if(captureMode==='victory'){victory();}
+else if(captureMode==='gameover'){player.troops=0;gameOver();}
+else if(captureMode==='lane'){resetRun(7);gates=[{x:-.35,y:.54,w:.68,h:.14,kind:'troops',value:-10,label:()=>'-10',color:'red',hit:false},{x:.35,y:.54,w:.68,h:.14,kind:'troops',value:9,label:()=>'+9',color:'blue',hit:false}];paused=true;}
+else{setState('menu');}
 requestAnimationFrame(loop);
