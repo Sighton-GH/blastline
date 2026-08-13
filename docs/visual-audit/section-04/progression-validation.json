@@ -3,8 +3,8 @@
   "bossDefeat": true,
   "waveProgression": true,
   "performance": {
-    "mobileMs": 6.377500000000024,
-    "desktopMs": 14.194583333333322,
+    "mobileMs": 4.319999999999951,
+    "desktopMs": 10.805416666666618,
     "pass": true
   },
   "pass": true
