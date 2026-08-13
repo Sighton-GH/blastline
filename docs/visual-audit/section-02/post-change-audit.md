@@ -16,7 +16,7 @@ Fresh browser evidence at DPR 1:
 - `run-frame-a-mobile.png`, `run-frame-b-mobile.png` — sequential real Chromium run frames while steering
 - `shooting-mobile.png` — real Chromium capture during front-row muzzle flashes
 
-The sandbox Chromium policy blocks URL navigation, including localhost. The screenshots are nevertheless genuine Chromium output from the exact committed/runtime game code: the Git-verified HTML/CSS/JS and byte-verified WebP files were injected into Chromium, with only module/asset transport URLs converted to in-memory data URLs. No screenshot was generated, redrawn, composited or synthesized.
+The committed evidence above was produced by a one-shot GitHub Actions capture on the actual repository branch. The job checked out full history, served the exact Section 1 baseline commit `87fd7bc66796dba51abe1624e6fff581623ae5a5` and the Section 2 branch over localhost, launched real Playwright Chromium at DPR 1, interacted with the actual Play button/game runtime, captured the images, re-ran the required Node validation, committed the PNGs, and removed its temporary workflow. The job completed successfully. Earlier implementation iterations were also inspected as genuine sandbox Chromium captures. No screenshot was generated, redrawn, composited or synthesized.
 
 Reference targets were inspected directly from the repository, especially gameplay/squad views 01, 02, 03 and 07 and character/style views 08 and 09. The repository identifies these as generated visual targets, not live-site evidence. Reference 10 was also retrieved; because its locally reconstructed binary did not match the repository blob hash, it was not used for pixel measurements or as current-state evidence.
 
@@ -84,6 +84,8 @@ Commands actually run after final changes:
 - `npm test` — PASS (`smoke ok`)
 - `node --check src/game.js` — PASS
 - `node --check src/core.mjs` — PASS
+
+The one-shot GitHub Actions screenshot job re-ran those same three commands against the exact branch used for the committed AFTER screenshots and passed all three.
 
 Real Chromium validation:
 
