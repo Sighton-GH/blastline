@@ -10,8 +10,8 @@
     "playerX": 0,
     "bullets": 5,
     "sampleBullet": {
-      "x": -0.0000032275111526788302,
-      "y": -0.03699999999999923,
+      "x": -0.0000048436075476738,
+      "y": -0.005270000000000351,
       "targetX": 0,
       "shooter": 1
     },
@@ -19,7 +19,7 @@
     "gates": [
       {
         "x": -0.35,
-        "y": 0.19799399999999992,
+        "y": 0.188976,
         "w": 0.68,
         "kind": "slow",
         "value": 0.15,
@@ -29,7 +29,7 @@
       },
       {
         "x": 0.35,
-        "y": 0.19799399999999992,
+        "y": 0.188976,
         "w": 0.68,
         "kind": "power",
         "value": 1,
@@ -41,28 +41,28 @@
     "muzzleFlashes": 0,
     "boss": null
   },
-  "mobileMs": 4.319999999999951,
+  "mobileMs": 3.2474999999999756,
   "desktop": {
     "state": "playing",
     "paused": false,
     "wave": 1,
-    "troops": 4,
+    "troops": 5,
     "power": 1,
     "fireRate": 5.5,
-    "visibleSquad": 4,
+    "visibleSquad": 5,
     "playerX": 0,
     "bullets": 5,
     "sampleBullet": {
-      "x": -0.000010688760699062104,
-      "y": 0.07386500000000085,
+      "x": 0.000004949462106513464,
+      "y": 0.042134999999999055,
       "targetX": 0,
-      "shooter": 0
+      "shooter": 2
     },
     "enemies": 6,
     "gates": [
       {
         "x": -0.35,
-        "y": 0.012000000000000005,
+        "y": -0.01498199999999993,
         "w": 0.68,
         "kind": "troopsMul",
         "value": 2,
@@ -72,7 +72,7 @@
       },
       {
         "x": 0.35,
-        "y": 0.012000000000000005,
+        "y": -0.01498199999999993,
         "w": 0.68,
         "kind": "slow",
         "value": 0.15,
@@ -84,43 +84,43 @@
     "muzzleFlashes": 1,
     "boss": null
   },
-  "desktopMs": 10.805416666666618,
+  "desktopMs": 8.970000000000011,
   "contact": {
     "state": "playing",
     "paused": false,
     "wave": 1,
-    "troops": 28,
+    "troops": 29,
     "power": 1,
     "fireRate": 5.5,
-    "visibleSquad": 22,
+    "visibleSquad": 23,
     "playerX": 0.78,
     "bullets": 4,
     "sampleBullet": {
-      "x": 0.7798852441943208,
-      "y": 0.03500499999999948,
+      "x": 0.7799885930203158,
+      "y": 0.03386499999999977,
       "targetX": 0.78,
-      "shooter": 0
+      "shooter": 2
     },
-    "enemies": 7,
+    "enemies": 6,
     "gates": [
       {
         "x": -0.35,
-        "y": 0.6356819999999991,
+        "y": 0.7019579999999995,
         "w": 0.68,
-        "kind": "power",
-        "value": 1,
-        "text": "+1 DMG",
-        "color": "blue",
+        "kind": "troops",
+        "value": -4,
+        "text": "-4",
+        "color": "red",
         "hit": false
       },
       {
         "x": 0.35,
-        "y": 0.6356819999999991,
+        "y": 0.7019579999999995,
         "w": 0.68,
-        "kind": "slow",
-        "value": 0.15,
-        "text": "-15%",
-        "color": "red",
+        "kind": "troops",
+        "value": 10,
+        "text": "+10",
+        "color": "blue",
         "hit": false
       }
     ],
@@ -138,17 +138,17 @@
     "playerX": 0,
     "bullets": 3,
     "sampleBullet": {
-      "x": -0.0001583480491380941,
-      "y": 0.23954000000000006,
+      "x": -0.000291114685430186,
+      "y": 0.2871350000000003,
       "targetX": 0,
       "shooter": 2
     },
     "enemies": 0,
     "gates": [],
-    "muzzleFlashes": 0,
+    "muzzleFlashes": 3,
     "boss": {
       "x": 0,
-      "y": 0.19192800000000015,
+      "y": 0.19197600000000012,
       "hp": 48
     }
   },
