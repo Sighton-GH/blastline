@@ -1,0 +1,39 @@
+name: Section 4 final screenshots
+on:
+  push:
+    branches: [section-04-enemies-combat]
+    paths-ignore: ['docs/visual-audit/section-04/**']
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required validation
+        run: |
+          npm test
+          node --check src/game.js
+          node --check src/core.mjs
+          node --check src/enemy-render.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Serve game and capture real screenshots
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .2; done
+          node tools/section04-final-capture.mjs
+      - name: Commit screenshot evidence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/visual-audit/section-04
+          git commit -m 'Capture Section 4 final real screenshots'
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: section04-final-screenshots
+          path: docs/visual-audit/section-04
