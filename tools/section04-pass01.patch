@@ -1,0 +1,45 @@
+--- a/src/game.js
++++ b/src/game.js
+@@ -221,8 +221,12 @@
+   if(!boss && waveTime >= level.length) spawnBoss();
+ 
+   for(const gate of gates){ gate.y += dt * 0.18 * level.speed; }
+-  for(const e of enemies){ e.y += dt * e.speed; e.x += Math.sin((waveTime*2)+e.wobble) * 0.0016; }
+-  if(boss){ boss.y += dt * boss.speed; boss.y = Math.min(0.22, boss.y); }
++  for(const e of enemies){
++    if(e.hitFlash>0)e.hitFlash=Math.max(0,e.hitFlash-dt);
++    if(e.dead){e.deathLife=Math.max(0,(e.deathLife||0)-dt);e.y-=dt*.018;continue;}
++    e.y += dt * e.speed; e.x += Math.sin((waveTime*2)+e.wobble) * 0.0016;
++  }
++  if(boss){ boss.y += dt * boss.speed; boss.y = Math.min(0.22, boss.y); if(boss.hitFlash>0)boss.hitFlash=Math.max(0,boss.hitFlash-dt); }
+ 
+   for(const b of bullets){
+     if(Number.isFinite(b.targetX)) b.x=lerp(b.x,b.targetX,Math.min(1,dt*11));
+@@ -241,24 +245,24 @@
+     if(b.dead) continue;
+     if(boss){
+       const dx = b.x - boss.x, dy = b.y - boss.y;
+-      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; setState('upgrade'); showUpgrades(); updateHud(); return; } }
++      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; boss.hitFlash=.10; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; setState('upgrade'); showUpgrades(); updateHud(); return; } }
+     }
+     for(const e of enemies){
+       if(e.dead || b.dead) continue;
+       const dx=b.x-e.x, dy=b.y-e.y;
+       if(dx*dx + dy*dy < (e.type==='elite'?0.018:0.014)**2){
+-        e.hp -= b.power; b.dead = true; burst(e.x,e.y,e.type==='elite' ? '#ffb35a' : '#ff6868', e.type==='elite' ? 5 : 3);
+-        if(e.hp <= 0){ e.dead = true; score += e.type==='elite' ? 55 : 18; player.coins += e.type==='elite' ? 12 : 4; frenzy += e.type==='elite'?3:1; if(frenzy >= 12){ frenzy = 0; frenzyTimer = 4.5; addFloater(0,0.5,'FRENZY!','#77ddff',32); } }
++        e.hp -= b.power; e.hitFlash=.09; b.dead = true; burst(e.x,e.y,e.type==='elite' ? '#ffb35a' : '#ff6868', e.type==='elite' ? 5 : 3);
++        if(e.hp <= 0){ e.dead = true; e.deathMax=e.type==='elite'?.28:.22; e.deathLife=e.deathMax; score += e.type==='elite' ? 55 : 18; player.coins += e.type==='elite' ? 12 : 4; frenzy += e.type==='elite'?3:1; if(frenzy >= 12){ frenzy = 0; frenzyTimer = 4.5; addFloater(0,0.5,'FRENZY!','#77ddff',32); } }
+       }
+     }
+   }
+ 
+   for(const e of enemies){
+-    if(!e.dead && e.y > 0.86){ e.dead = true; player.troops = Math.max(0, player.troops - (e.type==='elite' ? 4 : 1)); addFloater(e.x,0.83, e.type==='elite' ? '-4' : '-1', '#ff8d8d', 22); burst(e.x, e.y, '#ff5757', 8); if(player.troops <= 0){ gameOver(); return; } updateHud(); }
++    if(!e.dead && e.y > 0.86){ e.dead = true; e.deathMax=.18; e.deathLife=e.deathMax; player.troops = Math.max(0, player.troops - (e.type==='elite' ? 4 : 1)); addFloater(e.x,0.83, e.type==='elite' ? '-4' : '-1', '#ff8d8d', 22); burst(e.x, e.y, '#ff5757', 8); if(player.troops <= 0){ gameOver(); return; } updateHud(); }
+   }
+ 
+   bullets = bullets.filter(b => !b.dead && b.y > -0.1);
+-  enemies = enemies.filter(e => !e.dead && e.y < 1.02);
++  enemies = enemies.filter(e => e.dead ? (e.deathLife||0)>0 : e.y < 1.02);
+   gates = gates.filter(g => g.y < 1.03);
