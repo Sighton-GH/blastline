@@ -659,11 +659,18 @@ function drawGateForeground(){
 }
 
 function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}
+function enemyHeightAt(y,type='grunt'){
+  const y0=clamp(y,-.02,.98);
+  const y1=clamp(y0+.078,0,1.04);
+  const projected=Math.abs(perspectiveY(y1)-perspectiveY(y0));
+  const base=clamp(projected,14,72);
+  return base*(type==='elite'?1.20:1);
+}
 function drawEnemies(){
   enemies.sort((a,b)=>a.y-b.y);
   for(const e of enemies){
-    const scr = worldToScreen(e.x, e.y); const h = lerp(30, 78, e.y) * (e.type==='elite' ? 1.22 : 1);
-    drawSprite(e.type==='elite' ? IMAGES.elite : IMAGES.grunt, scr.x, scr.y+10, h);
+    const scr=worldToScreen(e.x,e.y); const h=enemyHeightAt(e.y,e.type);
+    drawSprite(e.type==='elite'?IMAGES.elite:IMAGES.grunt,scr.x,scr.y,h);
     if(e.type==='elite'){
       ctx.fillStyle='rgba(255,177,77,.9)'; ctx.font=`900 ${Math.max(14, h*0.17)}px system-ui`; ctx.textAlign='center'; ctx.fillText(`${e.hp}`, scr.x, scr.y - h*0.9);
     }
