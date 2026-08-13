@@ -26,3 +26,6 @@
 -    const scr = worldToScreen(boss.x, boss.y); const h = lerp(80, 150, boss.y) * 1.18;
 -    drawSprite(IMAGES.elite, scr.x, scr.y+20, h);
 +    const scr=worldToScreen(boss.x,boss.y);drawBossFigure(scr,bossHeightAt(boss.y),boss.hitFlash||0);
+     const bw = Math.min(360, W*0.42), bh = 12;
+     ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(W/2-bw/2, H*0.14, bw, bh);
+     ctx.fillStyle='#ff5959'; ctx.fillRect(W/2-bw/2, H*0.14, bw * clamp(boss.hp / boss.maxHp,0,1), bh);
