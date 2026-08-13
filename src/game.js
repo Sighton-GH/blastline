@@ -95,8 +95,8 @@ function spawnEnemy(type='grunt'){
 function spawnGatePair(){
   const pair = makeGatePair(rng, wave);
   const leftX = -0.35, rightX = 0.35;
-  gates.push({x:leftX, y:-0.06, w:0.44, h:0.14, kind:pair[0].kind, value:pair[0].value, label:pair[0].label, color: gateText(pair[0]).startsWith('-') ? 'red' : 'blue'});
-  gates.push({x:rightX, y:-0.06, w:0.44, h:0.14, kind:pair[1].kind, value:pair[1].value, label:pair[1].label, color: gateText(pair[1]).startsWith('-') ? 'red' : 'blue'});
+  gates.push({x:leftX, y:-0.06, w:0.68, h:0.14, kind:pair[0].kind, value:pair[0].value, label:pair[0].label, color: gateText(pair[0]).startsWith('-') ? 'red' : 'blue'});
+  gates.push({x:rightX, y:-0.06, w:0.68, h:0.14, kind:pair[1].kind, value:pair[1].value, label:pair[1].label, color: gateText(pair[1]).startsWith('-') ? 'red' : 'blue'});
 }
 
 function spawnBoss(){
@@ -258,7 +258,7 @@ function update(dt){
 
   bullets = bullets.filter(b => !b.dead && b.y > -0.1);
   enemies = enemies.filter(e => !e.dead && e.y < 1.02);
-  gates = gates.filter(g => g.y < 1.08 && !g.hit);
+  gates = gates.filter(g => g.y < 1.03);
   for(const p of particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt; p.vx *= 0.98; p.vy *= 0.98; }
   particles = particles.filter(p => p.life > 0);
   for(const f of floaters){ f.y -= dt * 0.06; f.life -= dt; }
@@ -577,38 +577,88 @@ function drawSprite(img, x, y, h){
   ctx.drawImage(img, x - w/2, y - h, w, h);
 }
 
-function drawGates(){
+function gateVisual(gate){
+  const center=worldToScreen(gate.x,gate.y);
+  const left=worldToScreen(gate.x-gate.w/2,gate.y);
+  const right=worldToScreen(gate.x+gate.w/2,gate.y);
+  const panelW=Math.max(18,right.x-left.x);
+  const depth=clamp((gate.y+.04)/1.04,0,1);
+  const panelH=Math.min(H*.086,Math.max(18,panelW*.62));
+  const frameH=panelH*1.34;
+  const deckY=center.y;
+  const topY=deckY-frameH;
+  const panelTop=topY+frameH*.13;
+  const panelBottom=deckY-frameH*.12;
+  const postW=clamp(panelW*.085,6,17);
+  const railH=clamp(panelH*.125,4,11);
+  const extrusion=clamp(lerp(1.4,6.5,Math.pow(depth,.8)),1.4,7);
+  const fade=gate.hit?clamp((1.03-gate.y)/.18,0,1):1;
+  return {center,left,right,panelW,panelH,frameH,deckY,topY,panelTop,panelBottom,postW,railH,extrusion,depth,fade};
+}
+
+function drawGateBody(gate){
+  const g=gateVisual(gate);
+  if(g.fade<=0)return;
+  const isRed=gate.color==='red';
+  const main=isRed?'#f14549':'#168ee8';
+  const bright=isRed?'#ff6d68':'#37c7ff';
+  const dark=isRed?'#921d27':'#07538f';
+  const deep=isRed?'#651620':'#06365e';
+  const fillA=isRed?'rgba(241,54,63,.72)':'rgba(15,151,235,.72)';
+  const fillB=isRed?'rgba(255,112,104,.48)':'rgba(62,207,255,.46)';
+  const glow=isRed?'rgba(255,67,72,.38)':'rgba(37,196,255,.40)';
+  const x0=g.left.x,x1=g.right.x;
+  const panelY=g.panelTop,panelH=g.panelBottom-g.panelTop;
+  ctx.save();ctx.globalAlpha=g.fade;
+
+  for(const x of [x0,x1]){
+    ctx.fillStyle='rgba(36,43,48,.34)';
+    ctx.beginPath();ctx.ellipse(x,g.deckY+g.railH*.46,g.postW*.86,g.railH*.52,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=deep;
+    ctx.beginPath();ctx.roundRect(x-g.postW*.78,g.deckY-g.railH*.12,g.postW*1.56,g.railH*.72,g.railH*.18);ctx.fill();
+  }
+  ctx.fillStyle=deep;
+  ctx.beginPath();ctx.moveTo(x0-g.postW*.55,g.topY+g.extrusion);ctx.lineTo(x0+g.postW*.55,g.topY);ctx.lineTo(x0+g.postW*.55,g.deckY);ctx.lineTo(x0-g.postW*.55,g.deckY+g.extrusion);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(x1-g.postW*.55,g.topY);ctx.lineTo(x1+g.postW*.55,g.topY+g.extrusion);ctx.lineTo(x1+g.postW*.55,g.deckY+g.extrusion);ctx.lineTo(x1-g.postW*.55,g.deckY);ctx.closePath();ctx.fill();
+  ctx.shadowColor=glow;ctx.shadowBlur=Math.min(12,lerp(3,10,g.depth));
+  const fill=ctx.createLinearGradient(0,panelY,0,g.panelBottom);
+  fill.addColorStop(0,fillA);fill.addColorStop(.48,fillB);fill.addColorStop(1,fillA);
+  ctx.fillStyle=fill;ctx.fillRect(x0+g.postW*.48,panelY,x1-x0-g.postW*.96,panelH);ctx.shadowBlur=0;
+  const shine=ctx.createLinearGradient(x0,0,x1,0);
+  shine.addColorStop(0,'rgba(255,255,255,.10)');shine.addColorStop(.48,'rgba(255,255,255,.25)');shine.addColorStop(1,'rgba(255,255,255,.08)');
+  ctx.fillStyle=shine;ctx.fillRect(x0+g.postW*.8,panelY+g.railH*.65,x1-x0-g.postW*1.6,Math.max(1.2,g.railH*.18));
+  for(const x of [x0,x1]){
+    const pg=ctx.createLinearGradient(x-g.postW/2,0,x+g.postW/2,0);
+    pg.addColorStop(0,dark);pg.addColorStop(.38,main);pg.addColorStop(.68,bright);pg.addColorStop(1,dark);
+    ctx.fillStyle=pg;ctx.beginPath();ctx.roundRect(x-g.postW/2,g.topY,g.postW,g.frameH,g.postW*.22);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.46)';ctx.fillRect(x-g.postW*.20,g.topY+g.railH*.55,Math.max(1,g.postW*.14),g.frameH*.67);
+  }
+  ctx.fillStyle=dark;ctx.fillRect(x0-g.postW*.22,g.topY,x1-x0+g.postW*.44,g.railH);
+  ctx.fillStyle=main;ctx.fillRect(x0,g.topY,x1-x0,g.railH*.62);
+  ctx.fillStyle=dark;ctx.fillRect(x0+g.postW*.15,g.panelBottom-g.railH*.42,x1-x0-g.postW*.30,g.railH*.78);
+  ctx.fillStyle=bright;ctx.globalAlpha=g.fade*.72;ctx.fillRect(x0+g.postW*.32,g.topY+g.railH*.16,x1-x0-g.postW*.64,Math.max(1,g.railH*.16));ctx.globalAlpha=g.fade;
+  const text=gateText(gate);
+  let fontSize=clamp(panelH*.48,11,38);
+  const textWidthLimit=Math.max(24,g.panelW-g.postW*2.35);
+  ctx.font=`950 ${fontSize}px system-ui`;
+  while(fontSize>10&&ctx.measureText(text).width>textWidthLimit){fontSize-=1;ctx.font=`950 ${fontSize}px system-ui`;}
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=clamp(fontSize*.15,2,5);ctx.strokeStyle='rgba(22,28,35,.72)';ctx.fillStyle='#fff';
+  const textY=panelY+panelH*.53;ctx.strokeText(text,g.center.x,textY);ctx.fillText(text,g.center.x,textY);ctx.restore();
+}
+
+function drawGateForeground(){
   for(const gate of gates){
-    const scr = worldToScreen(gate.x, gate.y);
-    const scale = lerp(0.38, 1.15, gate.y);
-    const w = Math.min(W * 0.34, 250) * scale;
-    const h = Math.min(H * 0.075, 74) * scale;
-    const isRed = gate.color === 'red';
-    const main = isRed ? '#ef3f45' : '#169df4';
-    const glow = isRed ? 'rgba(255,70,76,.33)' : 'rgba(42,201,255,.34)';
-    const dark = isRed ? '#9e1c24' : '#07589c';
-    ctx.save();
-    ctx.shadowColor = glow; ctx.shadowBlur = 18 * scale;
-    const grad = ctx.createLinearGradient(scr.x-w/2,scr.y,scr.x+w/2,scr.y);
-    grad.addColorStop(0, isRed ? 'rgba(239,63,69,.72)' : 'rgba(18,151,244,.72)');
-    grad.addColorStop(.5, isRed ? 'rgba(255,119,123,.55)' : 'rgba(72,213,255,.56)');
-    grad.addColorStop(1, isRed ? 'rgba(239,63,69,.72)' : 'rgba(18,151,244,.72)');
-    ctx.fillStyle = grad; ctx.strokeStyle = main; ctx.lineWidth = Math.max(2,4*scale);
-    ctx.beginPath(); ctx.roundRect(scr.x-w/2,scr.y-h/2,w,h,8*scale); ctx.fill(); ctx.stroke();
-    ctx.shadowBlur=0;
-    const postW = Math.max(7, 12*scale), postH = h*1.32;
-    for(const sign of [-1,1]){
-      const px=scr.x+sign*(w/2-postW*.1);
-      ctx.fillStyle=dark; ctx.beginPath(); ctx.roundRect(px-postW/2,scr.y-postH/2,postW,postH,3*scale);ctx.fill();
-      ctx.fillStyle=main; ctx.fillRect(px-postW*.32,scr.y-postH*.43,postW*.64,postH*.72);
-      ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(px,scr.y-postH*.34,Math.max(1.5,2*scale),0,Math.PI*2);ctx.fill();
-    }
-    ctx.fillStyle='#fff'; ctx.lineWidth=Math.max(3,5*scale); ctx.strokeStyle='rgba(26,35,44,.75)';
-    ctx.font=`900 ${Math.max(16,h*.48)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
-    const text=gateText(gate);ctx.strokeText(text,scr.x,scr.y+1);ctx.fillText(text,scr.x,scr.y+1);
-    ctx.restore();
+    if(gate.y<.77||gate.y>.98)continue;
+    const g=gateVisual(gate);if(g.fade<=0)continue;
+    const isRed=gate.color==='red',main=isRed?'#f14549':'#168ee8',dark=isRed?'#921d27':'#07538f';
+    ctx.save();ctx.globalAlpha=g.fade*.94;
+    for(const x of [g.left.x,g.right.x]){ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(x-g.postW/2,g.topY,g.postW,g.frameH,g.postW*.22);ctx.fill();ctx.fillStyle=main;ctx.fillRect(x-g.postW*.23,g.topY+g.railH*.6,g.postW*.46,g.frameH*.63);}
+    ctx.fillStyle=dark;ctx.fillRect(g.left.x-g.postW*.22,g.topY,g.right.x-g.left.x+g.postW*.44,g.railH);
+    ctx.fillStyle=main;ctx.fillRect(g.left.x,g.topY,g.right.x-g.left.x,g.railH*.58);ctx.restore();
   }
 }
+
+function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}
 function drawEnemies(){
   enemies.sort((a,b)=>a.y-b.y);
   for(const e of enemies){
@@ -696,7 +746,7 @@ function drawEffects(){
 }
 
 function draw(){
-  drawBackground(); drawGates(); drawEnemies(); drawBullets(); drawPlayer(); drawEffects();
+  drawBackground(); drawGates(); drawEnemies(); drawBullets(); drawPlayer(); drawGateForeground(); drawEffects();
 }
 
 const keys = {};
@@ -712,9 +762,16 @@ if(navigator.webdriver){
   globalThis.__blastlineTest={
     setTroops(value){player.troops=clamp(Math.round(value),1,999);updateHud();return visibleSquadCount(player.troops);},
     setPower(value){player.power=Math.max(1,Number(value)||1);updateHud();},
+    setPlayerX(value){player.x=player.targetX=clamp(Number(value)||0,-.78,.78);updateHud();return player.x;},
+    setWaveTime(value){waveTime=Math.max(0,Number(value)||0);return waveTime;},
+    setGatePair(left,right,y=.52){
+      const specs=[left,right],xs=[-.35,.35];
+      gates=specs.map((spec,i)=>({x:xs[i],y,w:.68,h:.14,kind:spec.kind,value:spec.value,label:()=>spec.text,color:spec.color||(String(spec.text).startsWith('-')?'red':'blue'),hit:false}));
+      return gates.map(g=>({kind:g.kind,value:g.value,text:gateText(g),color:g.color}));
+    },
     applyGate(kind,value){player=applyGate(player,{kind,value});updateHud();return player.troops;},
     benchmarkDraw(iterations=120){const n=clamp(Math.round(iterations),1,1000),start=performance.now();for(let i=0;i<n;i++)draw();return (performance.now()-start)/n;},
-    getState(){return {state,paused,wave:wave+1,troops:player.troops,visibleSquad:visibleSquadCount(player.troops),playerX:player.x,bullets:bullets.length,sampleBullet:bullets[0]?{x:bullets[0].x,y:bullets[0].y,targetX:bullets[0].targetX,shooter:bullets[0].shooter}:null,enemies:enemies.length,gates:gates.map(g=>({x:g.x,y:g.y,kind:g.kind,value:g.value,hit:!!g.hit})),muzzleFlashes:muzzleFlashes.length,boss:boss?{x:boss.x,y:boss.y,hp:boss.hp}:null};}
+    getState(){return {state,paused,wave:wave+1,troops:player.troops,power:player.power,fireRate:player.fireRate,visibleSquad:visibleSquadCount(player.troops),playerX:player.x,bullets:bullets.length,sampleBullet:bullets[0]?{x:bullets[0].x,y:bullets[0].y,targetX:bullets[0].targetX,shooter:bullets[0].shooter}:null,enemies:enemies.length,gates:gates.map(g=>({x:g.x,y:g.y,w:g.w,kind:g.kind,value:g.value,text:gateText(g),color:g.color,hit:!!g.hit})),muzzleFlashes:muzzleFlashes.length,boss:boss?{x:boss.x,y:boss.y,hp:boss.hp}:null};}
   };
 }
 
