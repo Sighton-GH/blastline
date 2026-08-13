@@ -1,0 +1,105 @@
+name: Section 2 capture real browser evidence
+
+on:
+  push:
+    branches:
+      - section-02-player-squad
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install temporary browser tooling
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Prepare Section 1 baseline worktree
+        run: git worktree add /tmp/blastline-section1 87fd7bc66796dba51abe1624e6fff581623ae5a5
+      - name: Start exact static games
+        run: |
+          python3 -m http.server 4173 --directory /tmp/blastline-section1 >/tmp/blastline-section1.log 2>&1 &
+          python3 -m http.server 4174 --directory "$GITHUB_WORKSPACE" >/tmp/blastline-section2.log 2>&1 &
+          sleep 1
+      - name: Capture genuine Chromium screenshots
+        run: |
+          cat > .tmp-section2-capture.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+
+          const out = 'docs/visual-audit/section-02';
+          await fs.mkdir(out, { recursive: true });
+          const browser = await chromium.launch({ headless: true });
+
+          async function openGame(port, width, height) {
+            const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
+            const page = await context.newPage();
+            const errors = [];
+            page.on('pageerror', e => errors.push(String(e)));
+            page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+            await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
+            await page.click('#playBtn');
+            await page.waitForFunction(() => document.querySelector('#game')?.dataset.state === 'playing');
+            await page.waitForTimeout(2400);
+            return { context, page, errors };
+          }
+
+          async function baseline(name, width, height) {
+            const { context, page, errors } = await openGame(4173, width, height);
+            await page.screenshot({ path: `${out}/${name}.png` });
+            if (errors.length) throw new Error(`${name}: ${errors.join(' | ')}`);
+            await context.close();
+          }
+
+          async function current(name, width, height) {
+            const { context, page, errors } = await openGame(4174, width, height);
+            await page.screenshot({ path: `${out}/${name}.png` });
+            if (errors.length) throw new Error(`${name}: ${errors.join(' | ')}`);
+            await context.close();
+          }
+
+          await baseline('before-mobile', 390, 844);
+          await baseline('before-desktop', 1365, 768);
+          await current('after-mobile', 390, 844);
+          await current('after-desktop', 1365, 768);
+
+          const { context, page, errors } = await openGame(4174, 390, 844);
+          for (const n of [1, 5, 10, 20, 50, 120]) {
+            await page.evaluate(v => globalThis.__blastlineTest.setTroops(v), n);
+            await page.waitForTimeout(80);
+            await page.screenshot({ path: `${out}/troops-${String(n).padStart(3,'0')}-mobile.png` });
+          }
+
+          await page.keyboard.down('ArrowRight');
+          await page.waitForTimeout(120);
+          await page.screenshot({ path: `${out}/run-frame-a-mobile.png` });
+          await page.waitForTimeout(160);
+          await page.screenshot({ path: `${out}/run-frame-b-mobile.png` });
+          await page.keyboard.up('ArrowRight');
+          await page.waitForFunction(() => globalThis.__blastlineTest.getState().muzzleFlashes > 0, null, { timeout: 3000 });
+          await page.screenshot({ path: `${out}/shooting-mobile.png` });
+          if (errors.length) throw new Error(`current-growth: ${errors.join(' | ')}`);
+          await context.close();
+          await browser.close();
+          EOF
+          node .tmp-section2-capture.mjs
+      - name: Re-run validation on screenshot source
+        run: |
+          npm test
+          node --check src/game.js
+          node --check src/core.mjs
+      - name: Commit screenshot evidence and remove one-shot workflow
+        run: |
+          rm -f .tmp-section2-capture.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/visual-audit/section-02/*.png
+          git rm .github/workflows/section2-capture.yml
+          git commit -m "Section 2: add real browser visual evidence"
+          git push origin HEAD:section-02-player-squad
