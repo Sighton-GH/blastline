@@ -1,0 +1,28 @@
+--- a/src/game.js
++++ b/src/game.js
+@@ -671,15 +671,24 @@
+   const base=clamp(projected,14,72);
+   return base*(type==='elite'?1.20:1);
+ }
++function drawBossFigure(scr,h,flash=0){
++  const u=h/110,f=clamp(flash/.1,0,1);ctx.save();ctx.translate(scr.x,scr.y);
++  ctx.fillStyle='rgba(20,27,30,.30)';ctx.beginPath();ctx.ellipse(0,3*u,42*u,10*u,0,0,Math.PI*2);ctx.fill();
++  ctx.strokeStyle='#252329';ctx.lineWidth=15*u;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-18*u,-34*u);ctx.lineTo(-24*u,-4*u);ctx.stroke();ctx.beginPath();ctx.moveTo(18*u,-34*u);ctx.lineTo(24*u,-4*u);ctx.stroke();
++  ctx.fillStyle='#30272a';ctx.beginPath();ctx.roundRect(-39*u,-78*u,78*u,48*u,12*u);ctx.fill();ctx.fillStyle=f?'#bb5b49':'#6f2c2d';ctx.beginPath();ctx.roundRect(-31*u,-74*u,62*u,40*u,9*u);ctx.fill();
++  ctx.fillStyle=f?'#f0c575':'#b68745';ctx.beginPath();ctx.roundRect(-20*u,-66*u,40*u,25*u,5*u);ctx.fill();ctx.fillStyle='#352d2f';ctx.beginPath();ctx.arc(-42*u,-68*u,17*u,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(42*u,-68*u,17*u,0,Math.PI*2);ctx.fill();
++  ctx.fillStyle='#bd7751';ctx.beginPath();ctx.arc(0,-91*u,14*u,0,Math.PI*2);ctx.fill();ctx.fillStyle=f?'#d94d42':'#7a292b';ctx.beginPath();ctx.arc(0,-95*u,22*u,Math.PI,Math.PI*2);ctx.lineTo(22*u,-89*u);ctx.lineTo(-22*u,-89*u);ctx.closePath();ctx.fill();ctx.fillStyle='#e3ad55';ctx.fillRect(-12*u,-92*u,24*u,5*u);ctx.restore();
++}
++function bossHeightAt(y){return clamp(enemyHeightAt(y,'elite')*3.25,92,Math.min(154,H*.22));}
+ function drawEnemies(){
+   enemies.sort((a,b)=>a.y-b.y);
+   for(const e of enemies){
+-    const scr=worldToScreen(e.x,e.y);
+-    drawEnemyCombatant(ctx,e,scr,enemyHeightAt(e.y,e.type),waveTime);
++    const scr=worldToScreen(e.x,e.y),h=enemyHeightAt(e.y,e.type);const fade=e.dead?clamp((e.deathLife||0)/(e.deathMax||.22),0,1):1,drift=e.dead?(1-fade)*h*.12:0;
++    ctx.save();ctx.globalAlpha=fade;drawEnemyCombatant(ctx,e,{x:scr.x+(e.x>=0?drift:-drift),y:scr.y+drift*.28},h,waveTime);ctx.restore();
++    if(e.hitFlash>0){ctx.globalAlpha=clamp(e.hitFlash/.09,0,1)*.55;ctx.fillStyle='#fff0c7';ctx.beginPath();ctx.arc(scr.x,scr.y-h*.38,Math.max(2,h*.10),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+   }
+   if(boss){
+-    const scr = worldToScreen(boss.x, boss.y); const h = lerp(80, 150, boss.y) * 1.18;
+-    drawSprite(IMAGES.elite, scr.x, scr.y+20, h);
++    const scr=worldToScreen(boss.x,boss.y);drawBossFigure(scr,bossHeightAt(boss.y),boss.hitFlash||0);
