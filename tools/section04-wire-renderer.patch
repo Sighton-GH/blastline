@@ -1,4 +1,3 @@
-diff --git a/src/game.js b/src/game.js
 --- a/src/game.js
 +++ b/src/game.js
 @@ -1,4 +1,5 @@
@@ -7,7 +6,8 @@ diff --git a/src/game.js b/src/game.js
  
  const canvas = document.querySelector('#game');
  const ctx = canvas.getContext('2d');
-@@ -668,12 +669,8 @@ function drawEnemies(){
+@@ -669,11 +670,8 @@
+ function drawEnemies(){
    enemies.sort((a,b)=>a.y-b.y);
    for(const e of enemies){
 -    const scr=worldToScreen(e.x,e.y); const h=enemyHeightAt(e.y,e.type);
