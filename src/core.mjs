@@ -59,3 +59,21 @@ export function pickUpgradeSet(rng){
   while(res.length<3 && copy.length){res.push(copy.splice(Math.floor(rng()*copy.length),1)[0]);}
   return res;
 }
+
+export function visibleSquadCount(troops){
+  const n = Math.max(1, Math.round(Number.isFinite(troops) ? troops : 1));
+  if(n <= 20) return n;
+  if(n <= 50) return Math.min(28, 20 + Math.ceil((n - 20) * 0.25));
+  if(n <= 100) return Math.min(36, 28 + Math.ceil((n - 50) * 0.16));
+  return Math.min(42, 36 + Math.ceil((n - 100) * 0.025));
+}
+
+export function squadColumnCount(visibleCount){
+  const n = Math.max(1, Math.round(visibleCount));
+  if(n <= 3) return n;
+  if(n <= 6) return 3;
+  if(n <= 10) return 4;
+  if(n <= 18) return 6;
+  if(n <= 25) return 5;
+  return 7;
+}
