@@ -1,0 +1,11 @@
+{
+  "bossDamage": true,
+  "bossDefeat": true,
+  "waveProgression": true,
+  "performance": {
+    "mobileMs": 6.377500000000024,
+    "desktopMs": 14.194583333333322,
+    "pass": true
+  },
+  "pass": true
+}

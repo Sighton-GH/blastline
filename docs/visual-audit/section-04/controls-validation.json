@@ -1,0 +1,10 @@
+{
+  "keyboard": true,
+  "pointer": true,
+  "squadGrowth": true,
+  "shooting": true,
+  "leftGate": true,
+  "pause": true,
+  "rightGate": true,
+  "pass": true
+}
