@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   projection-pass:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -20,23 +19,24 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           p=Path('src/game.js'); s=p.read_text()
-          anchor="function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}\nfunction drawEnemies(){"
-          replacement="""function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}
-function enemyHeightAt(y,type='grunt'){
-  const y0=clamp(y,-.02,.98);
-  const y1=clamp(y0+.078,0,1.04);
-  const projected=Math.abs(perspectiveY(y1)-perspectiveY(y0));
-  const base=clamp(projected,14,72);
-  return base*(type==='elite'?1.20:1);
-}
-function drawEnemies(){"""
-          assert anchor in s
-          s=s.replace(anchor,replacement,1)
-          old="    const scr = worldToScreen(e.x, e.y); const h = lerp(30, 78, e.y) * (e.type==='elite' ? 1.22 : 1);\n    drawSprite(e.type==='elite' ? IMAGES.elite : IMAGES.grunt, scr.x, scr.y+10, h);"
-          new="    const scr=worldToScreen(e.x,e.y); const h=enemyHeightAt(e.y,e.type);\n    drawSprite(e.type==='elite'?IMAGES.elite:IMAGES.grunt,scr.x,scr.y,h);"
-          assert old in s
-          s=s.replace(old,new,1)
-          p.write_text(s)
+          if "function enemyHeightAt(y,type='grunt')" not in s:
+              anchor="function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}\nfunction drawEnemies(){"
+              replacement="""function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}
+          function enemyHeightAt(y,type='grunt'){
+            const y0=clamp(y,-.02,.98);
+            const y1=clamp(y0+.078,0,1.04);
+            const projected=Math.abs(perspectiveY(y1)-perspectiveY(y0));
+            const base=clamp(projected,14,72);
+            return base*(type==='elite'?1.20:1);
+          }
+          function drawEnemies(){"""
+              assert anchor in s
+              s=s.replace(anchor,replacement,1)
+              old="    const scr = worldToScreen(e.x, e.y); const h = lerp(30, 78, e.y) * (e.type==='elite' ? 1.22 : 1);\n    drawSprite(e.type==='elite' ? IMAGES.elite : IMAGES.grunt, scr.x, scr.y+10, h);"
+              new="    const scr=worldToScreen(e.x,e.y); const h=enemyHeightAt(e.y,e.type);\n    drawSprite(e.type==='elite'?IMAGES.elite:IMAGES.grunt,scr.x,scr.y,h);"
+              assert old in s
+              s=s.replace(old,new,1)
+              p.write_text(s)
           PY
       - name: Static checks
         run: |
@@ -59,18 +59,21 @@ function drawEnemies(){"""
           cat > .capture.mjs <<'JS'
           import {chromium} from 'playwright';import fs from 'node:fs';
           const browser=await chromium.launch({headless:true});const errors=[];
-          async function shot(w,h,name){const c=await browser.newContext({viewport:{width:w,height:h},deviceScaleFactor:1});const p=await c.newPage();p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{Date.now=()=>7});await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.click('#playBtn');await p.waitForFunction(()=>__blastlineTest?.getState().state==='playing');await p.waitForTimeout(3500);await p.screenshot({path:`docs/visual-audit/section-04/${name}.png`});const draw=await p.evaluate(()=>__blastlineTest.benchmarkDraw(120));await c.close();return draw}
+          async function shot(w,h,name){const c=await browser.newContext({viewport:{width:w,height:h},deviceScaleFactor:1});const p=await c.newPage();p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{Date.now=()=>7});await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.click('#playBtn');await p.waitForFunction(()=>globalThis.__blastlineTest?.getState().state==='playing');await p.waitForTimeout(3500);await p.screenshot({path:`docs/visual-audit/section-04/${name}.png`});const draw=await p.evaluate(()=>globalThis.__blastlineTest.benchmarkDraw(120));await c.close();return draw}
           const mobile=await shot(390,844,'macro-projection-mobile');const desktop=await shot(1365,768,'macro-projection-desktop');await browser.close();fs.writeFileSync('docs/visual-audit/section-04/macro-projection-results.json',JSON.stringify({errors,mobileMsPerDraw:mobile,desktopMsPerDraw:desktop},null,2));if(errors.length)throw new Error(errors.join('\n'));
           JS
           node .capture.mjs
           rm .capture.mjs
-      - name: Commit macro pass
+      - name: Commit macro pass when changed
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/game.js docs/visual-audit/section-04
-          git commit -m 'Align enemy scale and grounding to bridge projection'
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m 'Align enemy scale and grounding to bridge projection'
+            git push
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: section04-macro-projection
