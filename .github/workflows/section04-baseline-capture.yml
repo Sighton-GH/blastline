@@ -1,15 +1,77 @@
-name: Section 4 reference staging
+name: Section 4 enemy projection pass
 
 on:
   push:
     branches: [section-04-enemies-combat]
 
+permissions:
+  contents: write
+
 jobs:
-  stage-references:
+  projection-pass:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Apply projection-aware enemy scale and grounding
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js'); s=p.read_text()
+          anchor="function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}\nfunction drawEnemies(){"
+          replacement="""function drawGates(){const ordered=[...gates].sort((a,b)=>a.y-b.y);for(const gate of ordered)drawGateBody(gate);}
+function enemyHeightAt(y,type='grunt'){
+  const y0=clamp(y,-.02,.98);
+  const y1=clamp(y0+.078,0,1.04);
+  const projected=Math.abs(perspectiveY(y1)-perspectiveY(y0));
+  const base=clamp(projected,14,72);
+  return base*(type==='elite'?1.20:1);
+}
+function drawEnemies(){"""
+          assert anchor in s
+          s=s.replace(anchor,replacement,1)
+          old="    const scr = worldToScreen(e.x, e.y); const h = lerp(30, 78, e.y) * (e.type==='elite' ? 1.22 : 1);\n    drawSprite(e.type==='elite' ? IMAGES.elite : IMAGES.grunt, scr.x, scr.y+10, h);"
+          new="    const scr=worldToScreen(e.x,e.y); const h=enemyHeightAt(e.y,e.type);\n    drawSprite(e.type==='elite'?IMAGES.elite:IMAGES.grunt,scr.x,scr.y,h);"
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Static checks
+        run: |
+          npm test
+          node --check src/game.js
+          node --check src/core.mjs
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Serve
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep .2; done
+          exit 1
+      - name: Capture projection pass
+        shell: bash
+        run: |
+          mkdir -p docs/visual-audit/section-04
+          cat > .capture.mjs <<'JS'
+          import {chromium} from 'playwright';import fs from 'node:fs';
+          const browser=await chromium.launch({headless:true});const errors=[];
+          async function shot(w,h,name){const c=await browser.newContext({viewport:{width:w,height:h},deviceScaleFactor:1});const p=await c.newPage();p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{Date.now=()=>7});await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.click('#playBtn');await p.waitForFunction(()=>__blastlineTest?.getState().state==='playing');await p.waitForTimeout(3500);await p.screenshot({path:`docs/visual-audit/section-04/${name}.png`});const draw=await p.evaluate(()=>__blastlineTest.benchmarkDraw(120));await c.close();return draw}
+          const mobile=await shot(390,844,'macro-projection-mobile');const desktop=await shot(1365,768,'macro-projection-desktop');await browser.close();fs.writeFileSync('docs/visual-audit/section-04/macro-projection-results.json',JSON.stringify({errors,mobileMsPerDraw:mobile,desktopMsPerDraw:desktop},null,2));if(errors.length)throw new Error(errors.join('\n'));
+          JS
+          node .capture.mjs
+          rm .capture.mjs
+      - name: Commit macro pass
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js docs/visual-audit/section-04
+          git commit -m 'Align enemy scale and grounding to bridge projection'
+          git push
       - uses: actions/upload-artifact@v4
         with:
-          name: section04-reference-library
-          path: docs/art-reference
+          name: section04-macro-projection
+          path: docs/visual-audit/section-04/macro-projection-*
