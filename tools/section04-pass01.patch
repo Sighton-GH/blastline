@@ -43,3 +43,5 @@
 -  enemies = enemies.filter(e => !e.dead && e.y < 1.02);
 +  enemies = enemies.filter(e => e.dead ? (e.deathLife||0)>0 : e.y < 1.02);
    gates = gates.filter(g => g.y < 1.03);
+   for(const p of particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt; p.vx *= 0.98; p.vy *= 0.98; }
+   particles = particles.filter(p => p.life > 0);
