@@ -125,8 +125,21 @@ function fireBurst(){
   for(const off of spread){ bullets.push({x:player.x+off*.4,y:0.88,vx:off*0.28,vy:-0.95*boost,power:player.power}); }
 }
 
-function perspectiveY(y){ return H * (0.12 + y * 0.78); }
-function laneHalfWidth(y){ return W * lerp(0.08, 0.44, y); }
+function sceneHorizon(){ return H * (W < H ? 0.18 : 0.16); }
+function depthCurve(y){
+  if(y <= 0) return y * 0.30;
+  return Math.pow(Math.min(y, 1.08), 1.28);
+}
+function perspectiveY(y){
+  const horizon = sceneHorizon();
+  return horizon + (H * 0.82) * depthCurve(y);
+}
+function laneHalfWidth(y){
+  const t = Math.pow(clamp(y, 0, 1), 0.88);
+  return W * lerp(0.105, 0.32, t);
+}
+function bridgeHalfWidth(y){ return laneHalfWidth(y) * 1.18; }
+function roadHalfWidth(y){ return bridgeHalfWidth(y) * 0.79; }
 function worldToScreen(x,y){ return { x: W/2 + x * laneHalfWidth(y), y: perspectiveY(y) }; }
 function playerScreen(){ return worldToScreen(player.x, 0.88); }
 
@@ -221,54 +234,286 @@ function gameOver(){
 }
 
 function drawBackground(){
-  const sky = ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#6bc9ff'); sky.addColorStop(.22,'#2fa9ea'); sky.addColorStop(1,'#046ca9');
-  ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
-  const shimmer = (roadScroll*0.02)%120;
-  for(let side=0; side<2; side++){
-    const dir = side===0 ? -1 : 1;
-    const x0 = W/2 + dir*W*0.46;
-    const water = ctx.createLinearGradient(0,0,0,H); water.addColorStop(0,'#54bbf0'); water.addColorStop(1,'#1186c3');
-    ctx.fillStyle = water; ctx.beginPath(); ctx.moveTo(dir<0?0:W,0); ctx.lineTo(W/2+dir*W*0.11,H*0.12); ctx.lineTo(W/2+dir*W*0.46,H); ctx.lineTo(dir<0?0:W,H); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=2;
-    for(let i=0;i<12;i++){ const y=(i*80+shimmer)%H; ctx.beginPath(); ctx.moveTo(x0-dir*90, y); ctx.lineTo(x0-dir*30, y+16); ctx.stroke(); }
+  const horizon = sceneHorizon();
+  const deckBottom = Math.min(H * 1.02, perspectiveY(1));
+  const bridgeRed = '#d94a43';
+  const bridgeRedDark = '#9f282b';
+  const bridgeRedDeep = '#762127';
+  const bridgeRedLight = '#ee6a58';
+
+  function sidePoint(side, y, factor=1){
+    return { x: W/2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) };
+  }
+  function roadPoint(side, y){
+    return { x: W/2 + side * roadHalfWidth(y), y: perspectiveY(y) };
+  }
+  function railHeight(y){
+    const t = Math.pow(clamp(y,0,1), 0.82);
+    return lerp(Math.max(5,H*0.008), Math.min(H*0.055,44), t);
+  }
+  function railTop(side,y){
+    const p = sidePoint(side,y,1.035);
+    p.y -= railHeight(y);
+    return p;
+  }
+  function towerHeight(y){
+    const t = Math.pow(clamp(y,0,1),0.72);
+    return lerp(H*0.105, Math.min(H*0.255,210), t);
+  }
+  function towerX(side,y){ return sidePoint(side,y,1.045).x; }
+
+  // Sky: bright, slightly hazy toward the water line.
+  const sky = ctx.createLinearGradient(0,0,0,horizon + H*0.08);
+  sky.addColorStop(0,'#67c9f7');
+  sky.addColorStop(.56,'#8ad8f6');
+  sky.addColorStop(1,'#d0edf4');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,W,horizon + H*0.08);
+
+  // Ocean: one continuous body of water, with a real horizon instead of blue wedges to the top edge.
+  const water = ctx.createLinearGradient(0,horizon,0,H);
+  water.addColorStop(0,'#55b9d9');
+  water.addColorStop(.28,'#2fa7d3');
+  water.addColorStop(1,'#0b79ad');
+  ctx.fillStyle = water;
+  ctx.fillRect(0,horizon,W,H-horizon);
+
+  // Atmospheric horizon haze.
+  const haze = ctx.createLinearGradient(0,horizon-H*.035,0,horizon+H*.075);
+  haze.addColorStop(0,'rgba(224,247,250,0)');
+  haze.addColorStop(.42,'rgba(226,246,247,.62)');
+  haze.addColorStop(1,'rgba(154,220,231,0)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0,horizon-H*.04,W,H*.12);
+  ctx.strokeStyle='rgba(238,251,252,.68)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,horizon+.5);ctx.lineTo(W,horizon+.5);ctx.stroke();
+
+  // Broad, irregular water highlights. The deck will cover the center, so these remain peripheral.
+  const shimmer = roadScroll * 0.055;
+  for(let i=0;i<14;i++){
+    const base = (i*67 + shimmer) % Math.max(90,H-horizon);
+    const y = horizon + base;
+    const depth = clamp((y-horizon)/(H-horizon),0,1);
+    const alpha = lerp(.10,.22,depth);
+    const span = lerp(18,70,depth) * (W/390 > 1 ? 1.25 : 1);
+    for(const side of [-1,1]){
+      const cx = W/2 + side * lerp(W*.28,W*.43,depth);
+      const wobble = Math.sin(i*1.77 + roadScroll*.004) * span*.28;
+      ctx.strokeStyle=`rgba(218,248,255,${alpha})`;
+      ctx.lineWidth=lerp(.8,2.2,depth);
+      ctx.beginPath();
+      ctx.moveTo(cx-side*span*.52,y);
+      ctx.bezierCurveTo(cx-side*span*.20,y-3-wobble*.05,cx+side*span*.18,y+3+wobble*.04,cx+side*span*.55,y-1);
+      ctx.stroke();
+    }
   }
 
-  const topY = H*0.08, botY = H;
-  const topHalf = W*0.13, botHalf = W*0.43;
-  ctx.fillStyle = '#c7ccd2';
-  ctx.beginPath(); ctx.moveTo(W/2-topHalf, topY); ctx.lineTo(W/2+topHalf, topY); ctx.lineTo(W/2+botHalf, botY); ctx.lineTo(W/2-botHalf, botY); ctx.closePath(); ctx.fill();
+  // Soft bridge shadow on the water establishes elevation before the deck is drawn.
+  ctx.fillStyle='rgba(21,71,92,.18)';
+  ctx.beginPath();
+  const shadowFar=sidePoint(-1,0,1.12), shadowFarR=sidePoint(1,0,1.12);
+  const shadowNear=sidePoint(-1,1,1.14), shadowNearR=sidePoint(1,1,1.14);
+  ctx.moveTo(shadowFar.x,shadowFar.y+H*.018);ctx.lineTo(shadowFarR.x,shadowFarR.y+H*.018);
+  ctx.lineTo(shadowNearR.x,deckBottom+H*.025);ctx.lineTo(shadowNear.x,deckBottom+H*.025);ctx.closePath();ctx.fill();
 
-  const roadGrad = ctx.createLinearGradient(0,topY,0,botY); roadGrad.addColorStop(0,'#bfc4ca'); roadGrad.addColorStop(1,'#9ea5ad');
-  ctx.fillStyle = roadGrad;
-  ctx.beginPath(); ctx.moveTo(W/2-topHalf*0.78, topY); ctx.lineTo(W/2+topHalf*0.78, topY); ctx.lineTo(W/2+botHalf*0.72, botY); ctx.lineTo(W/2-botHalf*0.72, botY); ctx.closePath(); ctx.fill();
-
-  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 4; ctx.setLineDash([26,22]);
-  for(const f of [-0.33,0.33]){
+  // Visible slab side faces: separate surface from structural depth.
+  for(const side of [-1,1]){
     ctx.beginPath();
-    for(let i=0;i<24;i++){
-      const y = i/23; const pt = worldToScreen(f*(0.06+y*0.04), y);
-      if(i===0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+    for(let i=0;i<=28;i++){
+      const y=i/28, p=sidePoint(side,y,1.01);
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+    }
+    for(let i=28;i>=0;i--){
+      const y=i/28, p=sidePoint(side,y,1.01);
+      const depth=lerp(4,Math.min(28,H*.035),Math.pow(y,.9));
+      ctx.lineTo(p.x-side*lerp(1,6,y),p.y+depth);
+    }
+    ctx.closePath();
+    const sideGrad=ctx.createLinearGradient(0,horizon,0,H);
+    sideGrad.addColorStop(0,side<0?'#8a9194':'#737b80');
+    sideGrad.addColorStop(1,side<0?'#6f767a':'#555e63');
+    ctx.fillStyle=sideGrad;ctx.fill();
+  }
+
+  // Shoulder / deck top.
+  ctx.beginPath();
+  for(let i=0;i<=28;i++){
+    const y=i/28,p=sidePoint(-1,y);
+    if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+  }
+  for(let i=28;i>=0;i--){const y=i/28,p=sidePoint(1,y);ctx.lineTo(p.x,p.y);}
+  ctx.closePath();
+  const shoulderGrad=ctx.createLinearGradient(0,horizon,0,H);
+  shoulderGrad.addColorStop(0,'#c7c7c1');
+  shoulderGrad.addColorStop(1,'#a6a7a7');
+  ctx.fillStyle=shoulderGrad;ctx.fill();
+
+  // Road surface with one coherent sun direction and subtle foreground darkening.
+  ctx.beginPath();
+  for(let i=0;i<=28;i++){
+    const y=i/28,p=roadPoint(-1,y);
+    if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+  }
+  for(let i=28;i>=0;i--){const y=i/28,p=roadPoint(1,y);ctx.lineTo(p.x,p.y);}
+  ctx.closePath();
+  const roadGrad=ctx.createLinearGradient(W*.30,horizon,W*.72,H);
+  roadGrad.addColorStop(0,'#a8aaa8');
+  roadGrad.addColorStop(.52,'#909391');
+  roadGrad.addColorStop(1,'#7d8282');
+  ctx.fillStyle=roadGrad;ctx.fill();
+
+  // Shoulder-edge value breaks make the deck read as layered rather than one trapezoid.
+  for(const side of [-1,1]){
+    ctx.strokeStyle=side<0?'rgba(255,255,255,.22)':'rgba(52,56,58,.25)';
+    ctx.lineWidth=Math.max(1.5,W*.0025);
+    ctx.beginPath();
+    for(let i=0;i<=28;i++){
+      const y=i/28,p=roadPoint(side,y);
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
     }
     ctx.stroke();
   }
-  ctx.setLineDash([]);
 
-  function rail(side){
-    const dir = side<0?-1:1; ctx.strokeStyle='#d8494f'; ctx.lineWidth=8;
-    ctx.beginPath(); ctx.moveTo(W/2+dir*topHalf*1.05, topY); ctx.lineTo(W/2+dir*botHalf*1.02, botY); ctx.stroke();
-    ctx.lineWidth=3; ctx.strokeStyle='#a90f20';
-    for(let i=0;i<20;i++){ const y=i/19; const x = W/2 + dir*lerp(topHalf*1.05, botHalf*1.02, y); const yy=lerp(topY, botY, y); ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x-dir*(28+y*26),yy); ctx.stroke(); }
-    for(const t of [0.06,0.42]){
-      const yy = lerp(topY, botY, t); const half = lerp(topHalf, botHalf, t); const x = W/2 + dir*half*1.18;
-      ctx.fillStyle='#d53b40'; ctx.fillRect(x-12,yy-110,24,140);
-      ctx.strokeStyle='#c23944'; ctx.lineWidth=4;
-      ctx.beginPath(); ctx.moveTo(x,yy-110); ctx.lineTo(x+dir*70,yy+6); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x,yy-110); ctx.lineTo(x-dir*18, yy-170); ctx.stroke();
-      ctx.strokeStyle='rgba(255,165,165,.85)'; ctx.lineWidth=2.4;
-      ctx.beginPath(); ctx.moveTo(x,yy-110); ctx.bezierCurveTo(x+dir*45,yy-60,x+dir*100,yy+40, W/2+dir*botHalf*1.01,H*0.92); ctx.stroke();
+  // Perspective-correct dashed lane separators using world-space segments instead of screen-space dash patterns.
+  const scrollPhase=(roadScroll/760)%0.12;
+  for(const lane of [-0.32,0.32]){
+    for(let i=-1;i<11;i++){
+      const y0=i*.12+scrollPhase;
+      const y1=y0+.052;
+      if(y1<=0||y0>=1)continue;
+      const a=clamp(y0,0,1),b=clamp(y1,0,1);
+      const p0=worldToScreen(lane,a),p1=worldToScreen(lane,b);
+      const w0=lerp(1.2,3.8,Math.pow(a,.85)),w1=lerp(1.2,4.5,Math.pow(b,.85));
+      ctx.fillStyle='rgba(248,248,239,.92)';
+      ctx.beginPath();ctx.moveTo(p0.x-w0,p0.y);ctx.lineTo(p0.x+w0,p0.y);ctx.lineTo(p1.x+w1,p1.y);ctx.lineTo(p1.x-w1,p1.y);ctx.closePath();ctx.fill();
     }
   }
-  rail(-1); rail(1);
+
+  // Side structural girder strips, projected along the deck.
+  for(const side of [-1,1]){
+    ctx.beginPath();
+    for(let i=0;i<=30;i++){
+      const y=i/30,p=sidePoint(side,y,1.015);
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+    }
+    for(let i=30;i>=0;i--){
+      const y=i/30,p=sidePoint(side,y,.965);
+      ctx.lineTo(p.x,p.y+lerp(1,7,y));
+    }
+    ctx.closePath();ctx.fillStyle=bridgeRedDark;ctx.fill();
+    ctx.strokeStyle=bridgeRedLight;ctx.lineWidth=1;ctx.globalAlpha=.55;
+    ctx.beginPath();for(let i=0;i<=30;i++){const y=i/30,p=sidePoint(side,y,1.005);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}ctx.stroke();ctx.globalAlpha=1;
+  }
+
+  const towers=[0.10,0.39];
+  function cableY(y){
+    const far=towers[0],near=towers[1];
+    const railY=railTop(1,y).y;
+    if(y<=far){
+      const u=clamp(y/far,0,1);
+      const topFar=perspectiveY(far)-towerHeight(far);
+      return lerp(horizon-H*.002,topFar,u)-Math.sin(Math.PI*u)*H*.018;
+    }
+    if(y<=near){
+      const u=(y-far)/(near-far);
+      const a=perspectiveY(far)-towerHeight(far),b=perspectiveY(near)-towerHeight(near);
+      return lerp(a,b,u)+Math.sin(Math.PI*u)*H*.068;
+    }
+    const u=clamp((y-near)/(1-near),0,1);
+    const a=perspectiveY(near)-towerHeight(near),b=railTop(1,1).y-H*.012;
+    return lerp(a,b,u)+Math.sin(Math.PI*u)*H*.046;
+  }
+
+  // Suspension hangers first, so towers/rails sit cleanly in front of their attachment points.
+  for(const side of [-1,1]){
+    for(let i=1;i<21;i++){
+      const y=i/21;
+      if(towers.some(t=>Math.abs(t-y)<.025))continue;
+      const top=railTop(side,y);
+      const cy=cableY(y);
+      if(cy>=top.y-2)continue;
+      const fade=lerp(.42,.9,Math.pow(y,.7));
+      ctx.strokeStyle=`rgba(159,40,43,${fade})`;
+      ctx.lineWidth=lerp(.8,2.2,Math.pow(y,.8));
+      ctx.beginPath();ctx.moveTo(top.x,cy);ctx.lineTo(top.x,top.y);ctx.stroke();
+    }
+  }
+
+  // Continuous main suspension cable with a darker underside for weight.
+  for(const side of [-1,1]){
+    for(const pass of [0,1]){
+      ctx.beginPath();
+      for(let i=0;i<=72;i++){
+        const y=i/72,p=railTop(side,y),cy=cableY(y);
+        if(i===0)ctx.moveTo(p.x,cy);else ctx.lineTo(p.x,cy);
+      }
+      ctx.strokeStyle=pass===0?bridgeRedDeep:bridgeRedLight;
+      ctx.lineWidth=pass===0?Math.max(3,W*.0042):Math.max(1.4,W*.0018);
+      ctx.globalAlpha=pass===0?.92:.82;ctx.stroke();ctx.globalAlpha=1;
+    }
+  }
+
+  // Tower portals: paired pylons, shaded thickness and cross-members spanning the deck.
+  function drawTower(y){
+    const baseY=perspectiveY(y),height=towerHeight(y),topY=baseY-height;
+    const depth=Math.pow(y,.72);
+    const pillarW=lerp(Math.max(10,W*.012),Math.min(34,W*.035),depth);
+    const beamH=lerp(9,19,depth);
+    const xs=[towerX(-1,y),towerX(1,y)];
+    for(let idx=0;idx<2;idx++){
+      const side=idx===0?-1:1,x=xs[idx];
+      const lean=side*lerp(1,5,depth);
+      ctx.fillStyle=bridgeRedDeep;
+      ctx.beginPath();ctx.moveTo(x-pillarW*.58,baseY+5);ctx.lineTo(x+pillarW*.58,baseY+5);ctx.lineTo(x+pillarW*.46+lean,topY);ctx.lineTo(x-pillarW*.46+lean,topY);ctx.closePath();ctx.fill();
+      ctx.fillStyle=bridgeRed;
+      ctx.beginPath();ctx.moveTo(x-pillarW*.42,baseY);ctx.lineTo(x+pillarW*.36,baseY);ctx.lineTo(x+pillarW*.28+lean,topY);ctx.lineTo(x-pillarW*.34+lean,topY);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,150,122,.26)';
+      ctx.beginPath();ctx.moveTo(x-pillarW*.30,baseY-4);ctx.lineTo(x-pillarW*.10,baseY-4);ctx.lineTo(x-pillarW*.05+lean,topY+3);ctx.lineTo(x-pillarW*.24+lean,topY+3);ctx.closePath();ctx.fill();
+    }
+    const leftTop=xs[0]+lerp(-1,-5,depth),rightTop=xs[1]+lerp(1,5,depth);
+    ctx.fillStyle=bridgeRedDeep;ctx.fillRect(leftTop-pillarW*.15,topY-beamH*.15,rightTop-leftTop+pillarW*.3,beamH*1.25);
+    ctx.fillStyle=bridgeRed;ctx.fillRect(leftTop,topY,rightTop-leftTop,beamH*.72);
+    const lowerY=topY+height*.27;
+    ctx.fillStyle=bridgeRedDark;ctx.fillRect(leftTop+pillarW*.15,lowerY,rightTop-leftTop-pillarW*.3,beamH*.46);
+    ctx.fillStyle='rgba(246,112,89,.38)';ctx.fillRect(leftTop+pillarW*.2,lowerY,rightTop-leftTop-pillarW*.4,Math.max(2,beamH*.11));
+    // Base collars visually connect each tower leg to the deck side girder.
+    for(const x of xs){
+      ctx.fillStyle=bridgeRedDeep;ctx.fillRect(x-pillarW*.68,baseY-3,pillarW*1.36,Math.max(6,beamH*.4));
+    }
+  }
+  drawTower(towers[0]);
+  drawTower(towers[1]);
+
+  // Guardrails: longitudinal top/mid rails plus vertical posts. No outward ladder ticks.
+  for(const side of [-1,1]){
+    for(const level of [1,.48]){
+      ctx.beginPath();
+      for(let i=0;i<=36;i++){
+        const y=i/36,p=sidePoint(side,y,1.035),rh=railHeight(y)*level;
+        const yy=p.y-rh;
+        if(i===0)ctx.moveTo(p.x,yy);else ctx.lineTo(p.x,yy);
+      }
+      ctx.strokeStyle=level===1?bridgeRed:bridgeRedDark;
+      ctx.lineWidth=level===1?Math.max(3,W*.004):Math.max(2,W*.0025);
+      ctx.stroke();
+    }
+    for(let i=1;i<24;i++){
+      const y=i/24,p=sidePoint(side,y,1.035),rh=railHeight(y);
+      ctx.strokeStyle=bridgeRedDark;ctx.lineWidth=lerp(1,3,Math.pow(y,.8));
+      ctx.beginPath();ctx.moveTo(p.x,p.y+2);ctx.lineTo(p.x,p.y-rh);ctx.stroke();
+      if(i%3===0){
+        const foot=sidePoint(side,y,.985);
+        ctx.strokeStyle='rgba(109,32,37,.55)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(p.x,p.y-rh*.42);ctx.lineTo(foot.x,foot.y+4);ctx.stroke();
+      }
+    }
+  }
+
+  // Subtle foreground vignette and deck-side ambient shadow add separation without an expensive filter.
+  const vignette=ctx.createLinearGradient(0,H*.62,0,H);
+  vignette.addColorStop(0,'rgba(15,45,57,0)');vignette.addColorStop(1,'rgba(10,31,41,.10)');
+  ctx.fillStyle=vignette;ctx.fillRect(0,H*.62,W,H*.38);
 }
 
 function drawSprite(img, x, y, h){
@@ -364,7 +609,7 @@ function draw(){
 const keys = {};
 addEventListener('keydown', e => { keys[e.key] = true; if((e.key === 'Enter' || e.key === ' ') && state === 'menu') resetRun(); if(e.key.toLowerCase()==='p') paused=!paused; });
 addEventListener('keyup', e => { keys[e.key] = false; });
-function pointerMove(clientX){ const nx = (clientX / W - 0.5) / 0.44; player.targetX = clamp(nx, -0.78, 0.78); }
+function pointerMove(clientX){ const laneFrac = laneHalfWidth(0.88) / W; const nx = (clientX / W - 0.5) / laneFrac; player.targetX = clamp(nx, -0.78, 0.78); }
 canvas.addEventListener('pointerdown', e => { controlsActive = true; pointerMove(e.clientX); });
 canvas.addEventListener('pointermove', e => { if(controlsActive || e.pointerType === 'mouse') pointerMove(e.clientX); });
 addEventListener('pointerup', () => { controlsActive = false; });
