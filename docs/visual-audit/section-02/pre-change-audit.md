@@ -11,7 +11,7 @@ Fresh real Chromium renders of the exact committed Section 1 HTML/CSS/Canvas gam
 - `before-mobile.png` — 390 × 844
 - `before-desktop.png` — 1365 × 768
 
-The sandbox Chromium policy blocks URL navigation, including localhost. To avoid substituting a reproduction, the exact committed HTML/CSS/JS and byte-verified WebP assets were loaded into Chromium directly; only module/asset transport URLs were converted to in-memory data URLs. The game logic/rendering code itself was executed in Chromium. No image-generation or screenshot synthesis was used.
+The committed BEFORE screenshots were independently re-captured by a one-shot GitHub Actions job from the exact Section 1 commit `87fd7bc66796dba51abe1624e6fff581623ae5a5`, served unchanged over localhost and rendered in real Playwright Chromium at DPR 1. That capture job completed successfully and removed its temporary workflow after committing the evidence. Earlier screenshot-driven iteration also used genuine sandbox Chromium output from Git-verified source/assets; no image generation, screenshot synthesis, redrawing or compositing was used at any point.
 
 Reference targets inspected directly from `docs/art-reference/` include `01-gameplay-lane-choice.webp`, `02-elite-wave.webp`, `03-boss-battle.webp`, `07-endgame-chaos.webp`, `08-character-environment-style-guide.webp`, `09-static-web-game-concept-sheet.webp`, and `10-before-after-visual-target.webp`. These are generated target renders, not live-site evidence.
 
