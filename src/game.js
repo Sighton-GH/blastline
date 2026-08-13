@@ -221,8 +221,12 @@ function update(dt){
   if(!boss && waveTime >= level.length) spawnBoss();
 
   for(const gate of gates){ gate.y += dt * 0.18 * level.speed; }
-  for(const e of enemies){ e.y += dt * e.speed; e.x += Math.sin((waveTime*2)+e.wobble) * 0.0016; }
-  if(boss){ boss.y += dt * boss.speed; boss.y = Math.min(0.22, boss.y); }
+  for(const e of enemies){
+    if(e.hitFlash>0)e.hitFlash=Math.max(0,e.hitFlash-dt);
+    if(e.dead){e.deathLife=Math.max(0,(e.deathLife||0)-dt);e.y-=dt*.018;continue;}
+    e.y += dt * e.speed; e.x += Math.sin((waveTime*2)+e.wobble) * 0.0016;
+  }
+  if(boss){ boss.y += dt * boss.speed; boss.y = Math.min(0.22, boss.y); if(boss.hitFlash>0)boss.hitFlash=Math.max(0,boss.hitFlash-dt); }
 
   for(const b of bullets){
     if(Number.isFinite(b.targetX)) b.x=lerp(b.x,b.targetX,Math.min(1,dt*11));
@@ -241,24 +245,24 @@ function update(dt){
     if(b.dead) continue;
     if(boss){
       const dx = b.x - boss.x, dy = b.y - boss.y;
-      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; setState('upgrade'); showUpgrades(); updateHud(); return; } }
+      if(dx*dx + dy*dy < 0.03*0.03){ b.dead = true; boss.hp -= b.power; boss.hitFlash=.10; burst(boss.x,boss.y,'#ff9153',2); score += 3; if(boss.hp <= 0){ score += 1200 + wave*500; burst(boss.x,boss.y,'#ffc44d',30); boss = null; setState('upgrade'); showUpgrades(); updateHud(); return; } }
     }
     for(const e of enemies){
       if(e.dead || b.dead) continue;
       const dx=b.x-e.x, dy=b.y-e.y;
       if(dx*dx + dy*dy < (e.type==='elite'?0.018:0.014)**2){
-        e.hp -= b.power; b.dead = true; burst(e.x,e.y,e.type==='elite' ? '#ffb35a' : '#ff6868', e.type==='elite' ? 5 : 3);
-        if(e.hp <= 0){ e.dead = true; score += e.type==='elite' ? 55 : 18; player.coins += e.type==='elite' ? 12 : 4; frenzy += e.type==='elite'?3:1; if(frenzy >= 12){ frenzy = 0; frenzyTimer = 4.5; addFloater(0,0.5,'FRENZY!','#77ddff',32); } }
+        e.hp -= b.power; e.hitFlash=.09; b.dead = true; burst(e.x,e.y,e.type==='elite' ? '#ffb35a' : '#ff6868', e.type==='elite' ? 5 : 3);
+        if(e.hp <= 0){ e.dead = true; e.deathMax=e.type==='elite'?.28:.22; e.deathLife=e.deathMax; score += e.type==='elite' ? 55 : 18; player.coins += e.type==='elite' ? 12 : 4; frenzy += e.type==='elite'?3:1; if(frenzy >= 12){ frenzy = 0; frenzyTimer = 4.5; addFloater(0,0.5,'FRENZY!','#77ddff',32); } }
       }
     }
   }
 
   for(const e of enemies){
-    if(!e.dead && e.y > 0.86){ e.dead = true; player.troops = Math.max(0, player.troops - (e.type==='elite' ? 4 : 1)); addFloater(e.x,0.83, e.type==='elite' ? '-4' : '-1', '#ff8d8d', 22); burst(e.x, e.y, '#ff5757', 8); if(player.troops <= 0){ gameOver(); return; } updateHud(); }
+    if(!e.dead && e.y > 0.86){ e.dead = true; e.deathMax=.18; e.deathLife=e.deathMax; player.troops = Math.max(0, player.troops - (e.type==='elite' ? 4 : 1)); addFloater(e.x,0.83, e.type==='elite' ? '-4' : '-1', '#ff8d8d', 22); burst(e.x, e.y, '#ff5757', 8); if(player.troops <= 0){ gameOver(); return; } updateHud(); }
   }
 
   bullets = bullets.filter(b => !b.dead && b.y > -0.1);
-  enemies = enemies.filter(e => !e.dead && e.y < 1.02);
+  enemies = enemies.filter(e => e.dead ? (e.deathLife||0)>0 : e.y < 1.02);
   gates = gates.filter(g => g.y < 1.03);
   for(const p of particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt; p.vx *= 0.98; p.vy *= 0.98; }
   particles = particles.filter(p => p.life > 0);
@@ -667,15 +671,24 @@ function enemyHeightAt(y,type='grunt'){
   const base=clamp(projected,14,72);
   return base*(type==='elite'?1.20:1);
 }
+function drawBossFigure(scr,h,flash=0){
+  const u=h/110,f=clamp(flash/.1,0,1);ctx.save();ctx.translate(scr.x,scr.y);
+  ctx.fillStyle='rgba(20,27,30,.30)';ctx.beginPath();ctx.ellipse(0,3*u,42*u,10*u,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#252329';ctx.lineWidth=15*u;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-18*u,-34*u);ctx.lineTo(-24*u,-4*u);ctx.stroke();ctx.beginPath();ctx.moveTo(18*u,-34*u);ctx.lineTo(24*u,-4*u);ctx.stroke();
+  ctx.fillStyle='#30272a';ctx.beginPath();ctx.roundRect(-39*u,-78*u,78*u,48*u,12*u);ctx.fill();ctx.fillStyle=f?'#bb5b49':'#6f2c2d';ctx.beginPath();ctx.roundRect(-31*u,-74*u,62*u,40*u,9*u);ctx.fill();
+  ctx.fillStyle=f?'#f0c575':'#b68745';ctx.beginPath();ctx.roundRect(-20*u,-66*u,40*u,25*u,5*u);ctx.fill();ctx.fillStyle='#352d2f';ctx.beginPath();ctx.arc(-42*u,-68*u,17*u,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(42*u,-68*u,17*u,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#bd7751';ctx.beginPath();ctx.arc(0,-91*u,14*u,0,Math.PI*2);ctx.fill();ctx.fillStyle=f?'#d94d42':'#7a292b';ctx.beginPath();ctx.arc(0,-95*u,22*u,Math.PI,Math.PI*2);ctx.lineTo(22*u,-89*u);ctx.lineTo(-22*u,-89*u);ctx.closePath();ctx.fill();ctx.fillStyle='#e3ad55';ctx.fillRect(-12*u,-92*u,24*u,5*u);ctx.restore();
+}
+function bossHeightAt(y){return clamp(enemyHeightAt(y,'elite')*3.25,92,Math.min(154,H*.22));}
 function drawEnemies(){
   enemies.sort((a,b)=>a.y-b.y);
   for(const e of enemies){
-    const scr=worldToScreen(e.x,e.y);
-    drawEnemyCombatant(ctx,e,scr,enemyHeightAt(e.y,e.type),waveTime);
+    const scr=worldToScreen(e.x,e.y),h=enemyHeightAt(e.y,e.type);const fade=e.dead?clamp((e.deathLife||0)/(e.deathMax||.22),0,1):1,drift=e.dead?(1-fade)*h*.12:0;
+    ctx.save();ctx.globalAlpha=fade;drawEnemyCombatant(ctx,e,{x:scr.x+(e.x>=0?drift:-drift),y:scr.y+drift*.28},h,waveTime);ctx.restore();
+    if(e.hitFlash>0){ctx.globalAlpha=clamp(e.hitFlash/.09,0,1)*.55;ctx.fillStyle='#fff0c7';ctx.beginPath();ctx.arc(scr.x,scr.y-h*.38,Math.max(2,h*.10),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
   }
   if(boss){
-    const scr = worldToScreen(boss.x, boss.y); const h = lerp(80, 150, boss.y) * 1.18;
-    drawSprite(IMAGES.elite, scr.x, scr.y+20, h);
+    const scr=worldToScreen(boss.x,boss.y);drawBossFigure(scr,bossHeightAt(boss.y),boss.hitFlash||0);
     const bw = Math.min(360, W*0.42), bh = 12;
     ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(W/2-bw/2, H*0.14, bw, bh);
     ctx.fillStyle='#ff5959'; ctx.fillRect(W/2-bw/2, H*0.14, bw * clamp(boss.hp / boss.maxHp,0,1), bh);
