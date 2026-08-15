@@ -3,122 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#087db4" />
-  <title>BLASTLINE</title>
+  <meta name="theme-color" content="#06344d" />
+  <title>BLASTLINE — Endless Bridge Assault</title>
   <link rel="icon" href="assets/favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main id="app">
-    <canvas id="game" aria-label="BLASTLINE bridge combat game"></canvas>
+    <canvas id="environment" aria-hidden="true"></canvas>
+    <canvas id="game" aria-label="BLASTLINE endless bridge combat game"></canvas>
 
     <header id="hud" class="panel hidden" aria-label="Run status">
-      <div class="hud-left">
+      <div class="hud-cluster hud-primary">
         <img id="portrait" src="assets/portrait.webp" alt="Blue squad commander" />
-        <div class="chips">
-          <div class="chip coin"><span class="chip-icon" aria-hidden="true">●</span><span class="chip-copy"><small>COINS</small><b id="coinLabel">0</b></span></div>
-          <div class="chip score"><span class="chip-icon" aria-hidden="true">★</span><span class="chip-copy"><small>SCORE</small><b id="scoreLabel">0</b></span></div>
-        </div>
+        <div class="metric score-metric"><small>SCORE</small><b id="scoreLabel">0</b></div>
+        <div class="metric points-metric"><small>SKILL</small><b id="pointsLabel">0</b></div>
       </div>
-      <div class="hud-right">
+      <div class="hud-cluster hud-run">
         <div class="wave-pill">
-          <span id="waveLabel">WAVE 1/6</span>
-          <small id="waveName">FIRST CONTACT</small>
-          <i><span id="waveProgress"></span></i>
+          <span id="waveLabel">WAVE 1</span>
+          <small><i id="difficultyLabel">VETERAN</i> · <span id="phaseLabel">HORDE</span></small>
+          <em><span id="waveProgress"></span></em>
         </div>
+        <div id="livesHud" class="lives-pill" aria-label="Reserve lives"><small>RESERVES</small><b id="livesLabel">0</b></div>
         <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game">❚❚</button>
       </div>
     </header>
 
     <section id="floatingStats" class="panel hidden" aria-label="Squad statistics">
-      <div class="stat troops"><span>TROOPS</span><b id="troopsLabel">12</b></div>
+      <div class="stat troops"><span>SQUAD</span><b id="troopsLabel">14</b></div>
       <div class="stat"><span>POWER</span><b id="powerLabel">1</b></div>
+      <div class="stat rate"><span>RATE</span><b id="rateLabel">5.2</b></div>
       <div class="stat armor"><span>ARMOR</span><b id="armorLabel">0</b></div>
     </section>
 
-    <section id="enemyCounter" class="panel hidden" aria-label="Enemy horde remaining">
-      <span aria-hidden="true">☠</span><b id="enemyCountLabel">0</b><small>RED HORDE</small>
+    <section id="enemyCounter" class="panel hidden" aria-label="Active enemy horde">
+      <span aria-hidden="true">◆</span><b id="enemyCountLabel">0</b><small>HOSTILES</small>
     </section>
 
     <section id="bossHud" class="hidden" aria-label="Boss health">
-      <div class="boss-heading"><span id="bossName">REDLINE COMMANDER</span><b id="bossHealthText">60 / 60</b></div>
+      <div class="boss-heading"><span id="bossName">REDLINE JUGGERNAUT</span><b id="bossPhaseText">PHASE I</b><strong id="bossHealthText">0 / 0</strong></div>
       <div class="boss-track"><i id="bossHealthFill"></i></div>
     </section>
 
     <section id="menu" class="overlay visible home-overlay">
       <div class="home-shell">
         <div class="home-title">
+          <p class="eyebrow">ENDLESS BRIDGE ASSAULT</p>
           <img class="menu-logo" src="assets/blastline/branding/logo-primary.webp" alt="BLASTLINE" />
-          <p class="eyebrow">BRIDGE ASSAULT</p>
           <h1 class="sr-only">BLASTLINE</h1>
-          <p class="sub">Build the squad. Pick the lane. Break the final line.</p>
+          <p class="sub">Build a firing line. Read the lanes. Hold until the bridge takes everything.</p>
         </div>
         <div class="home-actions">
-          <button id="playBtn" class="primary play-button" type="button">PLAY</button>
-          <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P TO PAUSE</span></div>
-          <div class="home-records">
-            <span>BEST <b id="homeBest">0</b></span>
-            <span>LIFETIME COINS <b id="homeCoins">0</b></span>
+          <p class="difficulty-heading">SELECT DIFFICULTY</p>
+          <div id="difficultyPicker" class="difficulty-picker" role="radiogroup" aria-label="Difficulty">
+            <button class="difficulty-option" type="button" data-difficulty="recruit" role="radio" aria-checked="false"><b>RECRUIT</b><span>80% pressure</span></button>
+            <button class="difficulty-option selected" type="button" data-difficulty="veteran" role="radio" aria-checked="true"><b>VETERAN</b><span>Intended fight</span></button>
+            <button class="difficulty-option" type="button" data-difficulty="elite" role="radio" aria-checked="false"><b>ELITE</b><span>125% density</span></button>
           </div>
+          <button id="playBtn" class="primary play-button" type="button"><span>DEPLOY</span><small id="playDifficulty">VETERAN RUN</small></button>
+          <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P PAUSE</span></div>
+          <p class="fresh-run-note">Every deployment starts fresh. No saves. No finish line.</p>
         </div>
       </div>
     </section>
 
     <section id="pausePanel" class="overlay pause-overlay" aria-label="Game paused">
-      <div class="card compact-card">
-        <p class="eyebrow">RUN SUSPENDED</p>
-        <h2>PAUSED</h2>
-        <p class="sub">The bridge is frozen exactly where you left it.</p>
-        <div class="button-row">
-          <button id="resumeBtn" class="primary" type="button">RESUME</button>
-          <button id="pauseHomeBtn" class="secondary" type="button">HOME</button>
+      <div class="card dashboard-card">
+        <div class="dashboard-head">
+          <div><p class="eyebrow">RUN DASHBOARD</p><h2>PAUSED</h2></div>
+          <div class="pause-points"><small>SKILL POINTS</small><b id="pausePoints">0</b></div>
+        </div>
+        <div id="buildSummary" class="build-summary" aria-label="Current build"></div>
+        <div class="shop-heading"><div><b>FIELD SHOP</b><span>Costs rise with every purchase</span></div><p id="shopMessage" aria-live="polite"></p></div>
+        <div id="shopGrid" class="shop-grid"></div>
+        <div class="pause-footer">
+          <div class="control-note"><b>STEER</b> Drag, touch, A/D or arrows <span>·</span> <b>PAUSE</b> Space or P</div>
+          <div class="button-row"><button id="resumeBtn" class="primary" type="button">RESUME</button><button id="restartBtn" class="secondary" type="button">RESTART RUN</button></div>
         </div>
       </div>
     </section>
 
-    <section id="upgradePanel" class="overlay upgrade-overlay" aria-label="Choose an upgrade">
-      <div class="card upgrade-shell">
-        <p class="eyebrow">BOSS DEFEATED</p>
-        <h2>BETWEEN WAVES</h2>
-        <p class="upgrade-sub">Choose one upgrade. It lasts for this run.</p>
-        <div id="upgradeCards" class="upgrade-grid"></div>
+    <section id="rewardPanel" class="overlay reward-overlay" aria-label="Choose a boss reward">
+      <div class="card reward-shell">
+        <p class="eyebrow">BOSS ELIMINATED · WAVE <span id="rewardWave">1</span></p>
+        <h2>CHOOSE YOUR EDGE</h2>
+        <p class="reward-sub">One free upgrade. Your build carries into every wave that follows.</p>
+        <div id="rewardCards" class="reward-grid"></div>
       </div>
     </section>
 
-    <section id="victoryPanel" class="overlay victory-overlay" aria-label="Victory">
-      <div class="card end-card victory-card">
-        <div class="victory-stars" aria-hidden="true">★ ★ ★</div>
-        <p class="eyebrow victory-eyebrow">THE LAST LINE BROKE</p>
-        <h2>VICTORY</h2>
-        <p class="end-message">All six waves cleared. The bridge is secure.</p>
-        <div class="results results-four">
-          <div><span>Score</span><b id="victoryScore">0</b></div>
-          <div><span>Wave</span><b>6/6</b></div>
-          <div><span>Coins</span><b id="victoryCoins">0</b></div>
-          <div><span>Best</span><b id="victoryBest">0</b></div>
-        </div>
-        <div class="button-row">
-          <button id="continueBtn" class="primary victory-button" type="button">PLAY AGAIN</button>
-          <button id="victoryHomeBtn" class="secondary" type="button">HOME</button>
-        </div>
-      </div>
+    <section id="recoveryPanel" class="recovery-overlay hidden" aria-live="assertive">
+      <div class="recovery-core"><small>RESERVE DEPLOYED</small><b id="recoveryCount">3</b><span>PROTECTED</span></div>
     </section>
 
     <section id="gameOverPanel" class="overlay game-over-overlay" aria-label="Game over">
       <div class="card end-card game-over-card">
-        <p class="eyebrow">SQUAD LOST</p>
-        <h2>GAME OVER</h2>
-        <p class="end-message">The red line held. Regroup and hit it again.</p>
-        <div class="results results-four">
+        <p class="eyebrow">THE LINE BROKE</p>
+        <h2>RUN OVER</h2>
+        <p class="end-message">The bridge keeps going. This squad doesn’t.</p>
+        <div class="results">
           <div><span>Score</span><b id="finalScore">0</b></div>
-          <div><span>Wave</span><b id="finalWave">1/6</b></div>
-          <div><span>Coins</span><b id="finalCoins">0</b></div>
-          <div><span>Best</span><b id="finalBest">0</b></div>
+          <div><span>Wave</span><b id="finalWave">1</b></div>
+          <div><span>Kills</span><b id="finalKills">0</b></div>
+          <div><span>Mode</span><b id="finalDifficulty">Veteran</b></div>
         </div>
-        <div class="button-row">
-          <button id="retryBtn" class="primary danger-button" type="button">RETRY</button>
-          <button id="gameOverHomeBtn" class="secondary" type="button">HOME</button>
-        </div>
+        <div class="button-row"><button id="retryBtn" class="primary danger-button" type="button">REDEPLOY</button><button id="gameOverHomeBtn" class="secondary" type="button">CHANGE MODE</button></div>
+        <p class="fresh-run-note">Redeploying resets score, points, lives, and every upgrade.</p>
       </div>
     </section>
   </main>

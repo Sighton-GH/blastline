@@ -1,31 +1,41 @@
 # BLASTLINE
 
-BLASTLINE is an instant-play browser gate-runner squad shooter. Steer a blue squad, auto-fire through six escalating waves, choose arithmetic/stat gates, defeat a boss after every wave, and break the final line to win.
+BLASTLINE is an instant-play, endless bridge shooter. Steer a growing blue squad across three lanes, auto-fire through dense red formations, choose gate tradeoffs, defeat a boss after every wave, and specialize a build until the line finally breaks.
 
-## Controls
+Every deployment is a fresh in-memory session. Reloading, retrying, or reopening the page resets score, skill points, reserves, purchases, and upgrades; BLASTLINE does not store progression in `localStorage`.
 
-- Mouse, pointer drag, or touch: steer horizontally.
-- A/D or Left/Right: steer horizontally.
-- Shooting and forward travel: automatic.
-- Pause/resume: top-right button, Space, or P.
+## Play
 
-## Stack
-- Plain HTML/CSS/Canvas
-- Optimized WebP crops from the approved BLASTLINE production masters
-- No backend required
-- Static Cloudflare Pages deployment
+- Choose Recruit, Veteran, or Elite. Veteran is the default.
+- Drag, touch, use A/D, or use Left/Right to steer freely.
+- Shooting and forward travel are automatic.
+- Use the top-right control, Space, or P to pause and open the run dashboard.
+- Spend skill points in the pause shop. Boss victories also pause the run for one free three-card reward.
+- Up to two reserve lives can restore a protected, difficulty-scaled squad after defeat.
 
-Run progress, combat upgrades, score, and coins are kept for the current run. Best score and lifetime coins persist locally in the browser.
+There is no final wave or Victory state. Each boss reward advances directly into the next, harder wave.
 
-## Test
+## Architecture
+
+- Static HTML, CSS, Canvas 2D, and JavaScript modules; no backend or install flow.
+- Separate cached environment and transparent combat canvases.
+- Fixed-step simulation with clamped catch-up and render interpolation.
+- Pooled combat entities, 32 lane-specific collision buckets, sprite LOD, and an adaptive dense-scene render scale.
+- Runtime WebP assets under `assets/blastline/`; source masters are never requested by the game.
+
+## Verify
+
 ```bash
 npm test
 node --check src/game.js
 node --check src/core.mjs
+npm run validate
 ```
 
-Real-browser regression and screenshot capture use:
+The complete acceptance-duration stress and soak run is:
 
 ```bash
-node tools/final-browser-validation.mjs
+npm run validate:full
 ```
+
+Fresh browser screenshots, comparison boards, runtime metadata, and the machine-readable report are written to `docs/visual-audit/endless-overhaul-2026-08-15/`. See `docs/VALIDATION.md` for thresholds and failure interpretation.

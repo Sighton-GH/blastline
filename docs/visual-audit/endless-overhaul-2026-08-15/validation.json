@@ -1,0 +1,2050 @@
+{
+  "generatedAt": "2026-08-15T20:04:50.379Z",
+  "fullSoak": false,
+  "durations": {
+    "normalMs": 3000,
+    "stressMs": 8000,
+    "soakMs": 15000
+  },
+  "thresholds": {
+    "normalP95Ms": 16.7,
+    "stress4xP95Ms": 33.3,
+    "framesOver50Fraction": 0.01,
+    "heapGrowthFraction": 0.15,
+    "entityCaps": {
+      "enemies": 220,
+      "playerBullets": 720,
+      "enemyBullets": 150,
+      "stressParticles": 100
+    }
+  },
+  "targetViewports": {
+    "portrait": {
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 1,
+      "touch": true
+    },
+    "landscape": {
+      "width": 1365,
+      "height": 768,
+      "deviceScaleFactor": 1
+    }
+  },
+  "pass": true,
+  "checks": {
+    "portrait-home:safeArea": true,
+    "portrait-home:hudOverlap": true,
+    "portrait-home:planarDeck": true,
+    "portrait-home:wideRoad": true,
+    "portrait-home:towerClearance": true,
+    "portrait-home:waterContinuity": true,
+    "portrait-horde:safeArea": true,
+    "portrait-horde:hudOverlap": true,
+    "portrait-horde:planarDeck": true,
+    "portrait-horde:wideRoad": true,
+    "portrait-horde:towerClearance": true,
+    "portrait-horde:waterContinuity": true,
+    "portrait-gate:safeArea": true,
+    "portrait-gate:hudOverlap": true,
+    "portrait-gate:planarDeck": true,
+    "portrait-gate:wideRoad": true,
+    "portrait-gate:towerClearance": true,
+    "portrait-gate:waterContinuity": true,
+    "portrait-dense:safeArea": true,
+    "portrait-dense:hudOverlap": true,
+    "portrait-dense:planarDeck": true,
+    "portrait-dense:wideRoad": true,
+    "portrait-dense:towerClearance": true,
+    "portrait-dense:waterContinuity": true,
+    "portrait-shop:safeArea": true,
+    "portrait-shop:hudOverlap": true,
+    "portrait-shop:planarDeck": true,
+    "portrait-shop:wideRoad": true,
+    "portrait-shop:towerClearance": true,
+    "portrait-shop:waterContinuity": true,
+    "portrait-reward:safeArea": true,
+    "portrait-reward:hudOverlap": true,
+    "portrait-reward:planarDeck": true,
+    "portrait-reward:wideRoad": true,
+    "portrait-reward:towerClearance": true,
+    "portrait-reward:waterContinuity": true,
+    "portrait-revive:safeArea": true,
+    "portrait-revive:hudOverlap": true,
+    "portrait-revive:planarDeck": true,
+    "portrait-revive:wideRoad": true,
+    "portrait-revive:towerClearance": true,
+    "portrait-revive:waterContinuity": true,
+    "portrait-boss-phase-1:safeArea": true,
+    "portrait-boss-phase-1:hudOverlap": true,
+    "portrait-boss-phase-1:planarDeck": true,
+    "portrait-boss-phase-1:wideRoad": true,
+    "portrait-boss-phase-1:towerClearance": true,
+    "portrait-boss-phase-1:waterContinuity": true,
+    "portrait-boss-phase-3:safeArea": true,
+    "portrait-boss-phase-3:hudOverlap": true,
+    "portrait-boss-phase-3:planarDeck": true,
+    "portrait-boss-phase-3:wideRoad": true,
+    "portrait-boss-phase-3:towerClearance": true,
+    "portrait-boss-phase-3:waterContinuity": true,
+    "portrait-chaos:safeArea": true,
+    "portrait-chaos:hudOverlap": true,
+    "portrait-chaos:planarDeck": true,
+    "portrait-chaos:wideRoad": true,
+    "portrait-chaos:towerClearance": true,
+    "portrait-chaos:waterContinuity": true,
+    "portrait-gameover:safeArea": true,
+    "portrait-gameover:hudOverlap": true,
+    "portrait-gameover:planarDeck": true,
+    "portrait-gameover:wideRoad": true,
+    "portrait-gameover:towerClearance": true,
+    "portrait-gameover:waterContinuity": true,
+    "landscape-home:safeArea": true,
+    "landscape-home:hudOverlap": true,
+    "landscape-home:planarDeck": true,
+    "landscape-home:wideRoad": true,
+    "landscape-home:towerClearance": true,
+    "landscape-home:waterContinuity": true,
+    "landscape-horde:safeArea": true,
+    "landscape-horde:hudOverlap": true,
+    "landscape-horde:planarDeck": true,
+    "landscape-horde:wideRoad": true,
+    "landscape-horde:towerClearance": true,
+    "landscape-horde:waterContinuity": true,
+    "landscape-gate:safeArea": true,
+    "landscape-gate:hudOverlap": true,
+    "landscape-gate:planarDeck": true,
+    "landscape-gate:wideRoad": true,
+    "landscape-gate:towerClearance": true,
+    "landscape-gate:waterContinuity": true,
+    "landscape-dense:safeArea": true,
+    "landscape-dense:hudOverlap": true,
+    "landscape-dense:planarDeck": true,
+    "landscape-dense:wideRoad": true,
+    "landscape-dense:towerClearance": true,
+    "landscape-dense:waterContinuity": true,
+    "landscape-shop:safeArea": true,
+    "landscape-shop:hudOverlap": true,
+    "landscape-shop:planarDeck": true,
+    "landscape-shop:wideRoad": true,
+    "landscape-shop:towerClearance": true,
+    "landscape-shop:waterContinuity": true,
+    "landscape-reward:safeArea": true,
+    "landscape-reward:hudOverlap": true,
+    "landscape-reward:planarDeck": true,
+    "landscape-reward:wideRoad": true,
+    "landscape-reward:towerClearance": true,
+    "landscape-reward:waterContinuity": true,
+    "landscape-revive:safeArea": true,
+    "landscape-revive:hudOverlap": true,
+    "landscape-revive:planarDeck": true,
+    "landscape-revive:wideRoad": true,
+    "landscape-revive:towerClearance": true,
+    "landscape-revive:waterContinuity": true,
+    "landscape-boss-phase-1:safeArea": true,
+    "landscape-boss-phase-1:hudOverlap": true,
+    "landscape-boss-phase-1:planarDeck": true,
+    "landscape-boss-phase-1:wideRoad": true,
+    "landscape-boss-phase-1:towerClearance": true,
+    "landscape-boss-phase-1:waterContinuity": true,
+    "landscape-boss-phase-3:safeArea": true,
+    "landscape-boss-phase-3:hudOverlap": true,
+    "landscape-boss-phase-3:planarDeck": true,
+    "landscape-boss-phase-3:wideRoad": true,
+    "landscape-boss-phase-3:towerClearance": true,
+    "landscape-boss-phase-3:waterContinuity": true,
+    "landscape-chaos:safeArea": true,
+    "landscape-chaos:hudOverlap": true,
+    "landscape-chaos:planarDeck": true,
+    "landscape-chaos:wideRoad": true,
+    "landscape-chaos:towerClearance": true,
+    "landscape-chaos:waterContinuity": true,
+    "landscape-gameover:safeArea": true,
+    "landscape-gameover:hudOverlap": true,
+    "landscape-gameover:planarDeck": true,
+    "landscape-gameover:wideRoad": true,
+    "landscape-gameover:towerClearance": true,
+    "landscape-gameover:waterContinuity": true,
+    "portraitDenseCrowd": true,
+    "landscapeDenseCrowd": true,
+    "portraitAndLandscapeProfiles": true,
+    "difficultySelectionVisual": true,
+    "difficultySelectionRuntime": true,
+    "keyboardSteeringAcrossLanes": true,
+    "touchSteeringAcrossLanes": true,
+    "pauseFreezesSimulation": true,
+    "shopInsufficientPoints": true,
+    "shopPurchaseSpendsPoints": true,
+    "resumeFromDashboard": true,
+    "laneLockedTradeoffGate": true,
+    "enemyFormationLaneOwnership": true,
+    "laneTelegraphedEnemyFire": true,
+    "bossPhasesAndDamage": true,
+    "threeUniqueBossRewards": true,
+    "endlessBossTransition": true,
+    "extraLifeStartsProtectedRecovery": true,
+    "recoveryReturnsToRun": true,
+    "gameOverOnlyWithoutReserve": true,
+    "cleanRetry": true,
+    "twentyWaveEndlessProgression": true,
+    "noVictoryLoop": true,
+    "reloadStartsFresh": true,
+    "noBlastlinePersistence": true,
+    "mobileP95AtMost16_7ms": true,
+    "desktopP95AtMost16_7ms": true,
+    "stressSceneEntityMinimums": true,
+    "stress4xP95AtMost33_3ms": true,
+    "stressFramesOver50Below1Percent": true,
+    "soakHeapGrowthAtMost15Percent": true,
+    "soakEntitiesRemainBounded": true,
+    "noConsoleErrors": true,
+    "noFailedRequests": true,
+    "noSourceMastersAtRuntime": true,
+    "generatedOceanRuntimeAsset": true
+  },
+  "failures": [],
+  "performance": {
+    "mobile": {
+      "samples": 176,
+      "p50": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182,
+      "over50": 0,
+      "refreshNormalizedP95": 16.666666666666668
+    },
+    "desktop": {
+      "samples": 176,
+      "p50": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182,
+      "over50": 0,
+      "refreshNormalizedP95": 16.666666666666668
+    },
+    "stressBenchmarks1x": {
+      "drawMs": 3.3799999952316284,
+      "updateMs": 0.2549999952316284
+    },
+    "stressBenchmarks4x": {
+      "drawMs": 2.8166666825612388,
+      "updateMs": 1.55,
+      "layers": {
+        "foregroundClear": 0,
+        "environmentMotion": 0.19999998807907104,
+        "telegraphs": 0.08750003576278687,
+        "enemiesAndBoss": 28.737499952316284,
+        "hostileProjectiles": 0.10000002384185791,
+        "squadProjectiles": 0.13749998807907104,
+        "squad": 0.574999988079071,
+        "effects": 0.01250004768371582
+      }
+    },
+    "stress4x": {
+      "samples": 313,
+      "p50": 33.19999999999982,
+      "p95": 33.400000000000546,
+      "max": 33.5,
+      "over50": 0,
+      "refreshNormalizedP95": 33.333333333333336
+    },
+    "soak": {
+      "durationMs": 15000,
+      "initialHeap": 3108812,
+      "finalHeap": 3130996,
+      "heapGrowth": 0.00713584481789185,
+      "entitySamples": [
+        {
+          "enemies": 180,
+          "bullets": 680,
+          "enemyBullets": 6,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 189,
+              "free": 7
+            },
+            "bullets": {
+              "created": 720,
+              "free": 40
+            },
+            "enemyBullets": {
+              "created": 22,
+              "free": 16
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 30,
+              "free": 26
+            },
+            "telegraphs": {
+              "created": 13,
+              "free": 12
+            }
+          }
+        },
+        {
+          "enemies": 180,
+          "bullets": 680,
+          "enemyBullets": 5,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 191,
+              "free": 4
+            },
+            "bullets": {
+              "created": 720,
+              "free": 40
+            },
+            "enemyBullets": {
+              "created": 22,
+              "free": 17
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 30,
+              "free": 18
+            },
+            "telegraphs": {
+              "created": 13,
+              "free": 10
+            }
+          }
+        },
+        {
+          "enemies": 180,
+          "bullets": 680,
+          "enemyBullets": 6,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 191,
+              "free": 11
+            },
+            "bullets": {
+              "created": 720,
+              "free": 40
+            },
+            "enemyBullets": {
+              "created": 22,
+              "free": 16
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 30,
+              "free": 24
+            },
+            "telegraphs": {
+              "created": 13,
+              "free": 13
+            }
+          }
+        }
+      ]
+    }
+  },
+  "captures": {
+    "portrait-home": {
+      "filename": "portrait-home.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 0,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "home",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.07500000794728597
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-horde": {
+      "filename": "portrait-horde.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.2638888888888889
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 149,
+              "y": 91,
+              "width": 92,
+              "height": 38,
+              "top": 91,
+              "right": 241,
+              "bottom": 129,
+              "left": 149
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-gate": {
+      "filename": "portrait-gate.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 20,
+        "enemies": 18,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.31388888094160294
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 149,
+              "y": 91,
+              "width": 92,
+              "height": 38,
+              "top": 91,
+              "right": 241,
+              "bottom": 129,
+              "left": 149
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-dense": {
+      "filename": "portrait-dense.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 12,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 60,
+        "enemies": 96,
+        "playerBullets": 60,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.625
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 149,
+              "y": 91,
+              "width": 92,
+              "height": 38,
+              "top": 91,
+              "right": 241,
+              "bottom": 129,
+              "left": 149
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-shop": {
+      "filename": "portrait-shop.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 7,
+      "difficulty": "veteran",
+      "phase": "paused",
+      "entityCounts": {
+        "squad": 38,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.21111110846201578
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-reward": {
+      "filename": "portrait-reward.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 5,
+      "difficulty": "veteran",
+      "phase": "boss-reward",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.13333332538604736
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-revive": {
+      "filename": "portrait-revive.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 9,
+      "difficulty": "veteran",
+      "phase": "recovery",
+      "entityCounts": {
+        "squad": 13,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 9,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.14166666401757133
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-boss-phase-1": {
+      "filename": "portrait-boss-p1.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 8,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 36,
+        "enemies": 0,
+        "playerBullets": 36,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.20833333333333334
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 19.5,
+              "y": 92,
+              "width": 351,
+              "height": 41,
+              "top": 92,
+              "right": 370.5,
+              "bottom": 133,
+              "left": 19.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-boss-phase-3": {
+      "filename": "portrait-boss-p3.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 15,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 48,
+        "enemies": 0,
+        "playerBullets": 48,
+        "enemyBullets": 2,
+        "particles": 24,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.33888889683617485
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 19.5,
+              "y": 92,
+              "width": 351,
+              "height": 41,
+              "top": 92,
+              "right": 370.5,
+              "bottom": 133,
+              "left": 19.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-chaos": {
+      "filename": "portrait-chaos.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 909,
+      "wave": 24,
+      "difficulty": "elite",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 60,
+        "enemies": 180,
+        "playerBullets": 720,
+        "enemyBullets": 0,
+        "particles": 80,
+        "telegraphs": 3
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 2.647222227520413
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 11,
+              "width": 183,
+              "height": 43,
+              "top": 11,
+              "right": 190,
+              "bottom": 54,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 245,
+              "y": 11,
+              "width": 138,
+              "height": 41,
+              "top": 11,
+              "right": 383,
+              "bottom": 52,
+              "left": 245
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 82.5,
+              "y": 57,
+              "width": 225,
+              "height": 31.390625,
+              "top": 57,
+              "right": 307.5,
+              "bottom": 88.390625,
+              "left": 82.5
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 19.5,
+              "y": 92,
+              "width": 351,
+              "height": 41,
+              "top": 92,
+              "right": 370.5,
+              "bottom": 133,
+              "left": 19.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "portrait-gameover": {
+      "filename": "portrait-gameover.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 708,
+      "wave": 11,
+      "difficulty": "veteran",
+      "phase": "game-over",
+      "entityCounts": {
+        "squad": 1,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.0722222195731269
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 32.486111111111086,
+        "projection": {
+          "leftMaxDeviation": 5.684341886080802e-14,
+          "rightMaxDeviation": 5.684341886080802e-14,
+          "horizon": 164.58,
+          "deckBottom": 865.0999999999998,
+          "roadWidthRatio": 0.9505999999999997,
+          "towerClearance": 8.108855983485299,
+          "profile": "portrait"
+        }
+      }
+    },
+    "landscape-home": {
+      "filename": "landscape-home.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 0,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "home",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.06944444444444445
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-horde": {
+      "filename": "landscape-horde.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.2750000026490953
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 626.5,
+              "y": 76,
+              "width": 112,
+              "height": 46,
+              "top": 76,
+              "right": 738.5,
+              "bottom": 122,
+              "left": 626.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-gate": {
+      "filename": "landscape-gate.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 20,
+        "enemies": 18,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.29999999205271405
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 626.5,
+              "y": 76,
+              "width": 112,
+              "height": 46,
+              "top": 76,
+              "right": 738.5,
+              "bottom": 122,
+              "left": 626.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-dense": {
+      "filename": "landscape-dense.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 12,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 60,
+        "enemies": 96,
+        "playerBullets": 60,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.6583333412806193
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "enemyCounter",
+            "rect": {
+              "x": 626.5,
+              "y": 76,
+              "width": 112,
+              "height": 46,
+              "top": 76,
+              "right": 738.5,
+              "bottom": 122,
+              "left": 626.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-shop": {
+      "filename": "landscape-shop.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 7,
+      "difficulty": "veteran",
+      "phase": "paused",
+      "entityCounts": {
+        "squad": 38,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.21111110846201578
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-reward": {
+      "filename": "landscape-reward.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 5,
+      "difficulty": "veteran",
+      "phase": "boss-reward",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.1527777777777778
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-revive": {
+      "filename": "landscape-revive.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 9,
+      "difficulty": "veteran",
+      "phase": "recovery",
+      "entityCounts": {
+        "squad": 13,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 9,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.125
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-boss-phase-1": {
+      "filename": "landscape-boss-p1.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 8,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 36,
+        "enemies": 0,
+        "playerBullets": 36,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.19444444444444445
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 377.5,
+              "y": 76,
+              "width": 610,
+              "height": 55,
+              "top": 76,
+              "right": 987.5,
+              "bottom": 131,
+              "left": 377.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-boss-phase-3": {
+      "filename": "landscape-boss-p3.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 15,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 48,
+        "enemies": 0,
+        "playerBullets": 48,
+        "enemyBullets": 2,
+        "particles": 24,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.4722222222222222
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 377.5,
+              "y": 76,
+              "width": 610,
+              "height": 55,
+              "top": 76,
+              "right": 987.5,
+              "bottom": 131,
+              "left": 377.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-chaos": {
+      "filename": "landscape-chaos.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 909,
+      "wave": 24,
+      "difficulty": "elite",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 60,
+        "enemies": 180,
+        "playerBullets": 720,
+        "enemyBullets": 0,
+        "particles": 80,
+        "telegraphs": 3
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 2.8000000052981906
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 13,
+              "y": 11,
+              "width": 278,
+              "height": 56,
+              "top": 11,
+              "right": 291,
+              "bottom": 67,
+              "left": 13
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 1065,
+              "y": 11,
+              "width": 287,
+              "height": 56,
+              "top": 11,
+              "right": 1352,
+              "bottom": 67,
+              "left": 1065
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 543,
+              "y": 15,
+              "width": 279,
+              "height": 42.796875,
+              "top": 15,
+              "right": 822,
+              "bottom": 57.796875,
+              "left": 543
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 377.5,
+              "y": 76,
+              "width": 610,
+              "height": 55,
+              "top": 76,
+              "right": 987.5,
+              "bottom": 131,
+              "left": 377.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    },
+    "landscape-gameover": {
+      "filename": "landscape-gameover.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 708,
+      "wave": 11,
+      "difficulty": "veteran",
+      "phase": "game-over",
+      "entityCounts": {
+        "squad": 1,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.08055554495917426
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 33.041666666666664,
+        "projection": {
+          "leftMaxDeviation": 1.7053025658242404e-13,
+          "rightMaxDeviation": 2.2737367544323206e-13,
+          "horizon": 157.44,
+          "deckBottom": 787.1999958292643,
+          "roadWidthRatio": 0.8917999957164128,
+          "towerClearance": 30.73671666754896,
+          "profile": "landscape"
+        }
+      }
+    }
+  },
+  "runtimeRequests": [
+    "/",
+    "/assets/blastline/branding/logo-primary.webp",
+    "/assets/blastline/characters/boss.webp",
+    "/assets/blastline/characters/enemy-elite-1.webp",
+    "/assets/blastline/characters/enemy-elite-2.webp",
+    "/assets/blastline/characters/enemy-elite-3.webp",
+    "/assets/blastline/characters/enemy-elite-4.webp",
+    "/assets/blastline/characters/enemy-grunt-1.webp",
+    "/assets/blastline/characters/enemy-grunt-2.webp",
+    "/assets/blastline/characters/enemy-grunt-3.webp",
+    "/assets/blastline/characters/enemy-grunt-4.webp",
+    "/assets/blastline/characters/enemy-special-1.webp",
+    "/assets/blastline/characters/enemy-special-2.webp",
+    "/assets/blastline/characters/enemy-special-3.webp",
+    "/assets/blastline/characters/enemy-special-4.webp",
+    "/assets/blastline/characters/home-hero.webp",
+    "/assets/blastline/characters/player-run-1.webp",
+    "/assets/blastline/characters/player-run-2.webp",
+    "/assets/blastline/characters/player-run-3.webp",
+    "/assets/blastline/characters/player-run-4.webp",
+    "/assets/blastline/environment/asphalt.webp",
+    "/assets/blastline/environment/ocean-surface-v2.webp",
+    "/assets/blastline/environment/ocean-whitecaps.webp",
+    "/assets/blastline/ui/upgrade-armor.webp",
+    "/assets/blastline/ui/upgrade-power.webp",
+    "/assets/blastline/ui/upgrade-rate.webp",
+    "/assets/blastline/ui/upgrade-spread.webp",
+    "/assets/blastline/ui/upgrade-troops.webp",
+    "/assets/blastline/ui/upgrade-velocity.webp",
+    "/assets/portrait.webp",
+    "/src/core.mjs",
+    "/src/enemy-render.mjs",
+    "/src/game.js",
+    "/src/production-render.mjs",
+    "/styles.css"
+  ],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "unexpectedError": null
+}

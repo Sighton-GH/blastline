@@ -1,161 +1,252 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
+  ACTIVE_STATES,
+  DIFFICULTIES,
   GAME_STATE,
-  LEVELS,
+  GATE_LIBRARY,
+  LANE_CENTERS,
+  MAX_ACTIVE_ENEMIES,
   MAX_FIRE_RATE,
+  MAX_LIVES,
   MAX_PROJECTILES,
-  UPGRADES,
+  SHOP_CATALOG,
+  applyBossReward,
   applyGate,
   applyTroopDamage,
   applyUpgrade,
   claimKillReward,
   createCleanRun,
-  gateText,
-  initialPlayer,
+  getWaveConfig,
+  laneBounds,
+  laneCenter,
+  laneContains,
   makeGateEncounter,
   makeGatePair,
   mulberry32,
-  pickUpgradeSet,
+  pickBossRewards,
+  purchaseUpgrade,
   resolveGateEncounter,
+  reviveSession,
+  shopPrice,
   stateAfterBossDefeat,
   stateAfterTroopDamage,
   visibleSquadCount,
 } from '../src/core.mjs';
 
-test('seeded RNG is deterministic', () => {
+test('seeded RNG remains deterministic', () => {
   const a = mulberry32(42);
   const b = mulberry32(42);
   assert.deepEqual([a(), a(), a(), a()], [b(), b(), b(), b()]);
 });
 
-test('gate effects obey troop caps and a harmful gate cannot empty the squad', () => {
-  assert.equal(applyGate({ ...initialPlayer(), troops: 600 }, { kind: 'troopsMul', value: 2 }).troops, 999);
-  assert.equal(applyGate({ ...initialPlayer(), troops: 998 }, { kind: 'troops', value: 20 }).troops, 999);
-  assert.equal(applyGate({ ...initialPlayer(), troops: 2 }, { kind: 'troops', value: -10 }).troops, 1);
+test('wave generation is endless, bounded, and numerically stable', () => {
+  for (const difficulty of Object.keys(DIFFICULTIES)) {
+    for (const wave of [1, 2, 10, 100, 10_000, 1_000_000, Infinity, NaN]) {
+      const config = getWaveConfig(wave, difficulty);
+      assert.ok(Number.isFinite(config.duration));
+      assert.ok(Number.isFinite(config.activeTarget));
+      assert.ok(Number.isFinite(config.bossHp));
+      assert.ok(config.duration >= 45 && config.duration <= 65);
+      assert.ok(config.activeTarget > 0 && config.activeTarget <= MAX_ACTIVE_ENEMIES);
+      assert.ok(config.hordeSize > 0 && config.hordeSize <= 54);
+      assert.ok(config.spawnInterval >= .5);
+      assert.ok(config.enemySpeed > 0 && config.enemySpeed < .1);
+      const compositionTotal = Object.values(config.composition).reduce((sum, chance) => sum + chance, 0);
+      assert.ok(Math.abs(compositionTotal - 1) < 1e-9);
+    }
+  }
+  assert.equal(getWaveConfig(1_000_000).duration, 65);
+  assert.equal(getWaveConfig(1_000_000).activeTarget, MAX_ACTIVE_ENEMIES);
+  assert.ok(getWaveConfig(30).bossHp > getWaveConfig(1).bossHp);
 });
 
-test('a gate encounter resolves at most one option and preserves a true neutral gap', () => {
-  const gates = [
-    { kind: 'troops', value: 8, label: value => `+${value}` },
-    { kind: 'troops', value: -5, label: value => `${value}` },
-  ];
-  const encounter = makeGateEncounter(1, gates);
-  const first = resolveGateEncounter(encounter, -0.36);
-  assert.equal(first.gate.value, 8);
+test('difficulty changes density and pressure without changing wave duration', () => {
+  for (const wave of [1, 8, 20]) {
+    const recruit = getWaveConfig(wave, 'recruit');
+    const veteran = getWaveConfig(wave, 'veteran');
+    const elite = getWaveConfig(wave, 'elite');
+    assert.ok(recruit.activeTarget < veteran.activeTarget);
+    assert.ok(veteran.activeTarget < elite.activeTarget || elite.activeTarget === MAX_ACTIVE_ENEMIES);
+    assert.ok(recruit.pressure < veteran.pressure && veteran.pressure < elite.pressure);
+    assert.ok(recruit.spawnInterval > veteran.spawnInterval && veteran.spawnInterval > elite.spawnInterval);
+    assert.equal(recruit.duration, veteran.duration);
+    assert.equal(veteran.duration, elite.duration);
+  }
+});
+
+test('canonical lanes are disjoint and all lane-bound objects fit their lane', () => {
+  assert.deepEqual(LANE_CENTERS.map((_, lane) => laneCenter(lane)), [...LANE_CENTERS]);
+  for (let lane = 0; lane < 3; lane += 1) {
+    const bounds = laneBounds(lane);
+    assert.ok(laneContains(lane, bounds.center));
+    assert.ok(laneContains(lane, bounds.min));
+    assert.ok(laneContains(lane, bounds.max));
+    if (lane < 2) assert.ok(bounds.max < laneBounds(lane + 1).min);
+  }
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const encounter = makeGateEncounter(seed, makeGatePair(mulberry32(seed), 5), -.06, mulberry32(seed * 7));
+    assert.equal(encounter.gates.length, 2);
+    assert.equal(new Set(encounter.gates.map(gate => gate.lane)).size, 2);
+    assert.ok(!encounter.gates.some(gate => gate.lane === encounter.neutralLane));
+    assert.ok(encounter.gates.every(gate => laneContains(gate.lane, gate.x)));
+  }
+});
+
+test('gate decisions resolve once with a true neutral lane', () => {
+  const encounter = makeGateEncounter(1, [GATE_LIBRARY[2], GATE_LIBRARY[4]], .4, () => .4);
+  const leftGate = encounter.gates[0];
+  const first = resolveGateEncounter(encounter, leftGate.x);
+  assert.equal(first.gate.id, leftGate.id);
   assert.equal(first.encounter.resolved, true);
-  assert.equal(resolveGateEncounter(first.encounter, 0.36).gate, null);
-
-  const neutral = resolveGateEncounter(makeGateEncounter(2, gates), 0);
+  assert.equal(resolveGateEncounter(first.encounter, encounter.gates[1].x).gate, null);
+  const neutral = resolveGateEncounter(makeGateEncounter(2, [GATE_LIBRARY[2], GATE_LIBRARY[4]], .4, () => .4), laneCenter(1));
   assert.equal(neutral.gate, null);
-  assert.equal(neutral.encounter.resolved, true);
+  assert.equal(neutral.encounter.selected, null);
 });
 
-test('generated pairs contain one reward and one penalty with runtime text', () => {
-  for (let seed = 1; seed < 100; seed += 1) {
-    const gates = makeGatePair(mulberry32(seed), seed % LEVELS.length);
-    const penalties = gates.filter(gate => gate.kind === 'slow' || (gate.kind === 'troops' && gate.value < 0));
-    assert.equal(gates.length, 2);
-    assert.equal(penalties.length, 1);
-    assert.ok(gates.every(gate => gateText(gate).length > 0));
+test('Wave 1 teaches a positive/negative choice and later waves offer tradeoffs', () => {
+  const tutorial = makeGatePair(mulberry32(1), 1);
+  assert.equal(tutorial[0].tone, 'blue');
+  assert.equal(tutorial[1].tone, 'red');
+  assert.ok(tutorial[0].effects[0].value > 0);
+  assert.ok(tutorial[1].effects[0].value < 0);
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const choices = makeGatePair(mulberry32(seed), 8);
+    assert.equal(new Set(choices.map(choice => choice.id)).size, 2);
+    assert.ok(choices.every(choice => choice.effects.length >= 2));
   }
 });
 
-test('three upgrade choices are unique and do not mutate the catalog', () => {
-  const originalIds = UPGRADES.map(({ id }) => id);
-  for (let seed = 1; seed < 20; seed += 1) {
-    const picked = pickUpgradeSet(mulberry32(seed));
-    assert.equal(picked.length, 3);
-    assert.equal(new Set(picked.map(({ id }) => id)).size, 3);
+test('gate effects apply all benefits and costs while preserving safety caps', () => {
+  const start = { ...createCleanRun().player, troops: 6, armor: 1, fireRate: 5 };
+  const ranks = applyGate(start, GATE_LIBRARY.find(gate => gate.id === 'rapid-ranks'));
+  assert.equal(ranks.troops, 22);
+  assert.equal(ranks.fireRate, 4.4);
+  const harmful = applyGate(start, { effects: [{ stat: 'troops', mode: 'add', value: -100 }] });
+  assert.equal(harmful.troops, 1);
+  const capped = applyGate({ ...start, fireRate: 15 }, { effects: [{ stat: 'fireRate', mode: 'multiply', value: 2 }] });
+  assert.equal(capped.fireRate, MAX_FIRE_RATE);
+});
+
+test('shop prices rise, spending is atomic, and insufficient points do nothing', () => {
+  for (const item of SHOP_CATALOG) {
+    const prices = [0, 1, 2, 3].map(count => shopPrice(item.id, count));
+    assert.ok(prices.every(Number.isFinite));
+    assert.ok(prices[0] < prices[1] && prices[1] < prices[2] && prices[2] < prices[3]);
   }
-  assert.deepEqual(UPGRADES.map(({ id }) => id), originalIds);
+  const poor = createCleanRun(1);
+  const failed = purchaseUpgrade(poor, 'damage');
+  assert.equal(failed.ok, false);
+  assert.equal(failed.reason, 'insufficient');
+  assert.deepEqual(failed.session, poor);
+
+  const funded = { ...createCleanRun(2), skillPoints: 20 };
+  const bought = purchaseUpgrade(funded, 'damage');
+  assert.equal(bought.ok, true);
+  assert.equal(bought.session.player.power, 2);
+  assert.equal(bought.session.skillPoints, 20 - shopPrice('damage', 0));
+  assert.equal(bought.session.purchaseCounts.damage, 1);
+  assert.equal(bought.session.upgradeTiers.damage, 1);
 });
 
-test('every canonical upgrade applies and run upgrades stack', () => {
-  const start = initialPlayer();
-  assert.equal(applyUpgrade(start, 'troops').troops, 24);
-  assert.equal(applyUpgrade(start, 'power').power, 2);
-  assert.equal(applyUpgrade(start, 'rate').fireRate, start.fireRate * 1.2);
-  assert.equal(applyUpgrade(start, 'spread').projectiles, 2);
-  assert.equal(applyUpgrade(start, 'velocity').bulletSpeed, 1.2);
-  assert.equal(applyUpgrade(start, 'armor').armor, 3);
-
-  let stacked = start;
-  for (let index = 0; index < 8; index += 1) stacked = applyUpgrade(stacked, 'spread');
-  assert.equal(stacked.projectiles, MAX_PROJECTILES);
-  stacked = applyUpgrade(applyUpgrade(stacked, 'power'), 'power');
-  assert.equal(stacked.power, 3);
-  for (let index = 0; index < 20; index += 1) stacked = applyUpgrade(stacked, 'rate');
-  assert.equal(stacked.fireRate, MAX_FIRE_RATE);
-});
-
-test('difficulty escalates across exactly six authored horde waves', () => {
-  assert.equal(LEVELS.length, 6);
-  assert.ok(LEVELS.every(level => level.enemies >= 72));
-  assert.ok(LEVELS.every(level => level.horde >= 12));
-  assert.ok(LEVELS.every(level => level.spawn >= 3), 'spawn cadence should represent horde intervals, not single-enemy spam');
-  for (let index = 1; index < LEVELS.length; index += 1) {
-    const previous = LEVELS[index - 1];
-    const current = LEVELS[index];
-    assert.ok(current.length > previous.length);
-    assert.ok(current.enemies > previous.enemies);
-    assert.ok(current.horde > previous.horde);
-    assert.ok(current.bossHp > previous.bossHp);
-    assert.ok(current.speed >= previous.speed);
-    assert.ok(current.spawn < previous.spawn);
+test('all shop upgrades apply and hard caps cannot be exceeded', () => {
+  let session = { ...createCleanRun(3), skillPoints: 1_000_000 };
+  for (const item of SHOP_CATALOG) {
+    const limit = item.id === 'extraLife' ? MAX_LIVES : item.maxTier + 2;
+    for (let count = 0; count < limit; count += 1) session = purchaseUpgrade(session, item.id).session;
   }
+  assert.equal(session.player.projectiles, MAX_PROJECTILES);
+  assert.ok(session.player.fireRate <= MAX_FIRE_RATE);
+  assert.equal(session.upgradeTiers.fireRate, SHOP_CATALOG.find(item => item.id === 'fireRate').maxTier);
+  assert.equal(session.lives, MAX_LIVES);
+  assert.ok(session.player.criticalChance <= .35);
+  assert.ok(session.player.pierce <= 4);
 });
 
-test('armor absorbs damage first and combat can reduce troops to zero', () => {
-  const armored = { ...initialPlayer(), troops: 2, armor: 3 };
-  const first = applyTroopDamage(armored, 4);
-  assert.deepEqual({ troops: first.player.troops, armor: first.player.armor, absorbed: first.absorbed, lost: first.lost }, { troops: 1, armor: 0, absorbed: 3, lost: 1 });
-  const fatal = applyTroopDamage(first.player, 1);
-  assert.equal(fatal.player.troops, 0);
-  assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.PLAYING), GAME_STATE.GAME_OVER);
-  assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.BOSS), GAME_STATE.GAME_OVER);
-});
-
-test('bosses on waves 1–5 lead to upgrade and wave 6 leads to Victory', () => {
-  for (let waveIndex = 0; waveIndex < LEVELS.length - 1; waveIndex += 1) {
-    assert.equal(stateAfterBossDefeat(waveIndex), GAME_STATE.UPGRADE);
+test('boss reward choices are unique, tiered, and contain synergy information', () => {
+  const session = createCleanRun(4);
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const choices = pickBossRewards(mulberry32(seed), session);
+    assert.equal(choices.length, 3);
+    assert.equal(new Set(choices.map(choice => choice.id)).size, 3);
+    assert.ok(choices.every(choice => choice.tier === 1 && choice.tierLabel === 'TIER 1'));
+    assert.ok(choices.every(choice => choice.synergy.length > 0));
   }
-  assert.equal(stateAfterBossDefeat(LEVELS.length - 1), GAME_STATE.VICTORY);
+  const rewarded = applyBossReward(session, 'piercing');
+  assert.equal(rewarded.player.pierce, 1);
+  assert.equal(rewarded.upgradeTiers.piercing, 1);
+  assert.equal(rewarded.skillPoints, session.skillPoints, 'boss rewards are free');
 });
 
-test('an enemy kill reward can be claimed only once', () => {
-  const first = claimKillReward({ type: 'elite', rewarded: false });
-  assert.deepEqual(first.reward, { score: 58, coins: 12, frenzy: 3 });
-  const duplicate = claimKillReward(first.enemy);
-  assert.equal(duplicate.reward, null);
+test('boss defeat always transitions to another endless reward, never Victory', () => {
+  for (const wave of [1, 6, 20, 1_000_000]) assert.equal(stateAfterBossDefeat(wave), GAME_STATE.BOSS_REWARD);
+  assert.ok(!Object.values(GAME_STATE).includes('victory'));
 });
 
-test('Retry/new run creates clean base stats and clears every transient collection', () => {
-  const dirty = createCleanRun(7);
-  dirty.player = applyUpgrade(applyUpgrade(dirty.player, 'power'), 'armor');
+test('armor absorbs first; reserves revive with protection and retain the build', () => {
+  const upgradedPlayer = applyUpgrade(applyUpgrade(createCleanRun().player, 'damage'), 'piercing');
+  const damaged = applyTroopDamage({ ...upgradedPlayer, troops: 2, armor: 3 }, 4);
+  assert.deepEqual({ troops: damaged.player.troops, armor: damaged.player.armor, absorbed: damaged.absorbed, lost: damaged.lost }, { troops: 1, armor: 0, absorbed: 3, lost: 1 });
+  const fatal = applyTroopDamage(damaged.player, 1);
+  assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.PLAYING, 1), GAME_STATE.RECOVERY);
+  assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.BOSS, 0), GAME_STATE.GAME_OVER);
+
+  const session = { ...createCleanRun(8, 'elite'), lives: 2, score: 500, skillPoints: 6, player: { ...fatal.player, power: 2, pierce: 1, recovery: 2 } };
+  const revived = reviveSession(session);
+  assert.equal(revived.revived, true);
+  assert.equal(revived.session.lives, 1);
+  assert.equal(revived.session.player.troops, DIFFICULTIES.elite.recoveryTroops + 6);
+  assert.equal(revived.session.player.protectedFor, 3);
+  assert.equal(revived.session.player.power, 2);
+  assert.equal(revived.session.player.pierce, 1);
+  assert.equal(revived.session.score, 500);
+  assert.equal(revived.session.skillPoints, 6);
+});
+
+test('kill rewards grant milestone and elite skill points only once', () => {
+  const milestone = claimKillReward({ type: 'grunt', rewarded: false }, 24);
+  assert.equal(milestone.reward.skillPoints, 1);
+  const elite = claimKillReward({ type: 'heavy', rewarded: false }, 25);
+  assert.equal(elite.reward.skillPoints, 1);
+  assert.equal(claimKillReward(elite.enemy, 26).reward, null);
+});
+
+test('clean retry resets every session value and transient collection', () => {
+  const dirty = createCleanRun(9, 'elite');
+  dirty.wave = 30;
   dirty.score = 999;
-  dirty.waveIndex = 5;
-  dirty.bullets.push({});
-  dirty.enemyBullets.push({});
-  dirty.enemies.push({});
-  dirty.gates.push({});
-  dirty.particles.push({});
-  dirty.floaters.push({});
-  dirty.muzzleFlashes.push({});
-  dirty.telegraphs.push({});
+  dirty.skillPoints = 12;
+  dirty.lives = 2;
+  dirty.player = applyUpgrade(dirty.player, 'damage');
+  dirty.purchaseCounts.damage = 1;
+  dirty.upgradeTiers.damage = 1;
+  for (const key of ['bullets', 'enemyBullets', 'enemies', 'gates', 'hazards', 'particles', 'floaters', 'muzzleFlashes', 'telegraphs']) dirty[key].push({});
   dirty.boss = {};
 
-  const retry = createCleanRun(8);
-  assert.equal(retry.state, GAME_STATE.PLAYING);
-  assert.equal(retry.waveIndex, 0);
+  const retry = createCleanRun(10, 'veteran');
+  assert.equal(retry.wave, 1);
   assert.equal(retry.score, 0);
-  assert.deepEqual(retry.player, initialPlayer());
-  for (const key of ['bullets','enemyBullets','enemies','gates','particles','floaters','muzzleFlashes','telegraphs']) {
-    assert.deepEqual(retry[key], []);
-  }
+  assert.equal(retry.skillPoints, 0);
+  assert.equal(retry.lives, 0);
+  assert.deepEqual(retry.purchaseCounts, {});
+  assert.deepEqual(retry.upgradeTiers, {});
+  for (const key of ['bullets', 'enemyBullets', 'enemies', 'gates', 'hazards', 'particles', 'floaters', 'muzzleFlashes', 'telegraphs']) assert.deepEqual(retry[key], []);
   assert.equal(retry.boss, null);
 });
 
-test('visible squad count compresses large logical squads', () => {
-  assert.deepEqual([1, 5, 20, 50, 100, 999].map(visibleSquadCount), [1, 5, 20, 28, 36, 42]);
+test('visible squad sprites remain individual through stress scale', () => {
+  assert.deepEqual([1, 14, 32, 60, 1000].map(value => visibleSquadCount(value)), [1, 14, 32, 60, 60]);
+  assert.equal(visibleSquadCount(240, 6), 72);
+});
+
+test('the runtime contains no persistence API', () => {
+  const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.ok(!runtime.includes('local' + 'Storage'));
+  assert.ok(!runtime.includes('session' + 'Storage'));
+  assert.ok(!html.includes('LIFETIME'));
+  assert.ok(!html.includes('VICTORY'));
+  assert.deepEqual(ACTIVE_STATES, [GAME_STATE.PLAYING, GAME_STATE.BOSS, GAME_STATE.RECOVERY]);
 });

@@ -4,6 +4,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "validate": "node tools/final-browser-validation.mjs",
+    "validate:perf": "node tools/final-browser-validation.mjs --perf-only",
+    "validate:full": "BLASTLINE_FULL_SOAK=1 node tools/final-browser-validation.mjs",
     "deploy": "wrangler deploy",
     "preview": "wrangler dev"
   },

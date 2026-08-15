@@ -3,6 +3,7 @@ node_modules/
 .github/
 docs/
 tests/
+assets/source/
 README.md
 package.json
 package-lock.json

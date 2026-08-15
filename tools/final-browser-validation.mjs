@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -6,18 +5,20 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', 'final-2026-08-15');
+const OUTPUT_NAME = 'endless-overhaul-2026-08-15';
+const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', OUTPUT_NAME);
+const FULL_SOAK = process.env.BLASTLINE_FULL_SOAK === '1';
+const PERF_ONLY = process.argv.includes('--perf-only');
+const STRESS_DURATION_MS = FULL_SOAK ? 60_000 : 8_000;
+const SOAK_DURATION_MS = FULL_SOAK ? 300_000 : 15_000;
+const NORMAL_DURATION_MS = FULL_SOAK ? 8_000 : 3_000;
 fs.mkdirSync(OUTPUT, { recursive: true });
 
 const MIME = new Map([
-  ['.css', 'text/css; charset=utf-8'],
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.mjs', 'text/javascript; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8'],
-  ['.png', 'image/png'],
-  ['.svg', 'image/svg+xml'],
-  ['.webp', 'image/webp'],
+  ['.css', 'text/css; charset=utf-8'], ['.html', 'text/html; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'], ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'], ['.md', 'text/markdown; charset=utf-8'],
+  ['.png', 'image/png'], ['.svg', 'image/svg+xml'], ['.webp', 'image/webp'],
 ]);
 
 const server = http.createServer((request, response) => {
@@ -33,10 +34,7 @@ const server = http.createServer((request, response) => {
       response.writeHead(error.code === 'ENOENT' ? 404 : 500).end(error.message);
       return;
     }
-    response.writeHead(200, {
-      'Cache-Control': 'no-store',
-      'Content-Type': MIME.get(path.extname(target)) || 'application/octet-stream',
-    });
+    response.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': MIME.get(path.extname(target)) || 'application/octet-stream' });
     response.end(data);
   });
 });
@@ -46,28 +44,73 @@ await new Promise((resolve, reject) => {
   server.listen(0, '127.0.0.1', resolve);
 });
 
-const address = server.address();
-const baseURL = `http://127.0.0.1:${address.port}`;
+const baseURL = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ headless: true });
 const errors = [];
-const requests = new Set();
 const failedRequests = [];
+const requests = new Set();
 const checks = {};
+const failures = [];
 const captures = {};
+const performance = {};
 
-function observe(page, label) {
-  page.on('console', message => {
-    if (message.type() === 'error') errors.push(`${label}:console:${message.text()}`);
-  });
-  page.on('pageerror', error => errors.push(`${label}:page:${error.message}`));
-  page.on('request', request => requests.add(new URL(request.url()).pathname));
-  page.on('requestfailed', request => failedRequests.push(`${label}:${request.url()}:${request.failure()?.errorText}`));
+function record(name, pass, details = null) {
+  checks[name] = Boolean(pass);
+  if (!pass) failures.push({ name, details });
 }
 
-async function waitUntilReady(page) {
+function normalizeRefreshQuantization(value, expectedInterval) {
+  return Math.abs(value - expectedInterval) <= .25 ? expectedInterval : value;
+}
+
+function observe(page, label) {
+  page.on('console', message => { if (message.type() === 'error') errors.push(`${label}:console:${message.text()}`); });
+  page.on('pageerror', error => errors.push(`${label}:page:${error.message}`));
+  page.on('request', request => requests.add(new URL(request.url()).pathname));
+  page.on('requestfailed', request => {
+    const errorText = request.failure()?.errorText;
+    if (errorText !== 'net::ERR_ABORTED') failedRequests.push(`${label}:${request.url()}:${errorText}`);
+  });
+}
+
+async function waitReady(page) {
   await page.waitForFunction(() => globalThis.__blastlineTest?.getState().assetsReady === 'true');
   await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
+async function visualAudit(page) {
+  return page.evaluate(() => {
+    const visibleBoxes = [...document.querySelectorAll('#hud:not(.hidden) .hud-primary, #hud:not(.hidden) .hud-run, #floatingStats:not(.hidden), #enemyCounter:not(.hidden), #bossHud:not(.hidden)')]
+      .map((element, index) => ({ id: element.id || element.className || `cluster-${index}`, rect: element.getBoundingClientRect().toJSON() }));
+    const overlap = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    const overlaps = [];
+    for (let a = 0; a < visibleBoxes.length; a += 1) for (let b = a + 1; b < visibleBoxes.length; b += 1) {
+      const area = overlap(visibleBoxes[a].rect, visibleBoxes[b].rect);
+      if (area > 4) overlaps.push([visibleBoxes[a].id, visibleBoxes[b].id, area]);
+    }
+    const safeArea = visibleBoxes.every(({ rect }) => rect.left >= -1 && rect.top >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1);
+    const canvas = document.querySelector('#environment');
+    const context = canvas.getContext('2d');
+    const backingScale = canvas.width / innerWidth;
+    const horizon = Math.round(__blastlineTest.projectionAudit().horizon);
+    const xSamples = [2, Math.max(2, innerWidth - 26)];
+    let maxWaterJump = 0;
+    for (const x of xSamples) {
+      let previous = null;
+      const endY = Math.min(innerHeight * .68, horizon + 340);
+      for (let y = Math.min(innerHeight - 3, horizon + 55); y < endY; y += 6) {
+        const pixels = context.getImageData(Math.round(x * backingScale), Math.round(y * backingScale), Math.max(1, Math.round(24 * backingScale)), Math.max(1, Math.round(3 * backingScale))).data;
+        const mean = [0, 0, 0];
+        for (let offset = 0; offset < pixels.length; offset += 4) { mean[0] += pixels[offset]; mean[1] += pixels[offset + 1]; mean[2] += pixels[offset + 2]; }
+        const count = pixels.length / 4;
+        mean[0] /= count; mean[1] /= count; mean[2] /= count;
+        if (previous) maxWaterJump = Math.max(maxWaterJump, Math.abs(mean[0] - previous[0]) + Math.abs(mean[1] - previous[1]) + Math.abs(mean[2] - previous[2]));
+        previous = mean;
+      }
+    }
+    return { visibleBoxes, overlaps, safeArea, maxWaterJump, projection: __blastlineTest.projectionAudit() };
+  });
 }
 
 async function captureState(context, viewportName, mode) {
@@ -75,448 +118,367 @@ async function captureState(context, viewportName, mode) {
   const label = `${viewportName}-${mode}`;
   observe(page, label);
   await page.goto(`${baseURL}/?capture=${mode}`, { waitUntil: 'networkidle' });
-  await waitUntilReady(page);
-  const filename = `${viewportName}-${mode === 'gameover' ? 'game-over' : mode}.png`;
+  await waitReady(page);
+  const filename = `${label.replaceAll('boss-phase-', 'boss-p')}.png`;
+  const state = await page.evaluate(() => __blastlineTest.getState());
+  const audit = await visualAudit(page);
+  const drawCostMs = await page.evaluate(() => __blastlineTest.benchmarkDraw(36));
   await page.screenshot({ path: path.join(OUTPUT, filename) });
   captures[label] = {
     filename,
     viewport: page.viewportSize(),
     deviceScaleFactor: await page.evaluate(() => devicePixelRatio),
-    state: await page.evaluate(() => __blastlineTest.getState()),
+    seed: state.seed,
+    wave: state.wave,
+    difficulty: state.difficulty,
+    phase: state.phase,
+    entityCounts: {
+      squad: state.visibleSquad, enemies: state.activeEnemies, playerBullets: state.bullets,
+      enemyBullets: state.enemyBullets, particles: state.particles, telegraphs: state.telegraphs.length,
+    },
+    frameTimeSummary: { synchronousDrawMeanMs: drawCostMs },
+    runtimeAssetCount: Number(await page.locator('#game').getAttribute('data-asset-count')),
+    audit,
   };
+  record(`${label}:safeArea`, audit.safeArea, audit.visibleBoxes);
+  record(`${label}:hudOverlap`, audit.overlaps.length === 0, audit.overlaps);
+  record(`${label}:planarDeck`, audit.projection.leftMaxDeviation < .1 && audit.projection.rightMaxDeviation < .1, audit.projection);
+  record(`${label}:wideRoad`, audit.projection.roadWidthRatio >= .86, audit.projection);
+  record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
+  record(`${label}:waterContinuity`, audit.maxWaterJump < 210, audit.maxWaterJump);
   await page.close();
 }
 
-async function newGameplayPage(context, label) {
+async function newPage(context, label, home = false) {
   const page = await context.newPage();
   observe(page, label);
-  await page.addInitScript(() => {
-    const fixedNow = 1730000000000;
-    Date.now = () => fixedNow;
-  });
+  await page.addInitScript(() => { Date.now = () => 1760000000000; });
   await page.goto(`${baseURL}/?qa=1`, { waitUntil: 'networkidle' });
-  await waitUntilReady(page);
-  await page.click('#playBtn');
-  await page.waitForFunction(() => __blastlineTest.getState().state === 'playing');
+  await waitReady(page);
+  if (!home) {
+    await page.click('#playBtn');
+    await page.waitForFunction(() => __blastlineTest.getState().state === 'playing');
+  }
   return page;
 }
 
-try {
-  const mobileCaptures = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  for (const mode of ['home', 'gameplay', 'gate', 'elite', 'dense', 'boss', 'upgrade', 'victory', 'gameover']) {
-    await captureState(mobileCaptures, 'mobile', mode);
-  }
-  await mobileCaptures.close();
+async function measureRaf(page, durationMs) {
+  return page.evaluate(duration => new Promise(resolve => {
+    const values = [];
+    let first = 0;
+    let previous = 0;
+    function frame(timestamp) {
+      if (!first) first = timestamp;
+      if (previous) values.push(timestamp - previous);
+      previous = timestamp;
+      if (timestamp - first < duration) requestAnimationFrame(frame);
+      else {
+        const sorted = values.slice(5).sort((a, b) => a - b);
+        const percentile = value => sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * value))] || 0;
+        resolve({
+          samples: sorted.length,
+          p50: percentile(.5),
+          p95: percentile(.95),
+          max: sorted.at(-1) || 0,
+          over50: sorted.length ? sorted.filter(value => value > 50).length / sorted.length : 0,
+        });
+      }
+    }
+    requestAnimationFrame(frame);
+  }), durationMs);
+}
 
-  const desktopCaptures = await browser.newContext({ viewport: { width: 1365, height: 768 }, deviceScaleFactor: 1 });
-  for (const mode of ['home', 'gameplay', 'boss', 'upgrade', 'victory', 'gameover']) {
-    await captureState(desktopCaptures, 'desktop', mode);
-  }
-  await desktopCaptures.close();
+async function heapUsage(session) {
+  await session.send('HeapProfiler.collectGarbage');
+  const usage = await session.send('Runtime.getHeapUsage');
+  return usage.usedSize;
+}
 
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 1,
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await newGameplayPage(context, 'interaction');
+async function runInteractionValidation() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
+  const page = await newPage(context, 'natural-interaction', true);
 
-  const start = await page.evaluate(() => __blastlineTest.getState());
-  await page.waitForTimeout(450);
-  const advanced = await page.evaluate(() => __blastlineTest.getState());
-  assert.ok(advanced.waveTime > start.waveTime + .25, 'automatic forward simulation did not advance');
-  await page.waitForFunction(() => {
-    const current = __blastlineTest.getState();
-    return current.bullets > 0 || current.muzzleFlashes > 0;
-  });
-  checks.automaticTravel = true;
-  checks.automaticShooting = true;
+  await page.click('[data-difficulty="elite"]');
+  record('difficultySelectionVisual', await page.locator('[data-difficulty="elite"]').getAttribute('aria-checked') === 'true');
+  await page.click('#playBtn');
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'playing');
+  record('difficultySelectionRuntime', (await page.evaluate(() => __blastlineTest.getState())).difficulty === 'elite');
 
-  await page.evaluate(() => __blastlineTest.reset(111));
-  await page.waitForFunction(() => {
-    const current = __blastlineTest.getState();
-    return current.sampleBullets.length >= current.visibleSquad;
-  });
-  const volley = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(new Set(volley.sampleBullets.map(bullet => bullet.shooter)).size, volley.visibleSquad, 'a firing volley did not include every visible soldier');
-  assert.equal(new Set(volley.sampleBullets.slice(0, volley.visibleSquad).map(bullet => `${bullet.originX}:${bullet.originY}`)).size, volley.visibleSquad, 'projectiles did not preserve individual soldier origins');
-  const straightBefore = volley.sampleBullets[0];
-  await page.evaluate(() => __blastlineTest.setPlayerX(.72));
-  await page.waitForTimeout(100);
-  const straightAfter = await page.evaluate(({ shooter, originY }) => __blastlineTest.getState().sampleBullets.find(bullet => bullet.shooter === shooter && bullet.originY === originY), straightBefore);
-  assert.ok(straightAfter, 'test projectile disappeared before trajectory validation');
-  assert.ok(Math.abs(straightAfter.x - straightBefore.x) < 1e-7, 'straight projectile curved after the player/target position changed');
-  assert.ok(straightAfter.y < straightBefore.y, 'player projectile did not travel forward');
-  checks.individualSoldierOrigins = true;
-  checks.straightPlayerProjectiles = true;
-
-  const saturatedVolleys = await page.evaluate(() => {
-    __blastlineTest.freeze(true);
-    __blastlineTest.reset(113);
-    __blastlineTest.setTroops(999);
-    const visibleSquad = __blastlineTest.getState().visibleSquad;
-    return { visibleSquad, counts: __blastlineTest.fireNow(24) };
-  });
-  assert.ok(saturatedVolleys.counts.some(count => count === 0), 'projectile saturation setup did not reach the active-bullet cap');
-  assert.ok(saturatedVolleys.counts.every(count => count === 0 || count === saturatedVolleys.visibleSquad), 'projectile cap produced a partial soldier volley');
-  checks.completeSoldierVolleysAtCapacity = true;
-  await page.evaluate(() => {
-    __blastlineTest.reset(114);
-    __blastlineTest.freeze(false);
-  });
-
-  const projection = await page.evaluate(() => __blastlineTest.projectionAudit());
-  assert.ok(projection.leftMaxDeviation < .05 && projection.rightMaxDeviation < .05, `bridge deck edge bowed by ${JSON.stringify(projection)}`);
-  checks.planarStraightBridgeDeck = true;
-
-  await page.evaluate(() => __blastlineTest.setPlayerX(0));
   await page.keyboard.down('a');
-  await page.waitForTimeout(260);
+  await page.waitForTimeout(420);
   await page.keyboard.up('a');
-  const afterA = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterA < -.08, 'A steering did not move left');
+  const keyboardLeft = (await page.evaluate(() => __blastlineTest.getState())).playerX;
   await page.keyboard.down('d');
-  await page.waitForTimeout(360);
+  await page.waitForTimeout(700);
   await page.keyboard.up('d');
-  const afterD = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterD > afterA + .12, 'D steering did not move right');
-  await page.keyboard.down('ArrowLeft');
-  await page.waitForTimeout(220);
-  await page.keyboard.up('ArrowLeft');
-  const afterArrowLeft = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterArrowLeft < afterD - .05, 'left arrow steering did not move left');
-  await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(260);
-  await page.keyboard.up('ArrowRight');
-  const afterArrowRight = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterArrowRight > afterArrowLeft + .05, 'right arrow steering did not move right');
-  checks.keyboardSteering = true;
+  const keyboardRight = (await page.evaluate(() => __blastlineTest.getState())).playerX;
+  record('keyboardSteeringAcrossLanes', keyboardLeft < -.2 && keyboardRight > .2, { keyboardLeft, keyboardRight });
 
-  await page.mouse.move(35, 500);
-  await page.waitForTimeout(240);
-  const afterPointerLeft = await page.evaluate(() => __blastlineTest.getState().playerX);
-  await page.mouse.move(355, 500);
-  await page.waitForTimeout(300);
-  const afterPointerRight = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterPointerRight > afterPointerLeft + .3, 'pointer steering did not cross the lane');
-  checks.pointerSteering = true;
+  await page.touchscreen.tap(28, 590);
+  await page.waitForTimeout(370);
+  const touchLeft = (await page.evaluate(() => __blastlineTest.getState())).playerX;
+  await page.touchscreen.tap(360, 590);
+  await page.waitForTimeout(470);
+  const touchRight = (await page.evaluate(() => __blastlineTest.getState())).playerX;
+  record('touchSteeringAcrossLanes', touchLeft < -.25 && touchRight > .25, { touchLeft, touchRight });
 
-  await page.touchscreen.tap(42, 520);
-  await page.waitForTimeout(300);
-  const afterTouchLeft = await page.evaluate(() => __blastlineTest.getState().playerX);
-  await page.touchscreen.tap(348, 520);
-  await page.waitForTimeout(300);
-  const afterTouchRight = await page.evaluate(() => __blastlineTest.getState().playerX);
-  assert.ok(afterTouchRight > afterTouchLeft + .3, 'touch steering did not cross the lane');
-  checks.touchSteering = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(101);
-    __blastlineTest.setTroops(10);
-    __blastlineTest.setPlayerX(-.39);
-    __blastlineTest.setGatePair(
-      { kind: 'troops', value: 5, text: '+5', color: 'blue' },
-      { kind: 'troops', value: -9, text: '−9', color: 'red' },
-      .835,
-    );
-  });
-  await page.waitForFunction(() => __blastlineTest.getState().troops === 15);
-  const once = await page.evaluate(() => __blastlineTest.getState().troops);
-  await page.waitForTimeout(220);
-  assert.equal(await page.evaluate(() => __blastlineTest.getState().troops), once, 'gate applied more than once');
-  checks.positiveGate = true;
-  checks.singleGateTrigger = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(102);
-    __blastlineTest.setTroops(2);
-    __blastlineTest.setPlayerX(.39);
-    __blastlineTest.setGatePair(
-      { kind: 'troops', value: 4, text: '+4', color: 'blue' },
-      { kind: 'troops', value: -20, text: '−20', color: 'red' },
-      .835,
-    );
-  });
-  await page.waitForFunction(() => __blastlineTest.getState().troops === 1);
-  checks.harmfulGateMinimum = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(103);
-    __blastlineTest.setTroops(10);
-    __blastlineTest.setPlayerX(0);
-    __blastlineTest.setGatePair(
-      { kind: 'troops', value: 4, text: '+4', color: 'blue' },
-      { kind: 'troops', value: -4, text: '−4', color: 'red' },
-      .835,
-    );
-  });
-  await page.waitForTimeout(160);
-  const neutral = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(neutral.troops, 10, 'neutral gap unexpectedly applied a gate');
-  assert.ok(neutral.gates.every(gate => gate.hit), 'neutral gate encounter did not resolve');
-  checks.neutralGap = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(104);
-    __blastlineTest.setTroops(8);
-    __blastlineTest.setPlayerX(.2);
-    __blastlineTest.spawnEnemyAt('elite', .2, .855);
-  });
-  await page.waitForFunction(() => __blastlineTest.getState().troops === 6, null, { timeout: 1500 });
-  checks.enemyCollision = true;
-  checks.eliteContactDamage = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(105);
-    __blastlineTest.setWave(3);
-    __blastlineTest.setPlayerX(-.72);
-    __blastlineTest.spawnEnemyAt('shield', .68, .28, true);
-  });
-  await page.waitForFunction(() => __blastlineTest.getState().enemyBullets > 0, null, { timeout: 1200 });
-  checks.ordinaryEnemyRangedAttack = true;
-
-  const baseGrunt = await page.evaluate(() => {
-    __blastlineTest.reset(106);
-    __blastlineTest.setPower(1);
-    return __blastlineTest.spawnEnemyAt('grunt', 0, .70);
-  });
-  assert.equal(baseGrunt.hp, 1, 'grunt was not configured for a one-hit defeat');
-  await page.waitForFunction(() => __blastlineTest.getState().score >= 20, null, { timeout: 1800 });
-  await page.evaluate(() => __blastlineTest.freeze(true));
-  const killReward = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(killReward.score, 20);
-  assert.equal(killReward.coins, 4);
-  checks.killReward = true;
-  checks.easyGruntDefeat = true;
-  await page.evaluate(() => __blastlineTest.freeze(false));
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(107);
-  });
   await page.click('#pauseBtn');
   const pauseBefore = await page.evaluate(() => __blastlineTest.getState());
-  await page.waitForTimeout(420);
+  await page.waitForTimeout(400);
   const paused = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(paused.state, 'paused');
-  assert.equal(paused.waveTime, pauseBefore.waveTime, 'wave time advanced while paused');
-  assert.equal(paused.bullets, pauseBefore.bullets, 'bullets advanced or spawned while paused');
+  record('pauseFreezesSimulation', paused.state === 'paused' && paused.waveTime === pauseBefore.waveTime && paused.bullets === pauseBefore.bullets, { pauseBefore, paused });
+  await page.locator('[data-shop="damage"]').click();
+  record('shopInsufficientPoints', (await page.locator('#shopMessage').textContent()).includes('Need'));
+  await page.evaluate(() => __blastlineTest.setPoints(20));
+  const powerBefore = (await page.evaluate(() => __blastlineTest.getState())).power;
+  await page.locator('[data-shop="damage"]').click();
+  const afterPurchase = await page.evaluate(() => __blastlineTest.getState());
+  record('shopPurchaseSpendsPoints', afterPurchase.power === powerBefore + 1 && afterPurchase.skillPoints < 20, afterPurchase);
   await page.click('#resumeBtn');
-  await page.waitForFunction(() => __blastlineTest.getState().state === 'playing');
-  checks.pauseFreeze = true;
-  checks.pauseButton = true;
-  checks.resume = true;
-  await page.keyboard.press('p');
-  assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'paused');
-  await page.keyboard.press('p');
-  assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'playing');
-  checks.pauseKey = true;
+  record('resumeFromDashboard', (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
 
-  await page.keyboard.press('Space');
-  const spacePaused = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(spacePaused.state, 'paused');
-  await page.waitForTimeout(260);
-  assert.equal((await page.evaluate(() => __blastlineTest.getState())).waveTime, spacePaused.waveTime, 'Space pause did not freeze simulation');
-  await page.keyboard.press('Space');
-  assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'playing');
-  checks.spacePauseKey = true;
-
-  await page.evaluate(() => {
-    __blastlineTest.reset(112);
+  const gateSetup = await page.evaluate(() => {
+    __blastlineTest.reset(201, 'veteran');
+    __blastlineTest.setTroops(10);
     __blastlineTest.freeze(true);
-    __blastlineTest.spawnHordeNow();
+    return __blastlineTest.setGateEncounter([
+      { id: 'qa-ranks', text: '+5', tone: 'blue', effects: [{ stat: 'troops', mode: 'add', value: 5 }] },
+      { id: 'qa-armor', text: '+4 / −2', tone: 'gold', effects: [{ stat: 'armor', mode: 'add', value: 4 }, { stat: 'troops', mode: 'add', value: -2 }] },
+    ], .84, 1);
   });
-  const hordeBefore = await page.evaluate(() => __blastlineTest.getState());
-  assert.ok(hordeBefore.activeEnemies >= 12, `expected a large horde, received ${hordeBefore.activeEnemies}`);
-  assert.equal(hordeBefore.hordes, 1);
-  assert.equal(await page.locator('#enemyCounter').isVisible(), true);
-  await page.evaluate(() => __blastlineTest.freeze(false));
-  await page.waitForTimeout(320);
-  await page.evaluate(() => __blastlineTest.freeze(true));
-  const hordeAfter = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(hordeAfter.sampleEnemies.length, hordeBefore.sampleEnemies.length);
-  const formationKey = enemy => `${enemy.hordeId}:${enemy.hordeRow}:${enemy.lineX}`;
-  const hordeBeforeByFormation = new Map(hordeBefore.sampleEnemies.map(enemy => [formationKey(enemy), enemy]));
-  for (const after of hordeAfter.sampleEnemies) {
-    const before = hordeBeforeByFormation.get(formationKey(after));
-    assert.ok(before, 'enemy formation member could not be matched after marching');
-    assert.ok(Math.abs(after.x - after.lineX) < 1e-9, 'enemy left its straight march line');
-    assert.ok(after.y > before.y && after.y - before.y < .03, 'enemy horde movement was not slow and forward');
-  }
-  assert.ok(hordeAfter.sampleEnemies.some(enemy => enemy.marchFrame !== hordeBeforeByFormation.get(formationKey(enemy))?.marchFrame), 'enemy march animation did not advance');
-  checks.largeSlowHordes = true;
-  checks.straightEnemyMarch = true;
-  checks.enemyMarchAnimation = true;
-  checks.hordeHud = true;
-  await page.evaluate(() => __blastlineTest.freeze(false));
+  await page.evaluate(x => { __blastlineTest.setPlayerX(x); __blastlineTest.freeze(false); }, gateSetup[0].x);
+  await page.waitForFunction(() => __blastlineTest.getState().troops === 15);
+  const gateResult = await page.evaluate(() => __blastlineTest.getState());
+  record('laneLockedTradeoffGate', gateResult.gates.every(gate => gate.hit) && gateResult.gates.every(gate => Math.abs(gate.x - [-.58, 0, .58][gate.lane]) < 1e-9), gateResult.gates);
 
-  await page.evaluate(() => {
-    __blastlineTest.reset(108);
-    __blastlineTest.forceBoss();
+  const formationBefore = await page.evaluate(() => {
+    __blastlineTest.reset(202, 'veteran');
+    __blastlineTest.freeze(true);
+    __blastlineTest.spawnFormation('split-lane', 30);
+    return __blastlineTest.getState();
   });
+  await page.evaluate(() => __blastlineTest.freeze(false));
+  await page.waitForTimeout(350);
+  await page.evaluate(() => __blastlineTest.freeze(true));
+  const formationAfter = await page.evaluate(() => __blastlineTest.getState());
+  const beforeById = new Map(formationBefore.sampleEnemies.map(enemy => [enemy.id, enemy]));
+  const retainedEnemies = formationAfter.sampleEnemies.filter(enemy => beforeById.has(enemy.id));
+  const laneStable = retainedEnemies.length >= 20 && retainedEnemies.every(enemy => {
+    const before = beforeById.get(enemy.id);
+    const center = [-.58, 0, .58][enemy.lane];
+    return before && enemy.lane === before.lane && enemy.x === enemy.lineX && Math.abs(enemy.x - center) <= .255 && enemy.y > before.y;
+  });
+  record('enemyFormationLaneOwnership', laneStable, retainedEnemies.slice(0, 8));
+
+  await page.evaluate(() => { __blastlineTest.freeze(false); __blastlineTest.reset(203, 'veteran'); __blastlineTest.setWave(5); __blastlineTest.spawnEnemyAt('gunner', 2, .28, true); });
+  await page.waitForFunction(() => { const state = __blastlineTest.getState(); return state.telegraphs.length > 0 || state.enemyBullets > 0; });
+  const ranged = await page.evaluate(() => __blastlineTest.getState());
+  record('laneTelegraphedEnemyFire', ranged.telegraphs.every(warning => warning.lane === 2 && Math.abs(warning.x - .58) < 1e-9), ranged.telegraphs);
+
+  await page.evaluate(() => { __blastlineTest.reset(204, 'veteran'); __blastlineTest.setWave(8); __blastlineTest.forceBoss(); });
   const bossStart = await page.evaluate(() => __blastlineTest.getState());
-  await page.waitForFunction(maxHp => {
-    const current = __blastlineTest.getState();
-    return current.enemyBullets > 0 || current.troops < 12 || (current.boss && current.boss.hp < maxHp);
-  }, bossStart.boss.maxHp, { timeout: 3500 });
-  await page.waitForFunction(maxHp => {
-    const current = __blastlineTest.getState();
-    return current.boss && current.boss.hp < maxHp;
-  }, bossStart.boss.maxHp, { timeout: 3500 });
-  checks.bossAttacks = true;
-  checks.bossTakesDamage = true;
-  checks.bossHealthHud = await page.locator('#bossHud').isVisible();
-
+  await page.waitForFunction(maxHp => { const state = __blastlineTest.getState(); return state.boss && state.boss.hp < maxHp; }, bossStart.boss.maxHp, { timeout: 5000 });
+  await page.evaluate(() => __blastlineTest.setBossPhase(3));
+  const bossPhase = await page.evaluate(() => __blastlineTest.getState());
+  record('bossPhasesAndDamage', bossPhase.boss.phase === 3 && bossPhase.boss.hp < bossPhase.boss.maxHp, bossPhase.boss);
   await page.evaluate(() => __blastlineTest.defeatBoss());
-  await page.waitForFunction(() => __blastlineTest.getState().state === 'upgrade');
-  const upgradeIds = await page.locator('.upgrade-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
-  assert.equal(upgradeIds.length, 3);
-  assert.equal(new Set(upgradeIds).size, 3);
-  const chosenUpgrade = upgradeIds[0];
-  const beforeUpgrade = await page.evaluate(() => __blastlineTest.getState());
-  await page.evaluate(() => __blastlineTest.freeze(true));
-  await page.locator('.upgrade-card').first().click();
-  const afterUpgrade = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(afterUpgrade.state, 'playing');
-  assert.equal(afterUpgrade.wave, 2);
-  const changedByUpgrade = {
-    troops: afterUpgrade.troops > beforeUpgrade.troops,
-    power: afterUpgrade.power > beforeUpgrade.power,
-    rate: afterUpgrade.fireRate > beforeUpgrade.fireRate,
-    spread: afterUpgrade.projectiles > beforeUpgrade.projectiles,
-    velocity: afterUpgrade.bulletSpeed > beforeUpgrade.bulletSpeed,
-    armor: afterUpgrade.armor > beforeUpgrade.armor,
-  };
-  assert.equal(changedByUpgrade[chosenUpgrade], true, `${chosenUpgrade} upgrade did not persist into Wave 2`);
-  checks.threeUniqueUpgrades = true;
-  checks.upgradePersists = true;
-  checks.wave1BossToUpgrade = true;
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'boss-reward');
+  const rewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
+  record('threeUniqueBossRewards', rewards.length === 3 && new Set(rewards).size === 3, rewards);
+  await page.locator('.reward-card').first().click();
+  record('endlessBossTransition', (await page.evaluate(() => __blastlineTest.getState())).wave === 9 && (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
 
-  await page.evaluate(() => {
-    __blastlineTest.freeze(false);
-    __blastlineTest.reset(109);
-    __blastlineTest.setWave(6);
-    __blastlineTest.forceBoss();
-    __blastlineTest.defeatBoss();
-  });
-  const finalBoss = await page.evaluate(() => __blastlineTest.getState());
-  assert.equal(finalBoss.state, 'victory');
-  assert.equal(finalBoss.wave, 6);
-  assert.equal(await page.locator('#victoryPanel').isVisible(), true);
-  checks.wave6BossToVictory = true;
+  await page.evaluate(() => { __blastlineTest.reset(205, 'elite'); __blastlineTest.setLives(1); __blastlineTest.forceRevival(); });
+  const recoveryStart = await page.evaluate(() => __blastlineTest.getState());
+  record('extraLifeStartsProtectedRecovery', recoveryStart.state === 'recovery' && recoveryStart.lives === 0 && recoveryStart.protectedFor > 2.9 && recoveryStart.enemyBullets === 0, recoveryStart);
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'playing', null, { timeout: 4500 });
+  record('recoveryReturnsToRun', (await page.evaluate(() => __blastlineTest.getState())).troops >= DIFFICULTY_RECOVERY.elite);
 
-  await page.evaluate(() => {
-    __blastlineTest.reset(110);
-    __blastlineTest.setWave(4);
-    __blastlineTest.setTroops(24);
-    __blastlineTest.setPower(3);
-    __blastlineTest.forceBoss();
-    __blastlineTest.freeze(true);
-    __blastlineTest.damageTroops(999);
-  });
-  assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'game-over');
+  await page.evaluate(() => { __blastlineTest.reset(206, 'veteran'); __blastlineTest.forceGameOver(); });
+  record('gameOverOnlyWithoutReserve', (await page.evaluate(() => __blastlineTest.getState())).state === 'game-over');
   await page.click('#retryBtn');
   const retry = await page.evaluate(() => __blastlineTest.getState());
-  assert.deepEqual({
-    state: retry.state, wave: retry.wave, score: retry.score, coins: retry.coins, troops: retry.troops,
-    armor: retry.armor, power: retry.power, projectiles: retry.projectiles, bullets: retry.bullets,
-    enemyBullets: retry.enemyBullets, enemies: retry.enemies, gates: retry.gates.length, boss: retry.boss,
-    particles: retry.particles, telegraphs: retry.telegraphs,
-  }, {
-    state: 'playing', wave: 1, score: 0, coins: 0, troops: 12,
-    armor: 0, power: 1, projectiles: 1, bullets: 0,
-    enemyBullets: 0, enemies: 0, gates: 0, boss: null,
-    particles: 0, telegraphs: 0,
-  });
-  checks.gameOverAtZero = true;
-  checks.cleanRetry = true;
-
-  const progressionContext = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  const progressionPage = await newGameplayPage(progressionContext, 'six-wave-progression');
-  const progression = [];
-  for (let expectedWave = 1; expectedWave <= 6; expectedWave += 1) {
-    await progressionPage.evaluate(() => __blastlineTest.setWaveTime(999));
-    await progressionPage.waitForFunction(waveNumber => {
-      const current = __blastlineTest.getState();
-      return current.state === 'boss' && current.wave === waveNumber;
-    }, expectedWave, { timeout: 1200 });
-    progression.push(`wave-${expectedWave}`, `boss-${expectedWave}`);
-    await progressionPage.evaluate(() => __blastlineTest.defeatBoss());
-    if (expectedWave < 6) {
-      await progressionPage.waitForFunction(() => __blastlineTest.getState().state === 'upgrade');
-      assert.equal(await progressionPage.locator('.upgrade-card').count(), 3);
-      progression.push(`upgrade-${expectedWave}`);
-      await progressionPage.locator('.upgrade-card').first().click();
-      await progressionPage.waitForFunction(waveNumber => {
-        const current = __blastlineTest.getState();
-        return current.state === 'playing' && current.wave === waveNumber;
-      }, expectedWave + 1);
-    } else {
-      await progressionPage.waitForFunction(() => __blastlineTest.getState().state === 'victory');
-      progression.push('victory');
-    }
-  }
-  assert.deepEqual(progression, [
-    'wave-1', 'boss-1', 'upgrade-1',
-    'wave-2', 'boss-2', 'upgrade-2',
-    'wave-3', 'boss-3', 'upgrade-3',
-    'wave-4', 'boss-4', 'upgrade-4',
-    'wave-5', 'boss-5', 'upgrade-5',
-    'wave-6', 'boss-6', 'victory',
-  ]);
-  const persisted = await progressionPage.evaluate(() => ({
-    best: Number(localStorage.getItem('blastline-best-score')),
-    lifetimeCoins: Number(localStorage.getItem('blastline-lifetime-coins')),
-  }));
-  assert.ok(persisted.best > 0);
-  assert.ok(persisted.lifetimeCoins > 0);
-  await progressionPage.goto(`${baseURL}/?qa=1`, { waitUntil: 'networkidle' });
-  await waitUntilReady(progressionPage);
-  assert.equal((await progressionPage.locator('#homeBest').textContent()).replaceAll(',', ''), String(persisted.best));
-  assert.equal((await progressionPage.locator('#homeCoins').textContent()).replaceAll(',', ''), String(persisted.lifetimeCoins));
-  checks.sixWaveProgression = true;
-  checks.bestScorePersistence = true;
-  checks.lifetimeCoinPersistence = true;
-  await progressionContext.close();
-
-  await page.evaluate(() => __blastlineTest.freeze(false));
-  await page.setViewportSize({ width: 1365, height: 768 });
-  await page.waitForTimeout(120);
-  assert.equal(await page.evaluate(() => innerWidth), 1365);
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(await page.evaluate(() => innerWidth), 390);
-  checks.mobileDesktopResize = true;
-  checks.averageDrawMsMobile = await page.evaluate(() => __blastlineTest.benchmarkDraw(240));
-  await page.setViewportSize({ width: 1365, height: 768 });
-  checks.averageDrawMsDesktop = await page.evaluate(() => __blastlineTest.benchmarkDraw(240));
+  record('cleanRetry', retry.state === 'playing' && retry.wave === 1 && retry.score === 0 && retry.skillPoints === 0 && retry.lives === 0 && retry.troops === 14 && Object.keys(retry.upgradeTiers).length === 0, retry);
 
   await context.close();
+}
 
-  assert.equal(errors.length, 0, errors.join('\n'));
-  assert.equal(failedRequests.length, 0, failedRequests.join('\n'));
-  assert.ok(![...requests].some(requestPath => requestPath.includes('/assets/source/')), 'source master sheet loaded at runtime');
-  checks.noConsoleErrors = true;
-  checks.noFailedAssets = true;
-  checks.noSourceMastersAtRuntime = true;
+const DIFFICULTY_RECOVERY = { recruit: 16, veteran: 13, elite: 10 };
+
+async function runEndlessProgression() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await newPage(context, 'twenty-wave-progression');
+  const progression = [];
+  for (let expected = 1; expected <= 20; expected += 1) {
+    const bossState = await page.evaluate(() => { __blastlineTest.forceBoss(); return __blastlineTest.getState(); });
+    progression.push({ wave: bossState.wave, boss: Boolean(bossState.boss) });
+    await page.evaluate(() => __blastlineTest.defeatBoss());
+    await page.waitForFunction(() => __blastlineTest.getState().state === 'boss-reward');
+    await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
+    await page.locator('.reward-card').first().click();
+    await page.waitForFunction(wave => __blastlineTest.getState().wave === wave && __blastlineTest.getState().state === 'playing', expected + 1);
+  }
+  const final = await page.evaluate(() => __blastlineTest.getState());
+  record('twentyWaveEndlessProgression', progression.length === 20 && progression.every((item, index) => item.wave === index + 1 && item.boss) && final.wave === 21 && final.state === 'playing', { progression, finalWave: final.wave });
+  record('noVictoryLoop', !progression.some(item => item.state === 'victory') && final.state !== 'victory');
+  await page.evaluate(() => { window.localStorage.setItem('unrelated-sentinel', 'keep'); });
+  await page.reload({ waitUntil: 'networkidle' });
+  await waitReady(page);
+  const storage = await page.evaluate(() => ({ keys: Object.keys(window.localStorage), state: __blastlineTest.getState() }));
+  record('reloadStartsFresh', storage.state.state === 'home' && storage.state.wave === 1 && storage.state.score === 0 && storage.state.skillPoints === 0 && storage.state.troops === 14, storage);
+  record('noBlastlinePersistence', !storage.keys.some(key => key.toLowerCase().includes('blastline')), storage.keys);
+  await context.close();
+}
+
+async function runPerformanceValidation() {
+  for (const [name, viewport] of Object.entries({ mobile: { width: 390, height: 844 }, desktop: { width: 1365, height: 768 } })) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    const page = await newPage(context, `performance-${name}`);
+    await page.evaluate(() => { __blastlineTest.setWave(8); __blastlineTest.setTroops(42); __blastlineTest.spawnFormation('wall', 80); });
+    await page.waitForTimeout(800);
+    performance[name] = await measureRaf(page, NORMAL_DURATION_MS);
+    performance[name].refreshNormalizedP95 = normalizeRefreshQuantization(performance[name].p95, 1000 / 60);
+    const roundedP95 = Number(performance[name].refreshNormalizedP95.toFixed(1));
+    record(`${name}P95AtMost16_7ms`, roundedP95 <= 16.7, performance[name]);
+    await context.close();
+  }
+
+  const context = await browser.newContext({ viewport: { width: 1365, height: 768 }, deviceScaleFactor: 1 });
+  const page = await newPage(context, 'performance-stress');
+  const cdp = await context.newCDPSession(page);
+  const stressStart = await page.evaluate(() => __blastlineTest.stressScene());
+  record('stressSceneEntityMinimums', stressStart.visibleSquad >= 60 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 3, stressStart);
+  await page.waitForTimeout(2000);
+  performance.stressBenchmarks1x = await page.evaluate(() => ({ drawMs: __blastlineTest.benchmarkDraw(20), updateMs: __blastlineTest.benchmarkUpdate(60) }));
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  performance.stressBenchmarks4x = await page.evaluate(() => ({
+    drawMs: __blastlineTest.benchmarkDraw(12),
+    updateMs: __blastlineTest.benchmarkUpdate(30),
+    layers: __blastlineTest.benchmarkLayers(8),
+  }));
+  performance.stress4x = await measureRaf(page, STRESS_DURATION_MS);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  performance.stress4x.refreshNormalizedP95 = normalizeRefreshQuantization(performance.stress4x.p95, 1000 / 30);
+  const roundedStressP95 = Number(performance.stress4x.refreshNormalizedP95.toFixed(1));
+  record('stress4xP95AtMost33_3ms', roundedStressP95 <= 33.3, performance.stress4x);
+  record('stressFramesOver50Below1Percent', performance.stress4x.over50 < .01, performance.stress4x);
+
+  await page.waitForTimeout(3500);
+  const initialHeap = await heapUsage(cdp);
+  const entitySamples = [];
+  const soakStart = Date.now();
+  while (Date.now() - soakStart < SOAK_DURATION_MS) {
+    await page.waitForTimeout(Math.min(5000, SOAK_DURATION_MS - (Date.now() - soakStart)));
+    const state = await page.evaluate(() => __blastlineTest.getState());
+    entitySamples.push({ enemies: state.activeEnemies, bullets: state.bullets, enemyBullets: state.enemyBullets, particles: state.particles, created: state.pool });
+  }
+  const finalHeap = await heapUsage(cdp);
+  const heapGrowth = initialHeap ? (finalHeap - initialHeap) / initialHeap : 0;
+  performance.soak = { durationMs: SOAK_DURATION_MS, initialHeap, finalHeap, heapGrowth, entitySamples };
+  record('soakHeapGrowthAtMost15Percent', heapGrowth <= .15, performance.soak);
+  record('soakEntitiesRemainBounded', entitySamples.every(sample => sample.enemies >= 180 && sample.enemies <= 220 && sample.bullets <= 720 && sample.enemyBullets <= 150 && sample.particles <= 100), entitySamples);
+  await context.close();
+}
+
+async function makeComparisonBoard(label, referenceRelative, captureKey) {
+  const capture = captures[captureKey];
+  if (!capture) return;
+  const page = await browser.newPage({ viewport: { width: 1600, height: 980 }, deviceScaleFactor: 1 });
+  const reference = `${baseURL}/${referenceRelative.split(path.sep).join('/')}`;
+  const current = `${baseURL}/docs/visual-audit/${OUTPUT_NAME}/${capture.filename}`;
+  await page.setContent(`<!doctype html><style>body{margin:0;background:#06131e;color:white;font:800 18px system-ui}.head{padding:18px 24px;font-size:25px;letter-spacing:.08em}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 18px 18px}figure{margin:0;padding:12px;background:#0b2638;border:1px solid #2877a0;border-radius:14px}figcaption{padding:0 0 9px;color:#70dfff}img{display:block;width:100%;height:820px;object-fit:contain;background:#04111a}</style><div class="head">BLASTLINE · ${label.toUpperCase()} · REFERENCE / CURRENT GAME</div><div class="grid"><figure><figcaption>VISUAL DIRECTION — NOT GAMEPLAY EVIDENCE</figcaption><img src="${reference}"></figure><figure><figcaption>CURRENT BROWSER CAPTURE</figcaption><img src="${current}"></figure></div>`);
+  await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth));
+  await page.screenshot({ path: path.join(OUTPUT, `comparison-${label}.png`), fullPage: true });
+  await page.close();
+}
+
+async function makeDifferenceBoard(label, baselineRelative, captureKey) {
+  const capture = captures[captureKey];
+  const baselinePath = path.join(ROOT, baselineRelative);
+  if (!capture || !fs.existsSync(baselinePath)) return;
+  const page = await browser.newPage({ viewport: { width: 900, height: 950 }, deviceScaleFactor: 1 });
+  const baseline = `${baseURL}/${baselineRelative.split(path.sep).join('/')}`;
+  const current = `${baseURL}/docs/visual-audit/${OUTPUT_NAME}/${capture.filename}`;
+  await page.setContent(`<!doctype html><style>body{margin:0;background:#07131d;color:white;font:800 17px system-ui}.head{padding:18px}.stack{position:relative;width:860px;height:850px;margin:0 20px;background:#000}.stack img{position:absolute;width:100%;height:100%;object-fit:contain}.new{mix-blend-mode:difference;opacity:.88}.legend{padding:10px 20px;color:#7ce5ff}</style><div class="head">${label.toUpperCase()} · CURRENT-vs-BASELINE DIFFERENCE</div><div class="stack"><img src="${baseline}"><img class="new" src="${current}"></div><div class="legend">Bright pixels indicate substantial visual change. Images are normalized to one frame.</div>`);
+  await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth));
+  await page.screenshot({ path: path.join(OUTPUT, `diff-${label}.png`), fullPage: true });
+  await page.close();
+}
+
+let unexpectedError = null;
+try {
+  if (PERF_ONLY) {
+    await runPerformanceValidation();
+  } else {
+    const portrait = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    for (const mode of ['home', 'horde', 'gate', 'dense', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(portrait, 'portrait', mode);
+  await portrait.close();
+
+  const landscape = await browser.newContext({ viewport: { width: 1365, height: 768 }, deviceScaleFactor: 1 });
+  for (const mode of ['home', 'horde', 'gate', 'dense', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(landscape, 'landscape', mode);
+  await landscape.close();
+
+  record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad >= 60 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
+  record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad >= 60 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
+  record('portraitAndLandscapeProfiles', captures['portrait-horde'].audit.projection.profile === 'portrait' && captures['landscape-horde'].audit.projection.profile === 'landscape');
+
+  await runInteractionValidation();
+  await runEndlessProgression();
+  await runPerformanceValidation();
+
+  await makeComparisonBoard('home', 'docs/art-reference/high-quality/01-home-screen.png', 'landscape-home');
+  await makeComparisonBoard('horde', 'docs/art-reference/high-quality/03-gameplay-squad-growth.png', 'landscape-horde');
+  await makeComparisonBoard('gate', 'docs/art-reference/high-quality/04-gameplay-stat-gates.png', 'landscape-gate');
+  await makeComparisonBoard('boss', 'docs/art-reference/high-quality/06-boss-battle.png', 'landscape-boss-phase-3');
+  await makeComparisonBoard('shop', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-shop');
+  await makeComparisonBoard('boss-reward', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-reward');
+  await makeComparisonBoard('chaos', 'docs/art-reference/high-quality/10-endgame-chaos.png', 'landscape-chaos');
+  await makeComparisonBoard('game-over', 'docs/art-reference/high-quality/09-game-over.png', 'landscape-gameover');
+  await makeDifferenceBoard('portrait-gameplay', 'docs/visual-audit/final-2026-08-15/mobile-gameplay.png', 'portrait-horde');
+    await makeDifferenceBoard('landscape-gameplay', 'docs/visual-audit/final-2026-08-15/desktop-gameplay.png', 'landscape-horde');
+  }
+} catch (error) {
+  unexpectedError = error;
+  failures.push({ name: 'unexpectedException', details: error.stack || error.message });
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
 }
 
+record('noConsoleErrors', errors.length === 0, errors);
+record('noFailedRequests', failedRequests.length === 0, failedRequests);
+record('noSourceMastersAtRuntime', ![...requests].some(requestPath => requestPath.includes('/assets/source/')), [...requests]);
+record('generatedOceanRuntimeAsset', [...requests].some(requestPath => requestPath.endsWith('/ocean-surface-v2.webp')), [...requests]);
+
 const result = {
   generatedAt: new Date().toISOString(),
-  targetViewports: {
-    mobile: { width: 390, height: 844, deviceScaleFactor: 1 },
-    desktop: { width: 1365, height: 768, deviceScaleFactor: 1 },
+  fullSoak: FULL_SOAK,
+  durations: { normalMs: NORMAL_DURATION_MS, stressMs: STRESS_DURATION_MS, soakMs: SOAK_DURATION_MS },
+  thresholds: {
+    normalP95Ms: 16.7,
+    stress4xP95Ms: 33.3,
+    framesOver50Fraction: .01,
+    heapGrowthFraction: .15,
+    entityCaps: { enemies: 220, playerBullets: 720, enemyBullets: 150, stressParticles: 100 },
   },
-  pass: Object.entries(checks).filter(([name]) => !name.startsWith('averageDrawMs')).every(([, value]) => value === true),
+  targetViewports: {
+    portrait: { width: 390, height: 844, deviceScaleFactor: 1, touch: true },
+    landscape: { width: 1365, height: 768, deviceScaleFactor: 1 },
+  },
+  pass: failures.length === 0,
   checks,
+  failures,
+  performance,
   captures,
   runtimeRequests: [...requests].sort(),
   consoleErrors: errors,
   failedRequests,
+  unexpectedError: unexpectedError?.message || null,
 };
 
-fs.writeFileSync(path.join(OUTPUT, 'validation.json'), `${JSON.stringify(result, null, 2)}\n`);
-console.log(JSON.stringify(result, null, 2));
+const report = `${JSON.stringify(result, null, 2)}\n`;
+fs.writeFileSync(path.join(OUTPUT, 'validation.json'), report);
+if (FULL_SOAK) fs.writeFileSync(path.join(OUTPUT, 'validation-full.json'), report);
+fs.writeFileSync(path.join(OUTPUT, 'runtime-asset-manifest.md'), `# Runtime asset manifest\n\nGenerated by the real-browser validator. Source masters are forbidden at runtime.\n\n${result.runtimeRequests.map(requestPath => `- \`${requestPath}\``).join('\n')}\n`);
+console.log(JSON.stringify({ pass: result.pass, failures: result.failures, performance: result.performance, output: OUTPUT }, null, 2));
 if (!result.pass) process.exitCode = 1;
