@@ -1,39 +1,58 @@
-name: Section 4 final screenshots
+name: Batch 12 fidelity validation
 on:
   push:
-    branches: [section-04-enemies-combat]
-    paths-ignore: ['docs/visual-audit/section-04/**']
+    branches: [batch-12-full-fidelity]
+    paths: ['tools/batch12-run-trigger.txt']
 permissions:
   contents: write
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+      - name: Apply pending Batch 12 source transforms
+        run: |
+          node tools/batch12-transform.mjs
+          node tools/batch12-capture-modes.mjs
       - name: Required validation
         run: |
           npm test
           node --check src/game.js
           node --check src/core.mjs
           node --check src/enemy-render.mjs
+          node --check src/production-render.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install chromium
-      - name: Serve game and capture real screenshots
+      - name: Serve and capture genuine browser evidence
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .2; done
           node tools/section04-final-capture.mjs
-      - name: Commit screenshot evidence
+          mkdir -p docs/visual-audit/full-fidelity/final
+          cp docs/visual-audit/section-04/after-mobile.png docs/visual-audit/full-fidelity/final/gameplay-mobile.png
+          cp docs/visual-audit/section-04/after-desktop.png docs/visual-audit/full-fidelity/final/gameplay-desktop.png
+          cp docs/visual-audit/section-04/after-elite-mobile.png docs/visual-audit/full-fidelity/final/elite-mobile.png
+          cp docs/visual-audit/section-04/after-dense-mobile.png docs/visual-audit/full-fidelity/final/dense-mobile.png
+          cp docs/visual-audit/section-04/after-boss-mobile.png docs/visual-audit/full-fidelity/final/boss-mobile.png
+          cp docs/visual-audit/section-04/final-capture.json docs/visual-audit/full-fidelity/final/runtime.json
+          npx playwright screenshot --viewport-size="390,844" --wait-for-timeout=900 "http://127.0.0.1:4173/?capture=home" docs/visual-audit/full-fidelity/final/home-mobile.png
+          npx playwright screenshot --viewport-size="390,844" --wait-for-timeout=900 "http://127.0.0.1:4173/?capture=lane" docs/visual-audit/full-fidelity/final/lane-choice-mobile.png
+          npx playwright screenshot --viewport-size="390,844" --wait-for-timeout=900 "http://127.0.0.1:4173/?capture=upgrade" docs/visual-audit/full-fidelity/final/upgrade-mobile.png
+          npx playwright screenshot --viewport-size="390,844" --wait-for-timeout=900 "http://127.0.0.1:4173/?capture=victory" docs/visual-audit/full-fidelity/final/victory-mobile.png
+          npx playwright screenshot --viewport-size="390,844" --wait-for-timeout=900 "http://127.0.0.1:4173/?capture=gameover" docs/visual-audit/full-fidelity/final/game-over-mobile.png
+      - name: Commit implementation and genuine screenshot evidence
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/visual-audit/section-04
-          git commit -m 'Capture Section 4 final real screenshots'
+          git add src index.html styles.css docs/visual-audit/full-fidelity docs/visual-audit/section-04 tools/batch12-transform.mjs tools/batch12-capture-modes.mjs
+          git diff --cached --quiet || git commit -m 'Integrate Batch 12 visual fidelity pass'
           git push
       - uses: actions/upload-artifact@v4
         with:
-          name: section04-final-screenshots
-          path: docs/visual-audit/section-04
+          name: batch12-fidelity-evidence
+          path: |
+            docs/visual-audit/full-fidelity
+            docs/art-reference
