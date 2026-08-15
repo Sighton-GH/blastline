@@ -16,16 +16,35 @@ RUNTIME = ROOT / "assets" / "blastline"
 
 ASSETS = (
     ("09-branding-master.png", (18, 12, 1145, 520), "branding/logo-primary.webp", (900, 420)),
+    # Lightweight environment textures from the approved environment sheet. The
+    # roadway geometry remains procedural; these only provide material detail.
+    ("01-environment-master.png", (1150, 450, 1515, 538), "environment/ocean-surface.webp", (730, 176)),
+    ("01-environment-master.png", (370, 780, 595, 1002), "environment/asphalt.webp", (450, 444)),
+    ("01-environment-master.png", (12, 0, 334, 690), "environment/bridge-tower-near.webp", (390, 760)),
+    ("01-environment-master.png", (325, 50, 510, 490), "environment/bridge-tower-far.webp", (260, 560)),
     # Top-row rear-facing run cycle. The lower edge stops before the aiming row.
     ("02-player-swat-master.png", (120, 0, 325, 282), "characters/player-run-1.webp", (190, 290)),
     ("02-player-swat-master.png", (365, 0, 550, 282), "characters/player-run-2.webp", (190, 290)),
     ("02-player-swat-master.png", (575, 0, 775, 282), "characters/player-run-3.webp", (190, 290)),
     ("02-player-swat-master.png", (790, 0, 995, 282), "characters/player-run-4.webp", (190, 290)),
-    # Isolated representatives from each red-faction row. Bounds deliberately
-    # exclude neighboring animation frames and the weapon strip below the boss.
+    # Four real march frames for every ordinary enemy silhouette. These replace
+    # the old single-frame vertical bob while retaining stable compatibility
+    # aliases for older runtime references.
     ("03-enemies-elites-boss-master.png", (20, 0, 125, 152), "characters/enemy-grunt.webp", (150, 175)),
+    ("03-enemies-elites-boss-master.png", (20, 0, 125, 152), "characters/enemy-grunt-1.webp", (150, 175)),
+    ("03-enemies-elites-boss-master.png", (140, 0, 260, 155), "characters/enemy-grunt-2.webp", (150, 175)),
+    ("03-enemies-elites-boss-master.png", (260, 0, 390, 160), "characters/enemy-grunt-3.webp", (150, 175)),
+    ("03-enemies-elites-boss-master.png", (385, 0, 515, 165), "characters/enemy-grunt-4.webp", (150, 175)),
     ("03-enemies-elites-boss-master.png", (0, 145, 162, 335), "characters/enemy-elite.webp", (190, 195)),
+    ("03-enemies-elites-boss-master.png", (0, 145, 162, 335), "characters/enemy-elite-1.webp", (190, 195)),
+    ("03-enemies-elites-boss-master.png", (165, 145, 330, 335), "characters/enemy-elite-2.webp", (190, 195)),
+    ("03-enemies-elites-boss-master.png", (335, 145, 500, 335), "characters/enemy-elite-3.webp", (190, 195)),
+    ("03-enemies-elites-boss-master.png", (505, 145, 675, 335), "characters/enemy-elite-4.webp", (190, 195)),
     ("03-enemies-elites-boss-master.png", (0, 330, 165, 495), "characters/enemy-special.webp", (205, 205)),
+    ("03-enemies-elites-boss-master.png", (0, 330, 165, 495), "characters/enemy-special-1.webp", (205, 205)),
+    ("03-enemies-elites-boss-master.png", (170, 330, 345, 505), "characters/enemy-special-2.webp", (205, 205)),
+    ("03-enemies-elites-boss-master.png", (350, 330, 525, 510), "characters/enemy-special-3.webp", (205, 205)),
+    ("03-enemies-elites-boss-master.png", (520, 330, 700, 510), "characters/enemy-special-4.webp", (205, 205)),
     ("03-enemies-elites-boss-master.png", (320, 500, 625, 855), "characters/boss.webp", (330, 390)),
     ("07-upgrade-ui-master.png", (15, 545, 198, 735), "ui/upgrade-troops.webp", (150, 150)),
     ("07-upgrade-ui-master.png", (198, 545, 382, 735), "ui/upgrade-power.webp", (150, 150)),
@@ -90,9 +109,39 @@ def export_keyed_asset(source_name: str, box: tuple[int, int, int, int], destina
     print(f"{destination_path.relative_to(ROOT)}\t{destination_path.stat().st_size} bytes\t{asset.width}x{asset.height}")
 
 
+def export_whitecap_asset(source_name: str, box: tuple[int, int, int, int], destination: str, maximum: tuple[int, int]) -> None:
+    """Extract only bright foam/ripple marks from an approved ocean crop.
+
+    Keeping the blue body transparent lets Canvas repeat the detail at several
+    depths without revealing rectangular texture bands over its water gradient.
+    """
+    source_path = SOURCE / source_name
+    destination_path = RUNTIME / destination
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    with Image.open(source_path) as master:
+        source = master.crop(box).convert("RGBA")
+        output = Image.new("RGBA", source.size)
+        converted = []
+        for red, green, blue, source_alpha in source.getdata():
+            brightness = red * 0.70 + green * 0.20 + blue * 0.10
+            foam = max(0, min(255, round((brightness - 66) * 2.45)))
+            alpha = round(foam * source_alpha / 255)
+            converted.append((222, 248, 255, alpha))
+        output.putdata(converted)
+        output.thumbnail(maximum, Image.Resampling.LANCZOS)
+        output.save(destination_path, "WEBP", quality=90, method=6, exact=True)
+    print(f"{destination_path.relative_to(ROOT)}\t{destination_path.stat().st_size} bytes\t{output.width}x{output.height}")
+
+
 def main() -> None:
     for spec in ASSETS:
         export_asset(*spec)
+    export_whitecap_asset(
+        "01-environment-master.png",
+        (1150, 450, 1515, 538),
+        "environment/ocean-whitecaps.webp",
+        (730, 176),
+    )
     export_keyed_asset("10-home-master.png", (785, 650, 1025, 1085), "characters/home-hero.webp", (360, 600))
 
 

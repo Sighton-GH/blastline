@@ -7,7 +7,7 @@ BLASTLINE is an instant-play browser gate-runner squad shooter. Steer a blue squ
 - Mouse, pointer drag, or touch: steer horizontally.
 - A/D or Left/Right: steer horizontally.
 - Shooting and forward travel: automatic.
-- Pause: top-right button or P.
+- Pause/resume: top-right button, Space, or P.
 
 ## Stack
 - Plain HTML/CSS/Canvas

@@ -27,15 +27,31 @@ import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 
 const RUNTIME_ASSET_PATHS = Object.freeze({
   homeHero: 'assets/blastline/characters/home-hero.webp',
+  oceanSurface: 'assets/blastline/environment/ocean-surface.webp',
+  oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
+  asphalt: 'assets/blastline/environment/asphalt.webp',
+  bridgeTowerNear: 'assets/blastline/environment/bridge-tower-near.webp',
+  bridgeTowerFar: 'assets/blastline/environment/bridge-tower-far.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
   playerRun3: 'assets/blastline/characters/player-run-3.webp',
   playerRun4: 'assets/blastline/characters/player-run-4.webp',
-  enemyGrunt: 'assets/blastline/characters/enemy-grunt.webp',
-  enemyElite: 'assets/blastline/characters/enemy-elite.webp',
-  enemySpecial: 'assets/blastline/characters/enemy-special.webp',
+  enemyGrunt1: 'assets/blastline/characters/enemy-grunt-1.webp',
+  enemyGrunt2: 'assets/blastline/characters/enemy-grunt-2.webp',
+  enemyGrunt3: 'assets/blastline/characters/enemy-grunt-3.webp',
+  enemyGrunt4: 'assets/blastline/characters/enemy-grunt-4.webp',
+  enemyElite1: 'assets/blastline/characters/enemy-elite-1.webp',
+  enemyElite2: 'assets/blastline/characters/enemy-elite-2.webp',
+  enemyElite3: 'assets/blastline/characters/enemy-elite-3.webp',
+  enemyElite4: 'assets/blastline/characters/enemy-elite-4.webp',
+  enemySpecial1: 'assets/blastline/characters/enemy-special-1.webp',
+  enemySpecial2: 'assets/blastline/characters/enemy-special-2.webp',
+  enemySpecial3: 'assets/blastline/characters/enemy-special-3.webp',
+  enemySpecial4: 'assets/blastline/characters/enemy-special-4.webp',
   boss: 'assets/blastline/characters/boss.webp',
 });
+
+const MAX_ACTIVE_PLAYER_BULLETS = 800;
 
 const runtimeAssets = Object.create(null);
 
@@ -62,6 +78,8 @@ const ctx = canvas.getContext('2d');
 const menu = document.querySelector('#menu');
 const hud = document.querySelector('#hud');
 const floatingStats = document.querySelector('#floatingStats');
+const enemyCounter = document.querySelector('#enemyCounter');
+const enemyCountLabel = document.querySelector('#enemyCountLabel');
 const bossHud = document.querySelector('#bossHud');
 const upgradePanel = document.querySelector('#upgradePanel');
 const gameOverPanel = document.querySelector('#gameOverPanel');
@@ -106,6 +124,7 @@ let player = initialPlayer();
 let bullets = [], enemyBullets = [], enemies = [], gates = [], particles = [], floaters = [], muzzleFlashes = [], telegraphs = [];
 let shotSerial = 0;
 let gateSerial = 0;
+let hordeSerial = 0;
 let wave = 0, waveTime = 0, bossTime = 0, spawnTimer = 0, gateTimer = 1.8, enemiesSpawned = 0;
 let score = 0;
 let best = +(localStorage.getItem('blastline-best-score') || localStorage.getItem('blastline-best') || 0);
@@ -136,6 +155,7 @@ function setState(next){
   victoryPanel.classList.toggle('visible', next === GAME_STATE.VICTORY);
   hud.classList.toggle('hidden', !hudVisible);
   floatingStats.classList.toggle('hidden', !hudVisible);
+  enemyCounter.classList.toggle('hidden', !ACTIVE_STATES.includes(next) || next === GAME_STATE.BOSS);
   bossHud.classList.toggle('hidden', !bossVisible || !boss);
   pauseBtn.textContent = next === GAME_STATE.PAUSED ? '▶' : '❚❚';
   pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
@@ -167,6 +187,7 @@ function resetRun(seed = Date.now() >>> 0){
   resumeState = null;
   roadScroll = 0;
   gateSerial = 0;
+  hordeSerial = 0;
   shotSerial = 0;
   runFinalized = false;
   controlsActive = false;
@@ -197,24 +218,69 @@ function startWave(){
   updateHud();
 }
 
-function spawnEnemy(type='grunt'){
+function spawnEnemy(type='grunt', options={}){
   const level = LEVELS[wave];
   const lane = [-0.6,-0.3,0,0.3,0.6][Math.floor(rng()*5)];
-  const hp = type === 'elite' ? 5 + wave * 2 : type === 'shield' ? 4 + wave * 2 : 1 + Math.floor(wave / 2);
+  const hp = type === 'elite' ? 2 + Math.floor(wave / 3) : type === 'shield' ? 2 + Math.floor(wave / 3) : 1;
+  const baseSpeed = type === 'elite' ? .050 : type === 'shield' ? .046 : .058;
+  const x = clamp(options.x ?? (lane + (rng()-.5)*.07), -.78, .78);
   enemies.push({
     type,
-    x: lane + (rng()-.5)*.07,
-    y: -0.08 - rng()*0.05,
+    x,
+    lineX: x,
+    y: options.y ?? (-0.08 - rng()*0.05),
     hp,
     maxHp: hp,
-    shield: type === 'shield' ? 3 + wave : 0,
-    speed: (type === 'elite' ? .18 : type === 'shield' ? .19 : .23) * level.speed * (0.9 + rng()*0.18),
+    shield: type === 'shield' ? 1 + Math.floor(wave / 4) : 0,
+    speed: options.speed ?? (baseSpeed * level.speed * (0.96 + rng()*0.08)),
     wobble: rng()*6.28,
-    bob: rng()*1000,
+    bob: options.marchPhase ?? rng()*1000,
+    hordeId: options.hordeId ?? null,
+    hordeRow: options.hordeRow ?? 0,
+    canShoot: options.canShoot ?? true,
     shotTimer: 0.9 + rng()*1.8,
     rewarded: false,
   });
   enemiesSpawned += 1;
+}
+
+function spawnHorde(){
+  const level = LEVELS[wave];
+  const remaining = Math.max(0, level.enemies - enemiesSpawned);
+  if (!remaining) return 0;
+  const hordeId = ++hordeSerial;
+  const desired = level.horde + Math.floor(rng() * Math.max(3, 4 + wave));
+  const count = Math.min(remaining, desired);
+  const columns = Math.min(8, 5 + Math.floor(wave / 2));
+  const rows = Math.ceil(count / columns);
+  const center = (rng() - .5) * .10;
+  const frontY = -.018 - rng() * .025;
+  const groupSpeed = .056 * level.speed * (.97 + rng() * .045);
+  let spawned = 0;
+  for (let row = 0; row < rows; row += 1) {
+    const rowCount = Math.min(columns, count - spawned);
+    const spacing = 1.54/Math.max(1,columns-1);
+    for (let col = 0; col < rowCount; col += 1) {
+      const index = spawned;
+      const roll = rng();
+      const shieldChance = wave >= 2 ? .018 + wave * .007 : 0;
+      const eliteChance = .045 + wave * .012;
+      const type = roll < shieldChance ? 'shield' : roll < shieldChance + eliteChance ? 'elite' : 'grunt';
+      const rowCentering = (columns - rowCount) * spacing * .5;
+      const x = center + (col - (columns - 1) / 2) * spacing + rowCentering;
+      spawnEnemy(type, {
+        x,
+        y: frontY - row * .064,
+        speed: groupSpeed * (type === 'grunt' ? 1 : type === 'elite' ? .90 : .86),
+        hordeId,
+        hordeRow: row,
+        marchPhase: hordeId * .71 + row * .32 + col * .19,
+        canShoot: type !== 'grunt' || index % 10 === 0,
+      });
+      spawned += 1;
+    }
+  }
+  return spawned;
 }
 
 function spawnGatePair(){
@@ -262,6 +328,9 @@ function updateHud(){
   armorLabel.textContent = format(player.armor);
   coinLabel.textContent = format(player.coins);
   scoreLabel.textContent = format(score);
+  const activeEnemyCount=enemies.reduce((total,enemy)=>total+(!enemy.dead?1:0),0);
+  enemyCountLabel.textContent=format(activeEnemyCount);
+  enemyCounter.classList.toggle('hidden',state!==GAME_STATE.PLAYING||activeEnemyCount===0);
   homeBest.textContent = format(best);
   homeCoins.textContent = format(lifetimeCoins);
   if (boss) {
@@ -284,39 +353,74 @@ function burst(x,y,color,count=8){
 
 function fireBurst(){
   const n=player.projectiles;
-  const spread=n===1?[0]:Array.from({length:n},(_,i)=>lerp(-0.08,0.08,i/(n-1)));
+  const spread=n===1?[0]:Array.from({length:n},(_,i)=>lerp(-0.055,0.055,i/(n-1)));
   const boost=frenzyTimer>0?1.25:1;
-  const target = boss ?? [...enemies].filter(enemy => !enemy.dead && enemy.y < .84).sort((a,b) => b.y-a.y)[0] ?? null;
   const slots=squadLogicalSlots();
-  const frontRow=slots.filter(slot=>slot.row===0);
-  const shooterCount=Math.min(frontRow.length,Math.max(n,slots.length>=18?3:slots.length>=6?2:1));
-  const shooters=[];
-  for(let i=0;i<shooterCount;i++) shooters.push(frontRow[(shotSerial+i)%frontRow.length]);
-  for(let i=0;i<spread.length;i++){
-    const off=spread[i],slot=shooters[i%shooters.length],world=squadSlotWorld(slot);
-    const targetX=(target ? target.x : player.x)+off*.35;
-    bullets.push({x:world.x+off*.08,y:world.y-0.052,targetX,vx:off*0.18,vy:-0.95*boost*player.bulletSpeed,power:player.power,shooter:slot.index});
+  const remaining = MAX_ACTIVE_PLAYER_BULLETS - bullets.length;
+  // Never emit a partial base volley: even at the projectile cap, every
+  // rendered soldier either fires together or waits for capacity together.
+  if (remaining < slots.length) return 0;
+  const shots=[];
+  // Every rendered soldier contributes a real projectile origin before any
+  // multishot extras are added. This keeps large formations visually honest.
+  for (const slot of slots) shots.push({slot,off:spread[Math.floor(spread.length/2)] ?? 0});
+  for (const slot of slots) {
+    for (let i=0;i<spread.length;i++) {
+      if(i===Math.floor(spread.length/2))continue;
+      shots.push({slot,off:spread[i]});
+    }
   }
-  for(const slot of shooters) muzzleFlashes.push({slot:slot.index,life:.085});
-  shotSerial=(shotSerial+1)%Math.max(1,frontRow.length);
+  const emittedShots=shots.slice(0,remaining);
+  for(const {slot,off} of emittedShots){
+    const world=squadSlotWorld(slot);
+    const muzzleOffset=-soldierHeightAt(slot.y)*.22/Math.max(1,laneHalfWidth(slot.y));
+    const muzzleX=clamp(world.x+muzzleOffset,-.94,.94);
+    bullets.push({
+      x:muzzleX,
+      y:world.y-0.047,
+      originX:muzzleX,
+      originY:world.y-0.047,
+      vx:off*.72,
+      vy:-0.95*boost*player.bulletSpeed,
+      power:player.power,
+      shooter:slot.index,
+    });
+  }
+  for(const slot of slots) muzzleFlashes.push({slot:slot.index,life:.085});
+  shotSerial=(shotSerial+1)%Math.max(1,slots.length);
+  return emittedShots.length;
 }
 
-function sceneHorizon(){ return H * (W < H ? 0.205 : 0.18); }
+function sceneHorizon(){ return H * (W < H ? 0.172 : 0.155); }
 function depthCurve(y){
   if(y <= 0) return y * 0.30;
-  return Math.pow(Math.min(y, 1.08), 1.28);
+  return Math.pow(Math.min(y, 1.08), 1.24);
 }
 function perspectiveY(y){
   const horizon = sceneHorizon();
-  return horizon + (H * 0.82) * depthCurve(y);
+  return horizon + (H * 1.035 - horizon) * depthCurve(y);
 }
 function laneHalfWidth(y){
-  const t = Math.pow(clamp(y, 0, 1), 0.88);
-  return W * lerp(0.105, 0.32, t);
+  // Width and projected height share the same depth term. Consequently every
+  // longitudinal deck edge is a straight screen-space line to one vanishing
+  // point instead of the bowed/hourglass silhouette produced by mixed curves.
+  const t = clamp(depthCurve(y), 0, 1);
+  return W * lerp(W < H ? 0.112 : 0.105, W < H ? 0.325 : 0.34, t);
 }
-function bridgeHalfWidth(y){ return laneHalfWidth(y) * 1.18; }
-function roadHalfWidth(y){ return bridgeHalfWidth(y) * 0.79; }
+function bridgeHalfWidth(y){ return laneHalfWidth(y) * 1.17; }
+function roadHalfWidth(y){ return bridgeHalfWidth(y) * 0.82; }
 function worldToScreen(x,y){ return { x: W/2 + x * laneHalfWidth(y), y: perspectiveY(y) }; }
+function bridgeProjectionAudit(){
+  const points=Array.from({length:21},(_,index)=>{
+    const y=index/20;
+    return {y:perspectiveY(y),left:W/2-roadHalfWidth(y),right:W/2+roadHalfWidth(y)};
+  });
+  const deviation=key=>{
+    const first=points[0],last=points.at(-1),dy=last.y-first.y||1;
+    return Math.max(...points.map(point=>Math.abs(point[key]-lerp(first[key],last[key],(point.y-first.y)/dy))));
+  };
+  return {leftMaxDeviation:deviation('left'),rightMaxDeviation:deviation('right'),horizon:sceneHorizon(),deckBottom:perspectiveY(1)};
+}
 const squadLayoutCache = new Map();
 function squadLogicalSlots(troops=player.troops){
   const visible=visibleSquadCount(troops);
@@ -339,7 +443,9 @@ function squadLogicalSlots(troops=player.troops){
   return slots;
 }
 function soldierHeightAt(y){
-  const near=clamp(Math.min(H*0.09,W*0.14),46,70);
+  const visible=visibleSquadCount(player.troops);
+  const crowdScale=lerp(1.08,.80,clamp((visible-10)/32,0,1));
+  const near=clamp(Math.min(H*0.097,W*0.18),54,82)*crowdScale;
   const depth=clamp((y-0.64)/0.31,0,1);
   return near*lerp(.76,1.04,depth);
 }
@@ -466,20 +572,17 @@ function update(dt){
 
   if (state === GAME_STATE.PLAYING) {
     spawnTimer -= dt;
-    if (spawnTimer <= 0 && enemiesSpawned < level.enemies && gates.length === 0) {
-      const roll = rng();
-      const shieldChance = wave >= 2 ? 0.055 + wave * 0.012 : 0;
-      const eliteChance = 0.18 + wave * 0.05;
-      spawnEnemy(roll < shieldChance ? 'shield' : roll < shieldChance + eliteChance ? 'elite' : 'grunt');
-      if (enemiesSpawned < level.enemies && rng() < 0.3 + wave * 0.04) spawnEnemy('grunt');
-      spawnTimer = level.spawn * (0.8 + rng() * 0.35);
+    const gateImminent=gateTimer<=0&&gates.length===0;
+    if (spawnTimer <= 0 && enemiesSpawned < level.enemies && waveTime < level.length - 7 && !gateImminent) {
+      spawnHorde();
+      spawnTimer = level.spawn * (0.92 + rng() * 0.16);
     }
 
     gateTimer -= dt;
-    const gateSpaceClear = gates.length === 0 && !enemies.some(enemy => !enemy.dead && enemy.y < 0.28);
+    const gateSpaceClear = gates.length === 0 && !enemies.some(enemy => !enemy.dead && enemy.y > -.045 && enemy.y < .31);
     if (gateTimer <= 0 && waveTime < level.length - 6 && gateSpaceClear) {
       spawnGatePair();
-      gateTimer = 5.2 - Math.min(1.5, wave * 0.18) + rng() * 1.0;
+      gateTimer = 7.2 - Math.min(1.1, wave * 0.12) + rng() * .8;
     }
     if (waveTime >= level.length) {
       spawnBoss();
@@ -497,8 +600,10 @@ function update(dt){
       continue;
     }
     enemy.y += dt * enemy.speed;
-    enemy.x += Math.sin((waveTime * 2) + enemy.wobble) * 0.0016;
-    if (wave >= 2 && enemy.y > 0.1 && enemy.y < 0.62 && enemyBullets.length < 9 + wave) {
+    // Formation x is invariant. Enemies march directly down their assigned
+    // bridge line; animation supplies motion without gameplay zig-zagging.
+    enemy.x = enemy.lineX;
+    if (enemy.canShoot && wave >= 2 && enemy.y > 0.1 && enemy.y < 0.62 && enemyBullets.length < 6 + Math.ceil(wave / 2)) {
       enemy.shotTimer -= dt;
       if (enemy.shotTimer <= 0) {
         spawnEnemyProjectile(enemy, (rng() - 0.5) * 0.08, { speed: enemy.type === 'grunt' ? 0.34 + wave * 0.012 : 0.39 + wave * 0.014 });
@@ -532,7 +637,8 @@ function update(dt){
   }
 
   for (const bullet of bullets) {
-    if (Number.isFinite(bullet.targetX)) bullet.x = lerp(bullet.x, bullet.targetX, Math.min(1, dt * 11));
+    bullet.previousX = bullet.x;
+    bullet.previousY = bullet.y;
     bullet.x += bullet.vx * dt;
     bullet.y += bullet.vy * dt;
   }
@@ -578,8 +684,11 @@ function update(dt){
       if (enemy.dead || bullet.dead) continue;
       const dx = bullet.x - enemy.x;
       const dy = bullet.y - enemy.y;
-      const hitRadius = enemy.type === 'grunt' ? 0.018 : 0.03;
-      if (dx * dx + dy * dy < hitRadius * hitRadius) {
+      const hitRadius = enemy.type === 'grunt' ? 0.028 : 0.044;
+      const previousDx=(bullet.previousX??bullet.x)-enemy.x;
+      const crossedY=(bullet.previousY??bullet.y)>=enemy.y&&bullet.y<=enemy.y;
+      const sweptHit=crossedY&&Math.min(Math.abs(previousDx),Math.abs(dx))<hitRadius;
+      if (sweptHit || dx * dx + dy * dy < hitRadius * hitRadius) {
         let damage = bullet.power;
         if (enemy.shield > 0) {
           const absorbed = Math.min(enemy.shield, damage);
@@ -601,9 +710,9 @@ function update(dt){
       enemy.dead = true;
       enemy.deathMax = 0.18;
       enemy.deathLife = enemy.deathMax;
-      const contactRadius = enemy.type === 'elite' ? 0.3 : enemy.type === 'shield' ? 0.27 : 0.22;
+      const contactRadius = enemy.type === 'elite' ? 0.26 : enemy.type === 'shield' ? 0.25 : 0.20;
       if (Math.abs(enemy.x - player.x) < contactRadius) {
-        const loss = enemy.type === 'elite' ? 4 : enemy.type === 'shield' ? 3 : 1;
+        const loss = enemy.type === 'elite' ? 2 : enemy.type === 'shield' ? 2 : 1;
         if (damageSquad(loss, enemy.x)) return;
       }
     }
@@ -759,26 +868,66 @@ function drawBackground(){
     return p;
   }
   function towerHeight(y){
-    const t = Math.pow(clamp(y,0,1),0.72);
-    return lerp(H*0.115, Math.min(H*0.285,224), t);
+    const near=y>.2,bridgeW=bridgeHalfWidth(y)*2;
+    return Math.min(bridgeW*(near?2.20:2.05),H*(near?.78:.46));
   }
   function towerX(side,y){ return sidePoint(side,y,1.045).x; }
 
-  // Sky: bright, slightly hazy toward the water line.
+  // Saturated arcade sky with a pale horizon, matching the reference palette.
   const sky = ctx.createLinearGradient(0,0,0,horizon + H*0.08);
-  sky.addColorStop(0,'#70c9ee');
-  sky.addColorStop(.56,'#9edcf1');
-  sky.addColorStop(1,'#d9eef1');
+  sky.addColorStop(0,'#24ace6');
+  sky.addColorStop(.50,'#72cff0');
+  sky.addColorStop(1,'#d9f2f5');
   ctx.fillStyle = sky;
   ctx.fillRect(0,0,W,horizon + H*0.08);
 
+  // Small soft cloud banks keep the horizon dimensional without a full-screen
+  // backdrop texture. They stay behind every bridge element.
+  ctx.save();ctx.globalAlpha=.58;ctx.fillStyle='#f4fbff';
+  for(const side of [-1,1]){
+    const cx=W/2+side*W*.34,cy=horizon-H*.025,scale=clamp(W/700,.62,1.25);
+    for(const cloud of [[-42,4,40,12],[-15,-4,34,18],[17,2,42,14],[46,6,27,10]]){
+      ctx.beginPath();ctx.ellipse(cx+cloud[0]*scale,cy+cloud[1]*scale,cloud[2]*scale,cloud[3]*scale,0,0,Math.PI*2);ctx.fill();
+    }
+  }
+  ctx.restore();
+
   // Ocean: one continuous body of water, with a real horizon instead of blue wedges to the top edge.
   const water = ctx.createLinearGradient(0,horizon,0,H);
-  water.addColorStop(0,'#55c1dd');
-  water.addColorStop(.28,'#28acd2');
-  water.addColorStop(1,'#087da9');
+  water.addColorStop(0,'#28c2e5');
+  water.addColorStop(.26,'#08a8d3');
+  water.addColorStop(.68,'#058bbd');
+  water.addColorStop(1,'#046f9f');
   ctx.fillStyle = water;
   ctx.fillRect(0,horizon,W,H-horizon);
+
+  // Approved painted ocean strip supplies the detailed breaker and distant
+  // ripples that were missing from the old flat gradient.
+  const ocean=runtimeAssets.oceanSurface;
+  if(ocean){
+    const bandH=clamp(H*.105,72,102),bandW=bandH*(ocean.width/ocean.height);
+    const offset=((roadScroll*.018)%bandW+bandW)%bandW;
+    ctx.save();ctx.globalAlpha=.76;
+    for(let x=-bandW-offset;x<W+bandW;x+=bandW)ctx.drawImage(ocean,x,horizon-2,bandW,bandH);
+    const oceanFade=ctx.createLinearGradient(0,horizon+bandH*.45,0,horizon+bandH*1.12);
+    oceanFade.addColorStop(0,'rgba(5,139,188,0)');oceanFade.addColorStop(1,'rgba(5,139,188,.92)');
+    ctx.fillStyle=oceanFade;ctx.fillRect(0,horizon+bandH*.42,W,bandH*.75);ctx.restore();
+
+    // Transparent whitecap-only crop adds depth-scaled surface detail without
+    // carrying blue rectangular backgrounds into the continuous water fill.
+    const whitecaps=runtimeAssets.oceanWhitecaps;
+    if(whitecaps){
+      ctx.save();ctx.globalCompositeOperation='screen';
+      for(let band=0;band<5;band++){
+        const depth=(band+.65)/5,detailH=lerp(30,76,depth),detailW=detailH*(whitecaps.width/whitecaps.height);
+        const y=horizon+bandH*.7+band*(H-horizon-bandH*.7)/5;
+        const shift=((band%2?.43:.08)*detailW+(roadScroll*.008*(band+1)))%detailW;
+        ctx.globalAlpha=lerp(.30,.58,depth);
+        for(let x=-detailW-shift;x<W+detailW;x+=detailW)ctx.drawImage(whitecaps,x,y,detailW,detailH);
+      }
+      ctx.restore();
+    }
+  }
 
   // Atmospheric horizon haze.
   const haze = ctx.createLinearGradient(0,horizon-H*.035,0,horizon+H*.075);
@@ -791,23 +940,23 @@ function drawBackground(){
   ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(0,horizon+.5);ctx.lineTo(W,horizon+.5);ctx.stroke();
 
-  // Broad, irregular water highlights. The deck will cover the center, so these remain peripheral.
-  const shimmer = roadScroll * 0.055;
-  for(let i=0;i<14;i++){
-    const base = (i*67 + shimmer) % Math.max(90,H-horizon);
-    const y = horizon + base;
-    const depth = clamp((y-horizon)/(H-horizon),0,1);
-    const alpha = lerp(.10,.22,depth);
-    const span = lerp(18,70,depth) * (W/390 > 1 ? 1.25 : 1);
-    for(const side of [-1,1]){
-      const cx = W/2 + side * lerp(W*.28,W*.43,depth);
-      const wobble = Math.sin(i*1.77 + roadScroll*.004) * span*.28;
-      ctx.strokeStyle=`rgba(218,248,255,${alpha})`;
-      ctx.lineWidth=lerp(.8,2.2,depth);
-      ctx.beginPath();
-      ctx.moveTo(cx-side*span*.52,y);
-      ctx.bezierCurveTo(cx-side*span*.20,y-3-wobble*.05,cx+side*span*.18,y+3+wobble*.04,cx+side*span*.55,y-1);
-      ctx.stroke();
+  // Layered whitecaps and pinprick sun glints. More numerous, shorter marks read
+  // as sparkling water instead of the sparse horizontal scratches used before.
+  const shimmer = roadScroll * 0.038;
+  for(let i=0;i<38;i++){
+    const hash=(Math.sin(i*91.731)*43758.5453)%1;
+    const depth=clamp((((i*47+shimmer)%Math.max(120,H-horizon))/(H-horizon)),0,1);
+    const y=horizon+depth*(H-horizon);
+    const side=i%2?-1:1;
+    const outer=lerp(W*.24,W*.49,Math.abs(hash));
+    const cx=W/2+side*outer;
+    const span=lerp(5,42,depth)*(0.72+Math.abs(hash)*.55);
+    ctx.strokeStyle=`rgba(224,251,255,${lerp(.16,.48,depth)})`;
+    ctx.lineWidth=lerp(.7,2.0,depth);ctx.lineCap='round';ctx.beginPath();
+    ctx.moveTo(cx-span*.5,y);ctx.quadraticCurveTo(cx,y-lerp(1,4,depth),cx+span*.5,y);ctx.stroke();
+    if(i%7===0){
+      ctx.globalAlpha=lerp(.24,.7,depth);ctx.strokeStyle='#fff';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(cx,y-span*.15);ctx.lineTo(cx,y+span*.15);ctx.moveTo(cx-span*.15,y);ctx.lineTo(cx+span*.15,y);ctx.stroke();ctx.globalAlpha=1;
     }
   }
 
@@ -847,8 +996,9 @@ function drawBackground(){
   for(let i=28;i>=0;i--){const y=i/28,p=sidePoint(1,y);ctx.lineTo(p.x,p.y);}
   ctx.closePath();
   const shoulderGrad=ctx.createLinearGradient(0,horizon,0,H);
-  shoulderGrad.addColorStop(0,'#b9c0bf');
-  shoulderGrad.addColorStop(1,'#8e999b');
+  shoulderGrad.addColorStop(0,'#d8d2c7');
+  shoulderGrad.addColorStop(.45,'#bcb9b0');
+  shoulderGrad.addColorStop(1,'#969b98');
   ctx.fillStyle=shoulderGrad;ctx.fill();
 
   // Road surface with one coherent sun direction and subtle foreground darkening.
@@ -860,21 +1010,44 @@ function drawBackground(){
   for(let i=28;i>=0;i--){const y=i/28,p=roadPoint(1,y);ctx.lineTo(p.x,p.y);}
   ctx.closePath();
   const roadGrad=ctx.createLinearGradient(W*.30,horizon,W*.72,H);
-  roadGrad.addColorStop(0,'#616a6e');
-  roadGrad.addColorStop(.52,'#4d565b');
-  roadGrad.addColorStop(1,'#343d43');
+  roadGrad.addColorStop(0,'#777775');
+  roadGrad.addColorStop(.48,'#626464');
+  roadGrad.addColorStop(1,'#4a4f50');
   ctx.fillStyle=roadGrad;ctx.fill();
+
+  const asphalt=runtimeAssets.asphalt;
+  if(asphalt){
+    ctx.save();ctx.clip();ctx.globalAlpha=.36;ctx.globalCompositeOperation='multiply';
+    const pattern=ctx.createPattern(asphalt,'repeat');
+    if(pattern){
+      ctx.translate(0,(roadScroll*.16)%asphalt.height);ctx.fillStyle=pattern;ctx.fillRect(0,-asphalt.height,W,H+asphalt.height*2);
+    }
+    ctx.restore();
+  }
 
   // Shoulder-edge value breaks make the deck read as layered rather than one trapezoid.
   for(const side of [-1,1]){
-    ctx.strokeStyle=side<0?'rgba(255,255,255,.22)':'rgba(52,56,58,.25)';
-    ctx.lineWidth=Math.max(1.5,W*.0025);
+    ctx.strokeStyle='rgba(250,248,232,.82)';
+    ctx.lineWidth=Math.max(1.5,W*.0028);
     ctx.beginPath();
     for(let i=0;i<=28;i++){
       const y=i/28,p=roadPoint(side,y);
       if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
     }
     ctx.stroke();
+  }
+
+  // Perspective sidewalk slabs provide scale and material detail along both
+  // edges. Their transverse joints scroll with the roadway.
+  const slabPhase=(roadScroll/920)%0.085;
+  for(let i=-1;i<14;i++){
+    const y=slabPhase+i*.085;
+    if(y<=0||y>=1)continue;
+    for(const side of [-1,1]){
+      const inner=roadPoint(side,y),outer=sidePoint(side,y,.995);
+      ctx.strokeStyle=`rgba(84,82,78,${lerp(.18,.48,depthCurve(y))})`;
+      ctx.lineWidth=lerp(.5,1.6,depthCurve(y));ctx.beginPath();ctx.moveTo(inner.x,inner.y);ctx.lineTo(outer.x,outer.y);ctx.stroke();
+    }
   }
 
   // Perspective-correct dashed lane separators using world-space segments instead of screen-space dash patterns.
@@ -908,7 +1081,21 @@ function drawBackground(){
     ctx.beginPath();for(let i=0;i<=30;i++){const y=i/30,p=sidePoint(side,y,1.005);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}ctx.stroke();ctx.globalAlpha=1;
   }
 
-  const towers=[0.09,0.405];
+  // Repeating under-deck diagonal steel gives the bridge visible load-bearing
+  // depth instead of leaving a single flat red outline.
+  for(const side of [-1,1]){
+    for(let i=0;i<13;i++){
+      const y0=.025+i*.077,y1=Math.min(1,y0+.077);
+      const a=sidePoint(side,y0,1.015),b=sidePoint(side,y1,1.015);
+      const depth0=lerp(3,24,depthCurve(y0)),depth1=lerp(3,24,depthCurve(y1));
+      ctx.strokeStyle=i%2?bridgeRedDark:bridgeRedDeep;ctx.lineWidth=lerp(1,4,depthCurve(y1));
+      ctx.beginPath();ctx.moveTo(a.x,a.y+depth0);ctx.lineTo(b.x,b.y+2);ctx.stroke();
+      ctx.strokeStyle='rgba(244,105,82,.38)';ctx.lineWidth=Math.max(.7,lerp(.7,1.5,depthCurve(y1)));
+      ctx.beginPath();ctx.moveTo(a.x,a.y+2);ctx.lineTo(b.x,b.y+depth1);ctx.stroke();
+    }
+  }
+
+  const towers=[0.075,0.34];
   function cableY(y){
     const far=towers[0],near=towers[1];
     const railY=railTop(1,y).y;
@@ -959,29 +1146,53 @@ function drawBackground(){
   // Tower portals: paired pylons, shaded thickness and cross-members spanning the deck.
   function drawTower(y){
     const baseY=perspectiveY(y),height=towerHeight(y),topY=baseY-height;
-    const depth=Math.pow(y,.72);
-    const pillarW=lerp(Math.max(10,W*.012),Math.min(34,W*.035),depth);
-    const beamH=lerp(9,19,depth);
+    const near=y>.2,towerAsset=near?runtimeAssets.bridgeTowerNear:runtimeAssets.bridgeTowerFar;
+    if(towerAsset){
+      // The source tower includes thick masonry bases. Widen it so the clear
+      // portal aligns with the live roadway and the bases sit on the sidewalks.
+      const portalW=bridgeHalfWidth(y)*2*(near?2.05:1.65);
+      ctx.drawImage(towerAsset,W/2-portalW/2,topY,portalW,height);
+      return;
+    }
+    const depth=clamp(depthCurve(y),0,1),scale=Math.pow(depth,.45);
+    const pillarW=lerp(Math.max(11,W*.018),Math.min(48,W*.045),scale);
+    const beamH=lerp(10,23,scale);
     const xs=[towerX(-1,y),towerX(1,y)];
     for(let idx=0;idx<2;idx++){
       const side=idx===0?-1:1,x=xs[idx];
-      const lean=side*lerp(1,5,depth);
+      const lean=side*lerp(1,7,scale);
       ctx.fillStyle=bridgeRedDeep;
       ctx.beginPath();ctx.moveTo(x-pillarW*.58,baseY+5);ctx.lineTo(x+pillarW*.58,baseY+5);ctx.lineTo(x+pillarW*.46+lean,topY);ctx.lineTo(x-pillarW*.46+lean,topY);ctx.closePath();ctx.fill();
+      // Outer return face gives each pylon thickness and a consistent light side.
+      ctx.fillStyle='#84252a';ctx.beginPath();
+      if(side<0){ctx.moveTo(x-pillarW*.72,baseY+7);ctx.lineTo(x-pillarW*.58,baseY+5);ctx.lineTo(x-pillarW*.46+lean,topY);ctx.lineTo(x-pillarW*.62+lean,topY+3);}
+      else{ctx.moveTo(x+pillarW*.58,baseY+5);ctx.lineTo(x+pillarW*.72,baseY+7);ctx.lineTo(x+pillarW*.62+lean,topY+3);ctx.lineTo(x+pillarW*.46+lean,topY);}
+      ctx.closePath();ctx.fill();
       ctx.fillStyle=bridgeRed;
       ctx.beginPath();ctx.moveTo(x-pillarW*.42,baseY);ctx.lineTo(x+pillarW*.36,baseY);ctx.lineTo(x+pillarW*.28+lean,topY);ctx.lineTo(x-pillarW*.34+lean,topY);ctx.closePath();ctx.fill();
       ctx.fillStyle='rgba(255,150,122,.26)';
       ctx.beginPath();ctx.moveTo(x-pillarW*.30,baseY-4);ctx.lineTo(x-pillarW*.10,baseY-4);ctx.lineTo(x-pillarW*.05+lean,topY+3);ctx.lineTo(x-pillarW*.24+lean,topY+3);ctx.closePath();ctx.fill();
+      const insetX=x+lean*.55;
+      ctx.strokeStyle='rgba(104,28,33,.58)';ctx.lineWidth=Math.max(1,pillarW*.08);ctx.beginPath();ctx.moveTo(insetX,topY+beamH*1.25);ctx.lineTo(x,baseY-beamH*.6);ctx.stroke();
+      for(const p of [.18,.58,.90]){
+        const py=lerp(topY,baseY,p),px=lerp(x+lean,x,p),collarH=beamH*(p===.9?.42:.28);
+        ctx.fillStyle=bridgeRedDeep;ctx.fillRect(px-pillarW*.55,py-collarH*.5,pillarW*1.1,collarH);
+        ctx.fillStyle=bridgeRedLight;ctx.globalAlpha=.45;ctx.fillRect(px-pillarW*.35,py-collarH*.35,pillarW*.12,collarH*.32);ctx.globalAlpha=1;
+      }
     }
     const leftTop=xs[0]+lerp(-1,-5,depth),rightTop=xs[1]+lerp(1,5,depth);
-    ctx.fillStyle=bridgeRedDeep;ctx.fillRect(leftTop-pillarW*.15,topY-beamH*.15,rightTop-leftTop+pillarW*.3,beamH*1.25);
-    ctx.fillStyle=bridgeRed;ctx.fillRect(leftTop,topY,rightTop-leftTop,beamH*.72);
+    ctx.fillStyle=bridgeRedDeep;ctx.fillRect(leftTop-pillarW*.15,topY-beamH*.15,rightTop-leftTop+pillarW*.3,beamH*1.30);
+    ctx.fillStyle=bridgeRed;ctx.fillRect(leftTop,topY,rightTop-leftTop,beamH*.76);
+    ctx.fillStyle='rgba(255,148,115,.48)';ctx.fillRect(leftTop+pillarW*.15,topY+beamH*.08,rightTop-leftTop-pillarW*.3,Math.max(1.5,beamH*.12));
     const lowerY=topY+height*.27;
-    ctx.fillStyle=bridgeRedDark;ctx.fillRect(leftTop+pillarW*.15,lowerY,rightTop-leftTop-pillarW*.3,beamH*.46);
+    ctx.fillStyle=bridgeRedDeep;ctx.fillRect(leftTop+pillarW*.12,lowerY-beamH*.08,rightTop-leftTop-pillarW*.24,beamH*.60);
+    ctx.fillStyle=bridgeRed;ctx.fillRect(leftTop+pillarW*.25,lowerY,rightTop-leftTop-pillarW*.5,beamH*.34);
     ctx.fillStyle='rgba(246,112,89,.38)';ctx.fillRect(leftTop+pillarW*.2,lowerY,rightTop-leftTop-pillarW*.4,Math.max(2,beamH*.11));
     // Base collars visually connect each tower leg to the deck side girder.
     for(const x of xs){
-      ctx.fillStyle=bridgeRedDeep;ctx.fillRect(x-pillarW*.68,baseY-3,pillarW*1.36,Math.max(6,beamH*.4));
+      ctx.fillStyle='#65696a';ctx.fillRect(x-pillarW*.78,baseY-2,pillarW*1.56,Math.max(7,beamH*.55));
+      ctx.fillStyle='#a8aaa6';ctx.fillRect(x-pillarW*.68,baseY-2,pillarW*1.36,Math.max(2,beamH*.16));
+      ctx.fillStyle=bridgeRedDeep;ctx.fillRect(x-pillarW*.58,baseY-beamH*.4,pillarW*1.16,Math.max(6,beamH*.48));
     }
   }
   drawTower(towers[0]);
@@ -1009,6 +1220,21 @@ function drawBackground(){
         ctx.strokeStyle='rgba(109,32,37,.55)';ctx.lineWidth=1;
         ctx.beginPath();ctx.moveTo(p.x,p.y-rh*.42);ctx.lineTo(foot.x,foot.y+4);ctx.stroke();
       }
+    }
+  }
+
+  // Industrial bridge lamps echo the reference silhouettes and establish a
+  // human scale along the otherwise long uninterrupted rails.
+  for(const side of [-1,1]){
+    for(const y of [.19,.56,.84]){
+      const base=sidePoint(side,y,1.075),depth=clamp(depthCurve(y),0,1);
+      const postH=lerp(13,58,Math.pow(depth,.62)),arm=lerp(4,15,Math.pow(depth,.62));
+      ctx.strokeStyle='#26353b';ctx.lineWidth=lerp(1.2,4,Math.pow(depth,.7));ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(base.x,base.y);ctx.lineTo(base.x,base.y-postH);ctx.quadraticCurveTo(base.x,base.y-postH-arm*.35,base.x-side*arm,base.y-postH-arm*.35);ctx.stroke();
+      const glow=ctx.createRadialGradient(base.x-side*arm,base.y-postH,0,base.x-side*arm,base.y-postH,arm*1.2);
+      glow.addColorStop(0,'rgba(255,239,178,.46)');glow.addColorStop(1,'rgba(255,239,178,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(base.x-side*arm,base.y-postH,arm*1.2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#f6dea0';ctx.beginPath();ctx.ellipse(base.x-side*arm,base.y-postH,arm*.48,arm*.28,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#17262c';ctx.fillRect(base.x-side*arm-arm*.56,base.y-postH-arm*.42,arm*1.12,arm*.22);
     }
   }
 
@@ -1136,20 +1362,27 @@ function enemyHeightAt(y,type='grunt'){
 }
 function bossHeightAt(y){return clamp(enemyHeightAt(y,'elite')*4.8,150,Math.min(280,H*.35,W*.62));}
 
-function enemySprite(type){
-  if(type==='elite') return runtimeAssets.enemyElite;
-  if(type==='shield') return runtimeAssets.enemySpecial;
-  return runtimeAssets.enemyGrunt;
+function enemyMarchFrame(enemy){
+  const clock=state===GAME_STATE.BOSS?bossTime:waveTime;
+  return ((Math.floor(clock*8+(enemy.bob||0))%4)+4)%4;
+}
+
+function enemySprite(enemy){
+  const frame=enemyMarchFrame(enemy)+1;
+  if(enemy.type==='elite') return runtimeAssets[`enemyElite${frame}`];
+  if(enemy.type==='shield') return runtimeAssets[`enemySpecial${frame}`];
+  return runtimeAssets[`enemyGrunt${frame}`];
 }
 
 function drawEnemySprite(enemy, scr, h, fade, drift){
-  const image=enemySprite(enemy.type);
+  const image=enemySprite(enemy);
   if(!image){
     ctx.save();ctx.globalAlpha=fade;drawEnemyCombatant(ctx,enemy,{x:scr.x+(enemy.x>=0?drift:-drift),y:scr.y+drift*.28},h,waveTime);ctx.restore();
     return;
   }
-  const run=Math.sin(waveTime*(enemy.type==='grunt'?10:8)+(enemy.bob||0)*.017);
-  const x=scr.x+(enemy.x>=0?drift:-drift), y=scr.y+run*h*.012+drift*.28;
+  const clock=state===GAME_STATE.BOSS?bossTime:waveTime;
+  const run=Math.sin(clock*(enemy.type==='grunt'?10:8)+(enemy.bob||0));
+  const x=scr.x+(enemy.x>=0?drift:-drift), y=scr.y+run*h*.006+drift*.28;
   ctx.save();ctx.translate(x,y);ctx.rotate((1-fade)*(enemy.x>=0?.16:-.16));ctx.globalAlpha=fade;
   ctx.fillStyle='rgba(28,22,26,.28)';ctx.beginPath();ctx.ellipse(0,2,h*.24,h*.055,0,0,Math.PI*2);ctx.fill();
   drawSprite(image,0,0,h);
@@ -1212,8 +1445,12 @@ function drawEnemyBullets(){
 function drawBullets(){
   for(const b of bullets){
     const scr = worldToScreen(b.x, b.y);
-    const len = 28; ctx.save(); ctx.shadowColor='#55d9ff'; ctx.shadowBlur=7; ctx.strokeStyle = frenzyTimer>0 ? '#d9f8ff' : '#69ddff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(scr.x, scr.y); ctx.lineTo(scr.x - b.vx*len, scr.y + 14); ctx.stroke();
-    ctx.fillStyle = '#f2fdff'; ctx.beginPath(); ctx.arc(scr.x, scr.y, 2.7, 0, Math.PI*2); ctx.fill(); ctx.restore();
+    const travelled=Math.max(0,(b.originY??b.y)-b.y);
+    const tailTime=Math.min(.042,travelled/Math.max(.001,Math.abs(b.vy)));
+    const tailWorld={x:b.x-b.vx*tailTime,y:b.y-b.vy*tailTime};
+    const tail=worldToScreen(tailWorld.x,tailWorld.y);
+    ctx.save();ctx.shadowColor='#ffb22e';ctx.shadowBlur=8;ctx.strokeStyle=frenzyTimer>0?'#fff6ba':'#ffc23d';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(scr.x,scr.y);ctx.stroke();
+    ctx.fillStyle='#fff9d2';ctx.beginPath();ctx.arc(scr.x,scr.y,2.5,0,Math.PI*2);ctx.fill();ctx.restore();
   }
 }
 
@@ -1267,9 +1504,17 @@ function draw(){
 const keys = {};
 addEventListener('keydown', e => {
   keys[e.key] = true;
-  if (['ArrowLeft','ArrowRight',' ','p','P'].includes(e.key)) e.preventDefault();
-  if ((e.key === 'Enter' || e.key === ' ') && state === GAME_STATE.HOME) resetRun();
-  if (e.key.toLowerCase() === 'p') state === GAME_STATE.PAUSED ? resumeGame() : pauseGame();
+  const isSpace=e.code==='Space'||e.key===' ';
+  if (['ArrowLeft','ArrowRight',' ','p','P'].includes(e.key)||isSpace) e.preventDefault();
+  if(isSpace){
+    if(e.repeat)return;
+    if(state===GAME_STATE.HOME)resetRun();
+    else if(state===GAME_STATE.PAUSED)resumeGame();
+    else if(ACTIVE_STATES.includes(state))pauseGame();
+    return;
+  }
+  if (e.key === 'Enter' && state === GAME_STATE.HOME) resetRun();
+  if (e.key.toLowerCase() === 'p'&&!e.repeat) state === GAME_STATE.PAUSED ? resumeGame() : pauseGame();
 });
 addEventListener('keyup', e => { keys[e.key] = false; });
 function pointerMove(clientX){
@@ -1313,10 +1558,11 @@ if(qaMode){
     reset(seed=42){resetRun(seed);return this.getState();},
     setTroops(value){player.troops=clamp(Math.round(value),0,999);updateHud();return visibleSquadCount(Math.max(1,player.troops));},
     setPower(value){player.power=Math.max(1,Number(value)||1);updateHud();},
+    fireNow(times=1){const counts=[];for(let i=0;i<clamp(Math.round(times),1,100);i++)counts.push(fireBurst());return counts;},
     setPlayerX(value){player.x=player.targetX=clamp(Number(value)||0,-.78,.78);updateHud();return player.x;},
     setWaveTime(value){waveTime=Math.max(0,Number(value)||0);return waveTime;},
     setWave(value){wave=clamp(Math.round(Number(value)||1)-1,0,LEVELS.length-1);updateHud();return wave+1;},
-    spawnEnemyAt(type='grunt',x=player.x,y=.82,readyToFire=false){spawnEnemy(type);const enemy=enemies.at(-1);enemy.x=clamp(Number(x)||0,-.8,.8);enemy.y=clamp(Number(y)||0,-.08,1);if(readyToFire)enemy.shotTimer=0;return {type:enemy.type,x:enemy.x,y:enemy.y,hp:enemy.hp,shield:enemy.shield};},
+    spawnEnemyAt(type='grunt',x=player.x,y=.82,readyToFire=false){spawnEnemy(type);const enemy=enemies.at(-1);enemy.x=enemy.lineX=clamp(Number(x)||0,-.8,.8);enemy.y=clamp(Number(y)||0,-.08,1);if(readyToFire)enemy.shotTimer=0;return {type:enemy.type,x:enemy.x,y:enemy.y,hp:enemy.hp,shield:enemy.shield};},
     setBossHp(value){if(boss){boss.hp=clamp(Number(value)||0,0,boss.maxHp);updateHud();}return boss?.hp??null;},
     forceBoss(){if(!ACTIVE_STATES.includes(state))setState(GAME_STATE.PLAYING);spawnBoss();boss.y=.45;return this.getState();},
     defeatBoss(){if(!boss)this.forceBoss();boss.hp=0;finishBoss();return state;},
@@ -1324,6 +1570,8 @@ if(qaMode){
     forceVictory(){victory();return state;},
     forceGameOver(){player.troops=0;gameOver();return state;},
     setGatePair(left,right,y=.52){const encounter=setDebugGatePair(left,right,y);return encounter.gates.map(g=>({kind:g.kind,value:g.value,text:gateText(g),color:g.color}));},
+    spawnHordeNow(){const count=spawnHorde();updateHud();return count;},
+    projectionAudit(){return bridgeProjectionAudit();},
     applyGate(kind,value){player=applyGate(player,{kind,value});updateHud();return player.troops;},
     damageTroops(value){damageSquad(value,player.x);return player.troops;},
     pause(){pauseGame();return state;},
@@ -1332,7 +1580,10 @@ if(qaMode){
     benchmarkDraw(iterations=120){const n=clamp(Math.round(iterations),1,1000),start=performance.now();for(let i=0;i<n;i++)draw();return (performance.now()-start)/n;},
     getState(){return {
       state,paused:state===GAME_STATE.PAUSED,resumeState,wave:wave+1,waveTime,bossTime,score,coins:player.coins,troops:player.troops,armor:player.armor,power:player.power,fireRate:player.fireRate,bulletSpeed:player.bulletSpeed,projectiles:player.projectiles,visibleSquad:visibleSquadCount(Math.max(1,player.troops)),playerX:player.x,assetsReady:canvas.dataset.assetsReady,
-      bullets:bullets.length,enemyBullets:enemyBullets.length,sampleBullet:bullets[0]?{x:bullets[0].x,y:bullets[0].y,targetX:bullets[0].targetX,shooter:bullets[0].shooter}:null,enemies:enemies.length,
+      bullets:bullets.length,enemyBullets:enemyBullets.length,sampleBullet:bullets[0]?{x:bullets[0].x,y:bullets[0].y,originX:bullets[0].originX,originY:bullets[0].originY,vx:bullets[0].vx,vy:bullets[0].vy,homing:false,shooter:bullets[0].shooter}:null,
+      sampleBullets:bullets.slice(0,64).map(b=>({x:b.x,y:b.y,originX:b.originX,originY:b.originY,vx:b.vx,vy:b.vy,shooter:b.shooter})),
+      enemies:enemies.length,activeEnemies:enemies.reduce((total,enemy)=>total+(!enemy.dead?1:0),0),hordes:new Set(enemies.filter(enemy=>!enemy.dead&&enemy.hordeId!=null).map(enemy=>enemy.hordeId)).size,
+      sampleEnemies:enemies.filter(enemy=>!enemy.dead).slice(0,64).map(enemy=>({type:enemy.type,x:enemy.x,lineX:enemy.lineX,y:enemy.y,speed:enemy.speed,hordeId:enemy.hordeId,hordeRow:enemy.hordeRow,marchFrame:enemyMarchFrame(enemy)})),
       gates:gates.flatMap(encounter=>encounter.gates.map(g=>({pairId:encounter.id,x:g.x,y:encounter.y,w:g.w,kind:g.kind,value:g.value,text:gateText(g),color:g.color,hit:encounter.resolved,selected:encounter.selected}))),
       muzzleFlashes:muzzleFlashes.length,particles:particles.length,floaters:floaters.length,telegraphs:telegraphs.length,boss:boss?{x:boss.x,y:boss.y,hp:boss.hp,maxHp:boss.maxHp}:null,
     };}
@@ -1346,13 +1597,13 @@ function prepareCapture(mode){
   if(mode==='home'){returnHome();qaFrozen=true;return;}
   resetRun(7);
   if(mode==='gameplay'){
-    player.troops=18;spawnEnemy('grunt');spawnEnemy('grunt');spawnEnemy('elite');enemies.forEach((enemy,index)=>{enemy.y=.28+index*.09;enemy.x=[-.42,.12,.46][index];});fireBurst();qaFrozen=true;
+    player.troops=18;spawnEnemy('grunt');spawnEnemy('grunt');spawnEnemy('elite');enemies.forEach((enemy,index)=>{enemy.y=.28+index*.09;enemy.x=enemy.lineX=[-.42,.12,.46][index];});fireBurst();qaFrozen=true;
   }else if(mode==='lane'||mode==='gate'){
-    player.troops=16;setDebugGatePair({kind:'troops',value:-10,text:'−10',color:'red'},{kind:'troops',value:9,text:'+9',color:'blue'},.52);spawnEnemy('grunt');spawnEnemy('grunt');enemies[0].y=.19;enemies[1].y=.25;enemies[0].x=-.18;enemies[1].x=.25;fireBurst();qaFrozen=true;
+    player.troops=16;setDebugGatePair({kind:'troops',value:-10,text:'−10',color:'red'},{kind:'troops',value:9,text:'+9',color:'blue'},.52);spawnEnemy('grunt');spawnEnemy('grunt');enemies[0].y=.19;enemies[1].y=.25;enemies[0].x=enemies[0].lineX=-.18;enemies[1].x=enemies[1].lineX=.25;fireBurst();qaFrozen=true;
   }else if(mode==='dense'){
-    wave=4;player.troops=42;for(let i=0;i<14;i++){spawnEnemy(i%6===0?'elite':i%9===0?'shield':'grunt');enemies[i].x=[-.6,-.3,0,.3,.6][i%5]+((i%3)-1)*.025;enemies[i].y=.08+Math.floor(i/5)*.11;}fireBurst();fireBurst();qaFrozen=true;updateHud();
+    wave=4;player.troops=42;for(let i=0;i<32;i++){spawnEnemy(i%13===0?'elite':i%19===0?'shield':'grunt',{x:-.78+(i%8)*.223,y:.075+Math.floor(i/8)*.09,marchPhase:i*.31,hordeId:1,hordeRow:Math.floor(i/8),canShoot:i%10===0});}fireBurst();fireBurst();qaFrozen=true;updateHud();
   }else if(mode==='elite'){
-    wave=4;player.troops=24;for(const type of ['grunt','elite','shield','grunt','elite'])spawnEnemy(type);enemies.forEach((enemy,index)=>{enemy.x=[-.58,-.3,0,.32,.58][index];enemy.y=.18+(index%2)*.1;});fireBurst();qaFrozen=true;updateHud();
+    wave=4;player.troops=24;for(const type of ['grunt','elite','shield','grunt','elite'])spawnEnemy(type);enemies.forEach((enemy,index)=>{enemy.x=enemy.lineX=[-.58,-.3,0,.32,.58][index];enemy.y=.18+(index%2)*.1;});fireBurst();qaFrozen=true;updateHud();
   }else if(mode==='boss'){
     wave=5;player.troops=28;spawnBoss();boss.y=.45;boss.hp=128;boss.attackSerial=1;spawnBossAttack();fireBurst();fireBurst();qaFrozen=true;updateHud();
   }else if(mode==='upgrade'){

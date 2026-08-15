@@ -133,6 +133,43 @@ try {
   checks.automaticTravel = true;
   checks.automaticShooting = true;
 
+  await page.evaluate(() => __blastlineTest.reset(111));
+  await page.waitForFunction(() => {
+    const current = __blastlineTest.getState();
+    return current.sampleBullets.length >= current.visibleSquad;
+  });
+  const volley = await page.evaluate(() => __blastlineTest.getState());
+  assert.equal(new Set(volley.sampleBullets.map(bullet => bullet.shooter)).size, volley.visibleSquad, 'a firing volley did not include every visible soldier');
+  assert.equal(new Set(volley.sampleBullets.slice(0, volley.visibleSquad).map(bullet => `${bullet.originX}:${bullet.originY}`)).size, volley.visibleSquad, 'projectiles did not preserve individual soldier origins');
+  const straightBefore = volley.sampleBullets[0];
+  await page.evaluate(() => __blastlineTest.setPlayerX(.72));
+  await page.waitForTimeout(100);
+  const straightAfter = await page.evaluate(({ shooter, originY }) => __blastlineTest.getState().sampleBullets.find(bullet => bullet.shooter === shooter && bullet.originY === originY), straightBefore);
+  assert.ok(straightAfter, 'test projectile disappeared before trajectory validation');
+  assert.ok(Math.abs(straightAfter.x - straightBefore.x) < 1e-7, 'straight projectile curved after the player/target position changed');
+  assert.ok(straightAfter.y < straightBefore.y, 'player projectile did not travel forward');
+  checks.individualSoldierOrigins = true;
+  checks.straightPlayerProjectiles = true;
+
+  const saturatedVolleys = await page.evaluate(() => {
+    __blastlineTest.freeze(true);
+    __blastlineTest.reset(113);
+    __blastlineTest.setTroops(999);
+    const visibleSquad = __blastlineTest.getState().visibleSquad;
+    return { visibleSquad, counts: __blastlineTest.fireNow(24) };
+  });
+  assert.ok(saturatedVolleys.counts.some(count => count === 0), 'projectile saturation setup did not reach the active-bullet cap');
+  assert.ok(saturatedVolleys.counts.every(count => count === 0 || count === saturatedVolleys.visibleSquad), 'projectile cap produced a partial soldier volley');
+  checks.completeSoldierVolleysAtCapacity = true;
+  await page.evaluate(() => {
+    __blastlineTest.reset(114);
+    __blastlineTest.freeze(false);
+  });
+
+  const projection = await page.evaluate(() => __blastlineTest.projectionAudit());
+  assert.ok(projection.leftMaxDeviation < .05 && projection.rightMaxDeviation < .05, `bridge deck edge bowed by ${JSON.stringify(projection)}`);
+  checks.planarStraightBridgeDeck = true;
+
   await page.evaluate(() => __blastlineTest.setPlayerX(0));
   await page.keyboard.down('a');
   await page.waitForTimeout(260);
@@ -226,7 +263,7 @@ try {
     __blastlineTest.setPlayerX(.2);
     __blastlineTest.spawnEnemyAt('elite', .2, .855);
   });
-  await page.waitForFunction(() => __blastlineTest.getState().troops === 4);
+  await page.waitForFunction(() => __blastlineTest.getState().troops === 6, null, { timeout: 1500 });
   checks.enemyCollision = true;
   checks.eliteContactDamage = true;
 
@@ -239,17 +276,19 @@ try {
   await page.waitForFunction(() => __blastlineTest.getState().enemyBullets > 0, null, { timeout: 1200 });
   checks.ordinaryEnemyRangedAttack = true;
 
-  await page.evaluate(() => {
+  const baseGrunt = await page.evaluate(() => {
     __blastlineTest.reset(106);
-    __blastlineTest.setPower(10);
-    __blastlineTest.spawnEnemyAt('grunt', 0, .70);
+    __blastlineTest.setPower(1);
+    return __blastlineTest.spawnEnemyAt('grunt', 0, .70);
   });
+  assert.equal(baseGrunt.hp, 1, 'grunt was not configured for a one-hit defeat');
   await page.waitForFunction(() => __blastlineTest.getState().score >= 20, null, { timeout: 1800 });
   await page.evaluate(() => __blastlineTest.freeze(true));
   const killReward = await page.evaluate(() => __blastlineTest.getState());
   assert.equal(killReward.score, 20);
   assert.equal(killReward.coins, 4);
   checks.killReward = true;
+  checks.easyGruntDefeat = true;
   await page.evaluate(() => __blastlineTest.freeze(false));
 
   await page.evaluate(() => {
@@ -272,6 +311,44 @@ try {
   await page.keyboard.press('p');
   assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'playing');
   checks.pauseKey = true;
+
+  await page.keyboard.press('Space');
+  const spacePaused = await page.evaluate(() => __blastlineTest.getState());
+  assert.equal(spacePaused.state, 'paused');
+  await page.waitForTimeout(260);
+  assert.equal((await page.evaluate(() => __blastlineTest.getState())).waveTime, spacePaused.waveTime, 'Space pause did not freeze simulation');
+  await page.keyboard.press('Space');
+  assert.equal((await page.evaluate(() => __blastlineTest.getState())).state, 'playing');
+  checks.spacePauseKey = true;
+
+  await page.evaluate(() => {
+    __blastlineTest.reset(112);
+    __blastlineTest.freeze(true);
+    __blastlineTest.spawnHordeNow();
+  });
+  const hordeBefore = await page.evaluate(() => __blastlineTest.getState());
+  assert.ok(hordeBefore.activeEnemies >= 12, `expected a large horde, received ${hordeBefore.activeEnemies}`);
+  assert.equal(hordeBefore.hordes, 1);
+  assert.equal(await page.locator('#enemyCounter').isVisible(), true);
+  await page.evaluate(() => __blastlineTest.freeze(false));
+  await page.waitForTimeout(320);
+  await page.evaluate(() => __blastlineTest.freeze(true));
+  const hordeAfter = await page.evaluate(() => __blastlineTest.getState());
+  assert.equal(hordeAfter.sampleEnemies.length, hordeBefore.sampleEnemies.length);
+  const formationKey = enemy => `${enemy.hordeId}:${enemy.hordeRow}:${enemy.lineX}`;
+  const hordeBeforeByFormation = new Map(hordeBefore.sampleEnemies.map(enemy => [formationKey(enemy), enemy]));
+  for (const after of hordeAfter.sampleEnemies) {
+    const before = hordeBeforeByFormation.get(formationKey(after));
+    assert.ok(before, 'enemy formation member could not be matched after marching');
+    assert.ok(Math.abs(after.x - after.lineX) < 1e-9, 'enemy left its straight march line');
+    assert.ok(after.y > before.y && after.y - before.y < .03, 'enemy horde movement was not slow and forward');
+  }
+  assert.ok(hordeAfter.sampleEnemies.some(enemy => enemy.marchFrame !== hordeBeforeByFormation.get(formationKey(enemy))?.marchFrame), 'enemy march animation did not advance');
+  checks.largeSlowHordes = true;
+  checks.straightEnemyMarch = true;
+  checks.enemyMarchAnimation = true;
+  checks.hordeHud = true;
+  await page.evaluate(() => __blastlineTest.freeze(false));
 
   await page.evaluate(() => {
     __blastlineTest.reset(108);

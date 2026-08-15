@@ -89,13 +89,17 @@ test('every canonical upgrade applies and run upgrades stack', () => {
   assert.equal(stacked.fireRate, MAX_FIRE_RATE);
 });
 
-test('difficulty escalates across exactly six authored waves', () => {
+test('difficulty escalates across exactly six authored horde waves', () => {
   assert.equal(LEVELS.length, 6);
+  assert.ok(LEVELS.every(level => level.enemies >= 72));
+  assert.ok(LEVELS.every(level => level.horde >= 12));
+  assert.ok(LEVELS.every(level => level.spawn >= 3), 'spawn cadence should represent horde intervals, not single-enemy spam');
   for (let index = 1; index < LEVELS.length; index += 1) {
     const previous = LEVELS[index - 1];
     const current = LEVELS[index];
     assert.ok(current.length > previous.length);
     assert.ok(current.enemies > previous.enemies);
+    assert.ok(current.horde > previous.horde);
     assert.ok(current.bossHp > previous.bossHp);
     assert.ok(current.speed >= previous.speed);
     assert.ok(current.spawn < previous.spawn);

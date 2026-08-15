@@ -271,6 +271,7 @@ The player should never need to hold a fire button during normal play.
 Pause must be available through:
 
 - visible pause button;
+- `Space` key on keyboard;
 - `P` key on keyboard.
 
 Pause freezes all gameplay simulation.
@@ -382,31 +383,24 @@ Rules:
 
 ## 8.5 Shooter selection
 
-Not every visible soldier needs to fire every frame.
+Every visible soldier contributes one projectile origin to each normal volley.
 
-For visual clarity:
+Rules:
 
-- small squads: 1 active shooter at a time;
-- medium squads: 2;
-- large squads: up to 3 or more if performance/readability allow.
-
-Muzzle flashes should originate from the corresponding visible shooter positions.
+- each shot starts at that soldier's own rifle/muzzle position;
+- muzzle flashes must correspond to the same visible soldier positions;
+- projectile upgrades may add tightly spread extra straight shots after every soldier has contributed a base shot;
+- logical troops compressed out of the visible formation do not create invisible shooters.
 
 ---
 
 # 9. Player combat
 
-## 9.1 Auto targeting
+## 9.1 Projectile trajectory
 
-Shots travel forward toward enemies ahead.
+Shots travel in fixed straight trajectories from the soldier who fired them.
 
-Preferred target logic:
-
-1. boss when boss phase is active;
-2. nearest/highest-threat enemy in the forward corridor;
-3. otherwise straight ahead.
-
-Do not make bullets visibly curve unnaturally across the entire screen. Small aiming correction is acceptable.
+Projectiles never home, retarget, or curve after firing. The player steers the formation to line up its firing lanes with enemies. Multishot offsets are fixed when the projectile is created and remain straight for the entire flight.
 
 ## 9.2 Damage
 
@@ -472,21 +466,13 @@ Role: basic pressure unit.
 
 Behavior:
 
-- spawns ahead in one of several lanes;
+- spawns ahead as part of a formation/horde;
 - advances toward player;
-- small lateral wobble/variation is acceptable;
-- dies quickly early in run;
+- remains on one fixed straight march line;
+- dies in one normal hit throughout the run;
 - contact removes **1 troop** by default.
 
-Suggested HP by wave index `w` starting at 0:
-
-`1 + floor(w / 2)`
-
-This yields approximately:
-
-- Waves 1–2: 1 HP;
-- Waves 3–4: 2 HP;
-- Waves 5–6: 3 HP.
+Canonical HP: **1**.
 
 ## 10.2 Heavy elite
 
@@ -498,13 +484,13 @@ Behavior:
 
 - larger silhouette;
 - slower than or similar speed to grunt;
-- substantially more HP;
+- modestly more HP while still falling quickly under squad fire;
 - higher reward;
-- contact removes **4 troops** by default.
+- contact removes **2 troops** by default.
 
 Suggested HP:
 
-`5 + 2 * waveIndex`
+`2 + floor(waveIndex / 3)`
 
 ## 10.3 Special / shielded elite
 
@@ -539,7 +525,7 @@ Avoid unavoidable bullet spam; horizontal steering must provide meaningful evasi
 
 # 11. Enemy spawning and formations
 
-Enemies spawn ahead near the horizon/depth start and advance toward the player.
+Enemies spawn ahead near the horizon/depth start in large, synchronized hordes and advance slowly toward the player.
 
 Use several lane centers, roughly equivalent to:
 
@@ -549,15 +535,14 @@ Use several lane centers, roughly equivalent to:
 - right;
 - far right.
 
-Add slight random offset so formations do not appear mechanically identical.
+Each enemy keeps its assigned lane center for the entire approach. Variation comes from formation layout, enemy mix, depth row, and marching phase rather than lateral wandering.
 
-Enemies may spawn as:
+Normal spawn events contain roughly 12–34 enemies arranged as:
 
-- singles;
-- pairs;
-- loose rows;
-- staggered formations;
-- mixed grunt/elite groups.
+- broad rows;
+- staggered depth formations;
+- mixed grunt/elite groups;
+- increasingly large late-wave hordes.
 
 Do not spawn enemies directly inside an active gate pair in a way that makes the gate choice unreadable or unfair.
 
@@ -667,14 +652,14 @@ BLASTLINE v1 contains **6 authored waves**.
 
 Canonical names and starting tuning:
 
-| Wave | Name | Combat duration target | Spawn interval | Enemy budget target | Boss HP | Speed scalar |
-|---|---|---:|---:|---:|---:|---:|
-| 1 | First Contact | 28s | 1.00s | 18 | 60 | 1.00× |
-| 2 | Crossfire | 30s | 0.92s | 22 | 80 | 1.08× |
-| 3 | Red Tide | 32s | 0.84s | 26 | 100 | 1.16× |
-| 4 | No Man's Land | 34s | 0.80s | 30 | 120 | 1.24× |
-| 5 | Overdrive | 36s | 0.74s | 34 | 145 | 1.34× |
-| 6 | The Last Line | 38s | 0.68s | 38 | 175 | 1.45× |
+| Wave | Name | Combat duration target | Horde interval | Enemy budget | Horde baseline | Boss HP | Speed scalar |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 1 | First Contact | 34s | 4.30s | 72 | 12 | 45 | 1.00× |
+| 2 | Crossfire | 38s | 4.05s | 96 | 15 | 60 | 1.04× |
+| 3 | Red Tide | 42s | 3.82s | 126 | 18 | 75 | 1.08× |
+| 4 | No Man's Land | 46s | 3.62s | 156 | 21 | 90 | 1.12× |
+| 5 | Overdrive | 50s | 3.43s | 192 | 25 | 110 | 1.16× |
+| 6 | The Last Line | 54s | 3.25s | 228 | 28 | 135 | 1.20× |
 
 These are **baseline tuning values**, not sacred constants. Codex may adjust them during playtesting to improve pacing, fairness, or difficulty while preserving the six-wave escalation structure.
 
@@ -1065,11 +1050,11 @@ Respect browser autoplay restrictions and provide mute control.
 
 Difficulty should increase through a combination of:
 
-- shorter spawn intervals;
-- more enemies per event;
+- slightly shorter horde intervals;
+- many more enemies per event;
 - higher elite frequency;
-- more enemy HP;
-- faster enemy approach;
+- modest elite durability rather than grunt HP inflation;
+- a small speed increase within an intentionally slow marching baseline;
 - ranged attacks in later waves;
 - stronger bosses;
 - denser boss attack patterns.

@@ -27,12 +27,12 @@ export const MAX_PROJECTILES = 4;
 export const MAX_FIRE_RATE = 18;
 
 export const LEVELS = Object.freeze([
-  { name: 'First Contact', length: 28, spawn: 1.00, enemies: 18, bossHp: 60, speed: 1.00 },
-  { name: 'Crossfire', length: 30, spawn: 0.92, enemies: 22, bossHp: 80, speed: 1.08 },
-  { name: 'Red Tide', length: 32, spawn: 0.84, enemies: 26, bossHp: 100, speed: 1.16 },
-  { name: 'No Man\'s Land', length: 34, spawn: 0.80, enemies: 30, bossHp: 120, speed: 1.24 },
-  { name: 'Overdrive', length: 36, spawn: 0.74, enemies: 34, bossHp: 145, speed: 1.34 },
-  { name: 'The Last Line', length: 38, spawn: 0.68, enemies: 38, bossHp: 175, speed: 1.45 },
+  { name: 'First Contact', length: 34, spawn: 4.30, enemies: 72, horde: 12, bossHp: 45, speed: 1.00 },
+  { name: 'Crossfire', length: 38, spawn: 4.05, enemies: 96, horde: 15, bossHp: 60, speed: 1.04 },
+  { name: 'Red Tide', length: 42, spawn: 3.82, enemies: 126, horde: 18, bossHp: 75, speed: 1.08 },
+  { name: 'No Man\'s Land', length: 46, spawn: 3.62, enemies: 156, horde: 21, bossHp: 90, speed: 1.12 },
+  { name: 'Overdrive', length: 50, spawn: 3.43, enemies: 192, horde: 25, bossHp: 110, speed: 1.16 },
+  { name: 'The Last Line', length: 54, spawn: 3.25, enemies: 228, horde: 28, bossHp: 135, speed: 1.20 },
 ]);
 
 export const UPGRADES = Object.freeze([

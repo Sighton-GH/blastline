@@ -23,6 +23,6 @@ Every PNG in this folder is a genuine screenshot from the running repository, ca
 - `desktop-victory.png`
 - `desktop-game-over.png`
 
-`validation.json` records the exact viewport, DPR, runtime state, requests, errors, interaction assertions, six-wave progression result, persistence checks, and Canvas timing measurements for the same validation run.
+`validation.json` records the exact viewport, DPR, runtime state, requests, errors, interaction assertions, individual-soldier firing (including projectile-cap saturation), straight projectile and enemy paths, bridge projection, Space pause, horde size/speed/march animation, easy grunt defeat, six-wave progression, persistence, and Canvas timing measurements for the same validation run. All 43 Boolean assertions passed.
 
 Deterministic screenshot setup uses test hooks that are exposed only to WebDriver or explicit QA/capture query strings. They are not shown or enabled during ordinary gameplay.
