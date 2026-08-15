@@ -1,8 +1,8 @@
 # BLASTLINE — Authoritative Game Design & Gameplay Specification
 
-**Document status:** Authoritative v1 gameplay contract  
-**Repository:** `Sighton-GH/webgame`  
-**Primary implementation target:** static HTML/CSS/Canvas browser game  
+**Document status:** Authoritative v1 gameplay contract<br>
+**Repository:** `Sighton-GH/webgame`<br>
+**Primary implementation target:** static HTML/CSS/Canvas browser game<br>
 **Primary viewport:** mobile portrait, with responsive desktop support
 
 ---
@@ -159,46 +159,46 @@ The canonical high-level state machine is:
 
 ### 4.1 Legal transitions
 
-`HOME -> PLAYING`  
+`HOME -> PLAYING`<br>
 Start a new run.
 
-`PLAYING -> BOSS`  
+`PLAYING -> BOSS`<br>
 Wave combat phase completes and boss spawns.
 
-`PLAYING -> PAUSED`  
+`PLAYING -> PAUSED`<br>
 Player pauses.
 
-`BOSS -> PAUSED`  
+`BOSS -> PAUSED`<br>
 Player pauses during boss fight.
 
-`PAUSED -> PLAYING` or `PAUSED -> BOSS`  
+`PAUSED -> PLAYING` or `PAUSED -> BOSS`<br>
 Resume the state that was active before pause.
 
-`PLAYING -> GAME_OVER`  
+`PLAYING -> GAME_OVER`<br>
 Squad reaches zero.
 
-`BOSS -> GAME_OVER`  
+`BOSS -> GAME_OVER`<br>
 Squad reaches zero during boss battle.
 
-`BOSS -> UPGRADE`  
+`BOSS -> UPGRADE`<br>
 Boss defeated on Waves 1–5.
 
-`BOSS -> VICTORY`  
+`BOSS -> VICTORY`<br>
 Boss defeated on Wave 6.
 
-`UPGRADE -> PLAYING`  
+`UPGRADE -> PLAYING`<br>
 Upgrade selected; next wave begins.
 
-`GAME_OVER -> PLAYING`  
+`GAME_OVER -> PLAYING`<br>
 Retry starts a clean new run.
 
-`GAME_OVER -> HOME`  
+`GAME_OVER -> HOME`<br>
 Return home.
 
-`VICTORY -> PLAYING`  
+`VICTORY -> PLAYING`<br>
 Play again starts a clean run.
 
-`VICTORY -> HOME`  
+`VICTORY -> HOME`<br>
 Return home.
 
 No enemies, bullets, gates, timers, or gameplay simulation should advance while in `HOME`, `UPGRADE`, `VICTORY`, `GAME_OVER`, or `PAUSED`.
