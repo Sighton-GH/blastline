@@ -17,6 +17,23 @@ The repository copies are lightweight WebP previews so this reference library st
 9. **Static-web game concept sheet** — end-to-end reference designed around an HTML5 Canvas/CSS/static-asset implementation.
 10. **Before/after visual target** — quality benchmark for perspective, density, scale, effects and polish.
 
+## High-quality source set
+
+Full-resolution visual targets are stored under `high-quality/` with stable, content-based names. The approved production master sheets are stored separately under `assets/source/blastline/`; they are source material for optimized runtime crops, not images to load wholesale in the game.
+
+1. `01-home-screen.png`
+2. `02-gameplay-lane-choice.png`
+3. `03-gameplay-squad-growth.png`
+4. `04-gameplay-stat-gates.png`
+5. `05-elite-wave.png`
+6. `06-boss-battle.png`
+7. `07-between-waves-upgrades.png`
+8. `08-victory-screen.png`
+9. `09-game-over.png`
+10. `10-endgame-chaos.png`
+
+These files are visual targets, not screenshots of the running repository. Genuine current-state screenshots are stored under `docs/visual-audit/final-2026-08-15/`.
+
 ## Gallery
 
 ![Gameplay lane choice](01-gameplay-lane-choice.webp)

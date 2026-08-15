@@ -1,21 +1,23 @@
 # BLASTLINE validation
 
-## Automated logic
-- `npm test` passes.
-- `node --check src/game.js` passes.
-- `node --check src/core.mjs` passes.
+Validation evidence was regenerated from the running repository on 2026-08-15.
 
-## Chromium interaction validation
-- 390x844 at DPR 2: canvas backing size 780x1688.
-- 768x1024 tablet layout renders.
-- 1365x768 desktop layout renders.
-- Keyboard steering test: player X moved from 0.000 to 0.776.
-- Pointer/touch-style steering moved player to the right lane.
-- Accelerated boss test reached the upgrade screen with 3 upgrade choices.
-- Selecting an upgrade advanced to Wave 2 and resumed play.
-- Accelerated defeat test reached the game-over state.
+## Automated logic and syntax
 
-## Visual pass
-- Replaced primitive circle/rectangle soldiers with original generated 3D-styled character art.
-- Added bright ocean, perspective bridge deck, suspension rails/cables, glossy number gates, tracer bullets, and a compact mobile HUD.
-- Tuned mobile HUD and gate label sizing after screenshot review.
+- `npm test`: 13 tests passed, 0 failed, 0 skipped.
+- `node --check src/game.js`: passed.
+- `node --check src/core.mjs`: passed.
+- `node --check tools/final-browser-validation.mjs`: passed.
+
+## Real Chromium validation
+
+`node tools/final-browser-validation.mjs` passed at both required DPR 1 viewports:
+
+- mobile: 390 × 844;
+- desktop: 1365 × 768.
+
+The regression exercises automatic travel/fire, touch, pointer, A/D, arrow keys, positive/harmful/neutral gates, gate single-trigger behavior, ordinary and elite contact, ordinary enemy ranged fire, kill rewards, pause/resume, boss attacks and damage, three unique upgrades, upgrade persistence, Game Over, clean Retry, final Victory, local persistence, and an accelerated natural six-wave progression with five upgrade stops.
+
+Browser result: no console errors, page errors, failed assets, or source-master runtime requests. Average measured Canvas draw cost was approximately 3.73 ms at mobile and 7.80 ms at desktop in the validation environment.
+
+The machine-readable report and genuine screenshots are under `docs/visual-audit/final-2026-08-15/`.

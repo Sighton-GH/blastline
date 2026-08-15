@@ -1,21 +1,31 @@
 # BLASTLINE
 
-BLASTLINE is an instant-play browser gate-runner shooter: steer a blue soldier, auto-fire through enemy waves, choose red/blue upgrade lanes, grow the squad, and defeat bridge bosses.
+BLASTLINE is an instant-play browser gate-runner squad shooter. Steer a blue squad, auto-fire through six escalating waves, choose arithmetic/stat gates, defeat a boss after every wave, and break the final line to win.
 
 ## Controls
-- Mouse / drag / touch: steer
-- A/D or Left/Right: steer
-- Shooting: automatic
-- Pause: top-right button or P
+
+- Mouse, pointer drag, or touch: steer horizontally.
+- A/D or Left/Right: steer horizontally.
+- Shooting and forward travel: automatic.
+- Pause: top-right button or P.
 
 ## Stack
 - Plain HTML/CSS/Canvas
-- Original generated 3D-style character assets
+- Optimized WebP crops from the approved BLASTLINE production masters
 - No backend required
 - Static Cloudflare Pages deployment
+
+Run progress, combat upgrades, score, and coins are kept for the current run. Best score and lifetime coins persist locally in the browser.
 
 ## Test
 ```bash
 npm test
 node --check src/game.js
+node --check src/core.mjs
+```
+
+Real-browser regression and screenshot capture use:
+
+```bash
+node tools/final-browser-validation.mjs
 ```

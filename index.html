@@ -3,78 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#087db4" />
   <title>BLASTLINE</title>
+  <link rel="icon" href="assets/favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <canvas id="game"></canvas>
+  <main id="app">
+    <canvas id="game" aria-label="BLASTLINE bridge combat game"></canvas>
 
-    <header id="hud" class="panel hidden">
+    <header id="hud" class="panel hidden" aria-label="Run status">
       <div class="hud-left">
-        <img id="portrait" src="assets/portrait.webp" alt="Commander portrait" />
+        <img id="portrait" src="assets/portrait.webp" alt="Blue squad commander" />
         <div class="chips">
-          <div class="chip coin"><span class="icon">🪙</span><b id="coinLabel">0</b><span class="plus">+</span></div>
-          <div class="chip gem"><span class="icon">💎</span><b id="gemLabel">0</b><span class="plus">+</span></div>
+          <div class="chip coin"><span class="chip-icon" aria-hidden="true">●</span><span class="chip-copy"><small>COINS</small><b id="coinLabel">0</b></span></div>
+          <div class="chip score"><span class="chip-icon" aria-hidden="true">★</span><span class="chip-copy"><small>SCORE</small><b id="scoreLabel">0</b></span></div>
         </div>
       </div>
       <div class="hud-right">
-        <div class="wave-pill"><span id="waveLabel">WAVE 1/6</span></div>
-        <button id="pauseBtn" class="icon-btn" aria-label="Pause">❚❚</button>
+        <div class="wave-pill">
+          <span id="waveLabel">WAVE 1/6</span>
+          <small id="waveName">FIRST CONTACT</small>
+          <i><span id="waveProgress"></span></i>
+        </div>
+        <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game">❚❚</button>
       </div>
     </header>
 
-    <div id="floatingStats" class="panel hidden">
-      <div class="stat"><span>TROOPS</span><b id="troopsLabel">12</b></div>
+    <section id="floatingStats" class="panel hidden" aria-label="Squad statistics">
+      <div class="stat troops"><span>TROOPS</span><b id="troopsLabel">12</b></div>
       <div class="stat"><span>POWER</span><b id="powerLabel">1</b></div>
-      <div class="stat"><span>BEST</span><b id="bestLabel">0</b></div>
-    </div>
+      <div class="stat armor"><span>ARMOR</span><b id="armorLabel">0</b></div>
+    </section>
 
-    <section id="menu" class="overlay visible">
-      <div class="card hero-card">
-        <img class="menu-logo" src="assets/logo.svg" alt="BLASTLINE" />
-        <p class="eyebrow">BRIDGE ASSAULT</p>
-        <h1 class="sr-only">BLASTLINE</h1>
-        <p class="sub">Build the squad. Pick the lane. Break through the line.</p>
-        <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span></div>
-        <button id="playBtn" class="primary">PLAY</button>
+    <section id="bossHud" class="hidden" aria-label="Boss health">
+      <div class="boss-heading"><span id="bossName">REDLINE COMMANDER</span><b id="bossHealthText">60 / 60</b></div>
+      <div class="boss-track"><i id="bossHealthFill"></i></div>
+    </section>
+
+    <section id="menu" class="overlay visible home-overlay">
+      <div class="home-shell">
+        <div class="home-title">
+          <img class="menu-logo" src="assets/blastline/branding/logo-primary.webp" alt="BLASTLINE" />
+          <p class="eyebrow">BRIDGE ASSAULT</p>
+          <h1 class="sr-only">BLASTLINE</h1>
+          <p class="sub">Build the squad. Pick the lane. Break the final line.</p>
+        </div>
+        <div class="home-actions">
+          <button id="playBtn" class="primary play-button" type="button">PLAY</button>
+          <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>P TO PAUSE</span></div>
+          <div class="home-records">
+            <span>BEST <b id="homeBest">0</b></span>
+            <span>LIFETIME COINS <b id="homeCoins">0</b></span>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="upgradePanel" class="overlay">
-      <div class="card">
-        <p class="eyebrow">WAVE CLEAR</p>
-        <h2>Pick your upgrade</h2>
+    <section id="pausePanel" class="overlay pause-overlay" aria-label="Game paused">
+      <div class="card compact-card">
+        <p class="eyebrow">RUN SUSPENDED</p>
+        <h2>PAUSED</h2>
+        <p class="sub">The bridge is frozen exactly where you left it.</p>
+        <div class="button-row">
+          <button id="resumeBtn" class="primary" type="button">RESUME</button>
+          <button id="pauseHomeBtn" class="secondary" type="button">HOME</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="upgradePanel" class="overlay upgrade-overlay" aria-label="Choose an upgrade">
+      <div class="card upgrade-shell">
+        <p class="eyebrow">BOSS DEFEATED</p>
+        <h2>BETWEEN WAVES</h2>
+        <p class="upgrade-sub">Choose one upgrade. It lasts for this run.</p>
         <div id="upgradeCards" class="upgrade-grid"></div>
       </div>
     </section>
 
-    <section id="victoryPanel" class="overlay victory-overlay">
-      <div class="card victory-card">
+    <section id="victoryPanel" class="overlay victory-overlay" aria-label="Victory">
+      <div class="card end-card victory-card">
         <div class="victory-stars" aria-hidden="true">★ ★ ★</div>
-        <p class="eyebrow victory-eyebrow">BRIDGE SECURED</p>
-        <h2>VICTORY!</h2>
-        <div class="results victory-results">
+        <p class="eyebrow victory-eyebrow">THE LAST LINE BROKE</p>
+        <h2>VICTORY</h2>
+        <p class="end-message">All six waves cleared. The bridge is secure.</p>
+        <div class="results results-four">
           <div><span>Score</span><b id="victoryScore">0</b></div>
+          <div><span>Wave</span><b>6/6</b></div>
+          <div><span>Coins</span><b id="victoryCoins">0</b></div>
           <div><span>Best</span><b id="victoryBest">0</b></div>
         </div>
-        <button id="continueBtn" class="primary victory-button">RUN AGAIN</button>
+        <div class="button-row">
+          <button id="continueBtn" class="primary victory-button" type="button">PLAY AGAIN</button>
+          <button id="victoryHomeBtn" class="secondary" type="button">HOME</button>
+        </div>
       </div>
     </section>
 
-    <section id="gameOverPanel" class="overlay">
-      <div class="card">
-        <p class="eyebrow">MISSION ENDED</p>
-        <h2>Bridge lost</h2>
-        <div class="results">
-          <div><span>Coins</span><b id="finalScore">0</b></div>
-          <div><span>Wave</span><b id="finalWave">1</b></div>
+    <section id="gameOverPanel" class="overlay game-over-overlay" aria-label="Game over">
+      <div class="card end-card game-over-card">
+        <p class="eyebrow">SQUAD LOST</p>
+        <h2>GAME OVER</h2>
+        <p class="end-message">The red line held. Regroup and hit it again.</p>
+        <div class="results results-four">
+          <div><span>Score</span><b id="finalScore">0</b></div>
+          <div><span>Wave</span><b id="finalWave">1/6</b></div>
+          <div><span>Coins</span><b id="finalCoins">0</b></div>
           <div><span>Best</span><b id="finalBest">0</b></div>
         </div>
-        <button id="retryBtn" class="primary">RUN IT BACK</button>
+        <div class="button-row">
+          <button id="retryBtn" class="primary danger-button" type="button">RETRY</button>
+          <button id="gameOverHomeBtn" class="secondary" type="button">HOME</button>
+        </div>
       </div>
     </section>
-  </div>
+  </main>
 
   <script type="module" src="src/game.js"></script>
 </body>

@@ -14,3 +14,5 @@ The repository already contains the compressed BLASTLINE visual targets under `d
 10. `10-before-after-visual-target.webp`
 
 Use these as visual targets. Do not treat them as screenshots of the current website.
+
+The full-resolution targets are under `docs/art-reference/high-quality/` with stable content-based names documented in `docs/art-reference/README.md`. Current-site evidence is stored separately under `docs/visual-audit/final-2026-08-15/`.

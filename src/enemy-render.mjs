@@ -5,7 +5,7 @@ function panel(ctx,x,y,w,h,r,stops){
 function limb(ctx,x0,y0,x1,y1,w,c){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}
 
 export function drawEnemyCombatant(ctx,e,s,h,t){
-  const elite=e.type==='elite',u=h/60,phase=t*(elite?8.1:10.0)+(e.bob||0)*.017;
+  const shielded=e.type==='shield',elite=e.type==='elite'||shielded,u=h/60,phase=t*(elite?8.1:10.0)+(e.bob||0)*.017;
   const bob=Math.sin(phase)*u,stride=Math.sin(phase)*4.2*u;
   const bodyW=(elite?29:19)*u,flash=Math.max(0,e.hitFlash||0);
   ctx.save();ctx.translate(s.x,s.y+bob);ctx.lineCap='round';
@@ -34,6 +34,13 @@ export function drawEnemyCombatant(ctx,e,s,h,t){
     panel(ctx,-10*u,-29*u,20*u,12*u,2.5*u,[[0,'#cf7044'],[.42,'#8d3a32'],[1,'#3f2528']]);
     ctx.fillStyle='#1a1d20';ctx.beginPath();ctx.roundRect(-7.5*u,-26.5*u,15*u,6.5*u,2*u);ctx.fill();
     ctx.fillStyle='rgba(255,179,88,.4)';ctx.fillRect(-4.8*u,-24.8*u,9.6*u,1.6*u);
+    if(shielded){
+      // A tall independent shield gives the special elite a readable silhouette.
+      const sg=ctx.createLinearGradient(-25*u,-38*u,-10*u,-5*u);sg.addColorStop(0,'rgba(255,117,76,.95)');sg.addColorStop(.5,'rgba(129,31,38,.96)');sg.addColorStop(1,'rgba(42,25,31,.98)');
+      ctx.fillStyle=sg;ctx.beginPath();ctx.moveTo(-30*u,-38*u);ctx.lineTo(-13*u,-35*u);ctx.lineTo(-12*u,-8*u);ctx.lineTo(-21*u,-2*u);ctx.lineTo(-31*u,-9*u);ctx.closePath();ctx.fill();
+      ctx.strokeStyle=e.shield>0?'rgba(255,200,105,.92)':'rgba(91,45,49,.75)';ctx.lineWidth=2.2*u;ctx.stroke();
+      ctx.fillStyle=e.shield>0?'rgba(255,192,84,.62)':'rgba(51,31,35,.7)';ctx.beginPath();ctx.roundRect(-26*u,-30*u,9*u,6*u,1.4*u);ctx.fill();
+    }
   }else{
     panel(ctx,-5.2*u,-28*u,10.4*u,8.4*u,2*u,[[0,'#a53233'],[1,'#63262b']]);
   }
@@ -44,6 +51,9 @@ export function drawEnemyCombatant(ctx,e,s,h,t){
   ctx.save();ctx.translate(2*u,-20*u);ctx.rotate(.66);
   panel(ctx,-2*u,-2*u,(elite?7.5:5.2)*u,(elite?22:18)*u,1.2*u,[[0,'#647077'],[.25,'#343d42'],[1,'#171b1e']]);
   ctx.fillStyle='#0e1214';ctx.fillRect((elite?1.8:1.0)*u,11*u,(elite?2.4:1.8)*u,(elite?11:8)*u);ctx.restore();
+  if(e.shotFlash>0){
+    const a=Math.min(1,e.shotFlash/.12),mx=15*u,my=-6*u;ctx.save();ctx.globalAlpha=a;ctx.shadowColor='#ffb13f';ctx.shadowBlur=8*u;ctx.fillStyle='#fff1af';ctx.beginPath();ctx.arc(mx,my,3.6*u,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff742f';ctx.beginPath();ctx.moveTo(mx,my-6*u);ctx.lineTo(mx+8*u,my);ctx.lineTo(mx,my+5*u);ctx.closePath();ctx.fill();ctx.restore();
+  }
 
   // Visible face / helmet establishes enemy direction toward the camera.
   ctx.fillStyle='#bd7854';ctx.beginPath();ctx.arc(0,(elite?-40:-38)*u,(elite?6.7:5.6)*u,0,Math.PI*2);ctx.fill();

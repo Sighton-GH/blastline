@@ -1,8 +1,6 @@
 # BLASTLINE production asset handoff
 
-This branch is reserved for the BLASTLINE production asset integration handoff.
-
-The approved production masters were generated in ChatGPT File Library in Batches 1–10. The runtime should use cropped/optimized assets under `assets/blastline/`, following the Batch 11 export manifest.
+The approved production masters were generated in Batches 1–10 and are now stored under `assets/source/blastline/`. The running game uses cropped, optimized derivatives under `assets/blastline/`.
 
 Important rules:
 
@@ -11,4 +9,4 @@ Important rules:
 - Prefer WebP and modular atlases; keep ordinary files under ~500 KB, atlases under ~1.5 MB, major environment layers under ~2 MB, and exceptional files under ~4 MB where practical.
 - Use real browser screenshots for visual validation against `docs/art-reference/`.
 
-The binary production master sheets are not duplicated here yet because the File Library interface in this session exposes them as references but not transferable file bytes. Do not substitute fabricated or regenerated files without explicit approval.
+Runtime derivatives are deterministic crops made by `tools/extract-production-assets.py`; no source sheet is loaded wholesale. The high-resolution visual targets remain separate under `docs/art-reference/high-quality/`.
