@@ -137,27 +137,27 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 .stat.rate b { color: #a9ef87; }
 .stat.armor b { color: #92e6ff; }
 
-#enemyCounter {
+#frenzyBadge {
   top: max(76px, calc(env(safe-area-inset-top) + 67px));
   left: 50%;
   display: flex;
-  min-width: 112px;
-  height: 46px;
+  min-width: 100px;
+  height: 38px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 3px 12px 10px;
-  border: 2px solid #ff9c79;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(255, 92, 70, .98), rgba(163, 25, 35, .98));
-  box-shadow: 0 4px 0 #68151d, 0 10px 22px rgba(50,5,10,.32), inset 0 2px rgba(255,255,255,.27);
+  gap: 3px;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 224, 105, .9);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(8, 85, 113, .96), rgba(3, 35, 58, .98));
+  box-shadow: 0 3px 0 #05233b, 0 0 18px rgba(68,220,255,.34), inset 0 1px rgba(255,255,255,.25);
   transform: translateX(-50%);
-  text-shadow: 0 2px 0 rgba(70,5,10,.7);
+  text-shadow: 0 2px 0 rgba(0,22,39,.7);
 }
 
-#enemyCounter > b { font-size: 26px; line-height: 1; }
-#enemyCounter > span { color: #ffd071; font-size: 17px; }
-#enemyCounter > small { position: absolute; right: 0; bottom: 3px; left: 0; font-size: 6px; font-weight: 1000; letter-spacing: .16em; text-align: center; }
+#frenzyBadge > b { color: #fff2a0; font-size: 20px; line-height: 1; }
+#frenzyBadge > span { color: #8eeaff; font-size: 9px; font-weight: 1000; }
+#frenzyBadge > small { margin-right: 4px; color: #67e5ff; font-size: 7px; font-weight: 1000; letter-spacing: .15em; }
 
 #bossHud {
   position: absolute;
@@ -315,7 +315,7 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 @media (max-width: 900px) {
   .metric { min-width: 88px; }
   #floatingStats { top: max(72px, calc(env(safe-area-inset-top) + 62px)); }
-  #enemyCounter, #bossHud { top: max(117px, calc(env(safe-area-inset-top) + 108px)); }
+  #frenzyBadge, #bossHud { top: max(117px, calc(env(safe-area-inset-top) + 108px)); }
   #bossHud { width: min(610px, 86vw); }
   .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -337,9 +337,9 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .stat { min-width: 54px; padding: 3px 6px; border-width: 1px; border-radius: 7px; }
   .stat span { font-size: 5.5px; }
   .stat b { font-size: 14px; }
-  #enemyCounter { top: max(91px, calc(env(safe-area-inset-top) + 84px)); min-width: 92px; height: 38px; padding-bottom: 8px; border-width: 1px; }
-  #enemyCounter > b { font-size: 21px; }
-  #enemyCounter > small { font-size: 5px; }
+  #frenzyBadge { top: max(91px, calc(env(safe-area-inset-top) + 84px)); min-width: 86px; height: 32px; padding: 3px 8px; }
+  #frenzyBadge > b { font-size: 17px; }
+  #frenzyBadge > small { font-size: 6px; }
   #bossHud { top: max(92px, calc(env(safe-area-inset-top) + 84px)); width: 90vw; padding: 6px 8px 8px; border-width: 1px; }
   .boss-heading { gap: 5px; font-size: 7px; }
   .boss-track { height: 11px; }

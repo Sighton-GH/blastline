@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT_NAME = 'endless-overhaul-2026-08-15';
+const OUTPUT_NAME = 'environment-perspective-upgrade-2026-08-15';
 const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', OUTPUT_NAME);
 const FULL_SOAK = process.env.BLASTLINE_FULL_SOAK === '1';
 const PERF_ONLY = process.argv.includes('--perf-only');
@@ -81,7 +81,7 @@ async function waitReady(page) {
 
 async function visualAudit(page) {
   return page.evaluate(() => {
-    const visibleBoxes = [...document.querySelectorAll('#hud:not(.hidden) .hud-primary, #hud:not(.hidden) .hud-run, #floatingStats:not(.hidden), #enemyCounter:not(.hidden), #bossHud:not(.hidden)')]
+    const visibleBoxes = [...document.querySelectorAll('#hud:not(.hidden) .hud-primary, #hud:not(.hidden) .hud-run, #floatingStats:not(.hidden), #frenzyBadge:not(.hidden), #bossHud:not(.hidden)')]
       .map((element, index) => ({ id: element.id || element.className || `cluster-${index}`, rect: element.getBoundingClientRect().toJSON() }));
     const overlap = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     const overlaps = [];
@@ -109,7 +109,24 @@ async function visualAudit(page) {
         previous = mean;
       }
     }
-    return { visibleBoxes, overlaps, safeArea, maxWaterJump, projection: __blastlineTest.projectionAudit() };
+    const pageText = document.body.innerText;
+    return {
+      visibleBoxes,
+      overlaps,
+      safeArea,
+      maxWaterJump,
+      projection: __blastlineTest.projectionAudit(),
+      waterMask: __blastlineTest.waterMaskAudit(),
+      frenzy: __blastlineTest.frenzyAudit(),
+      frenzyBadge: {
+        visible: Boolean(document.querySelector('#frenzyBadge:not(.hidden)')),
+        text: document.querySelector('#frenzyBadge')?.textContent?.replace(/\s+/g, ' ').trim() || '',
+      },
+      removedPresentation: {
+        enemyPanelAbsent: !document.querySelector('#enemyCounter'),
+        safeWordingAbsent: !pageText.includes('SAFE LANE') && !/(^|\s)SAFE($|\s)/m.test(pageText),
+      },
+    };
   });
 }
 
@@ -145,6 +162,14 @@ async function captureState(context, viewportName, mode) {
   record(`${label}:planarDeck`, audit.projection.leftMaxDeviation < .1 && audit.projection.rightMaxDeviation < .1, audit.projection);
   record(`${label}:wideRoad`, audit.projection.roadWidthRatio >= .86, audit.projection);
   record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
+  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .16 : .14)) < .002, audit.projection);
+  record(`${label}:noBridgeEnd`, audit.projection.vanishingRoadWidth < .01 && audit.projection.vanishingBridgeWidth < .01, audit.projection);
+  record(`${label}:boundedProjectedSpeed`, audit.projection.projectedSpeedRatio < 1.4, audit.projection);
+  record(`${label}:sharedProjectionScale`, audit.projection.sharedScaleError < 1e-8, audit.projection.sharedScaleSamples);
+  record(`${label}:cableAndHangerAnchors`, audit.projection.cableAnchorError < 1 && audit.projection.hangerAnchorError < 1 && audit.projection.towerHeightScaleError < 1e-6, audit.projection);
+  record(`${label}:entityGrounding`, audit.projection.entityGroundingError === 0, audit.projection);
+  record(`${label}:waterExcludedFromDeck`, audit.waterMask.maxDeckAlpha === 0 && audit.waterMask.minWaterAlpha > 0, audit.waterMask);
+  record(`${label}:removedPresentation`, audit.removedPresentation.enemyPanelAbsent && audit.removedPresentation.safeWordingAbsent, audit.removedPresentation);
   record(`${label}:waterContinuity`, audit.maxWaterJump < 210, audit.maxWaterJump);
   await page.close();
 }
@@ -411,24 +436,34 @@ try {
     await runPerformanceValidation();
   } else {
     const portrait = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-    for (const mode of ['home', 'horde', 'gate', 'dense', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(portrait, 'portrait', mode);
+    for (const mode of ['home', 'horde', 'gate', 'dense', 'frenzy', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(portrait, 'portrait', mode);
   await portrait.close();
 
   const landscape = await browser.newContext({ viewport: { width: 1365, height: 768 }, deviceScaleFactor: 1 });
-  for (const mode of ['home', 'horde', 'gate', 'dense', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(landscape, 'landscape', mode);
+  for (const mode of ['home', 'horde', 'gate', 'dense', 'frenzy', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(landscape, 'landscape', mode);
   await landscape.close();
 
   record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad >= 60 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
   record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad >= 60 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
   record('portraitAndLandscapeProfiles', captures['portrait-horde'].audit.projection.profile === 'portrait' && captures['landscape-horde'].audit.projection.profile === 'landscape');
+  for (const viewport of ['portrait', 'landscape']) {
+    const frenzy = captures[`${viewport}-frenzy`];
+    record(
+      `${viewport}FrenzyPresentation`,
+      frenzy.audit.frenzy.borderAlpha > 0 && frenzy.audit.frenzy.cornerAlpha > 0 && frenzy.audit.frenzy.centerAlpha === 0 && frenzy.audit.frenzyBadge.visible && frenzy.audit.frenzyBadge.text.includes('FRENZY'),
+      { pixels: frenzy.audit.frenzy, badge: frenzy.audit.frenzyBadge },
+    );
+  }
 
   await runInteractionValidation();
   await runEndlessProgression();
   await runPerformanceValidation();
 
   await makeComparisonBoard('home', 'docs/art-reference/high-quality/01-home-screen.png', 'landscape-home');
-  await makeComparisonBoard('horde', 'docs/art-reference/high-quality/03-gameplay-squad-growth.png', 'landscape-horde');
+  await makeComparisonBoard('gameplay', 'docs/art-reference/high-quality/02-gameplay-lane-choice.png', 'landscape-horde');
   await makeComparisonBoard('gate', 'docs/art-reference/high-quality/04-gameplay-stat-gates.png', 'landscape-gate');
+  await makeComparisonBoard('dense-horde', 'docs/art-reference/high-quality/05-elite-wave.png', 'landscape-dense');
+  await makeComparisonBoard('frenzy', 'docs/art-reference/high-quality/10-endgame-chaos.png', 'landscape-frenzy');
   await makeComparisonBoard('boss', 'docs/art-reference/high-quality/06-boss-battle.png', 'landscape-boss-phase-3');
   await makeComparisonBoard('shop', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-shop');
   await makeComparisonBoard('boss-reward', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-reward');
