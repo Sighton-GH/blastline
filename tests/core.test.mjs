@@ -1,7 +1,63 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {LEVELS,mulberry32,initialPlayer,gateEffect,applyMetaUpgrade,makeGatePair,gateLabel,pickUnique} from '../src/core.mjs';
-test('seeded RNG is deterministic',()=>{const a=mulberry32(42),b=mulberry32(42);assert.deepEqual([a(),a(),a()],[b(),b(),b()])});
-test('troop multiplier and cap work',()=>{let p=initialPlayer();p.troops=600;p=gateEffect(p,{kind:'multiply',value:2});assert.equal(p.troops,999)});
-test('all meta upgrades improve exactly one intended dimension',()=>{const p=initialPlayer();assert.equal(applyMetaUpgrade(p,'troops').troops,30);assert.ok(applyMetaUpgrade(p,'damage').damage>p.damage);assert.ok(applyMetaUpgrade(p,'rate').fireRate>p.fireRate);assert.equal(applyMetaUpgrade(p,'armor').armor,3);assert.equal(applyMetaUpgrade(p,'spread').projectiles,2);assert.ok(applyMetaUpgrade(p,'velocity').bulletSpeed>p.bulletSpeed)});
-test('gate pair always contains two distinct upgrade kinds',()=>{for(let seed=1;seed<100;seed++){const g=makeGatePair(mulberry32(seed),seed%LEVELS.length);assert.equal(g.length,2);assert.notEqual(g[0].kind,g[1].kind);assert.ok(g[0].charge>0&&g[1].charge>0);assert.ok(gateLabel(g[0]).length>3)}});
-test('upgrade choices are unique',()=>{const src=['a','b','c','d','e'];const picked=pickUnique(mulberry32(7),src,3);assert.equal(new Set(picked).size,3);assert.equal(src.length,5)});
-test('difficulty escalates across authored levels',()=>{for(let i=1;i<LEVELS.length;i++){assert.ok(LEVELS[i].boss>LEVELS[i-1].boss);assert.ok(LEVELS[i].hp>=LEVELS[i-1].hp);assert.ok(LEVELS[i].speed>=LEVELS[i-1].speed);assert.ok(LEVELS[i].spawn<LEVELS[i-1].spawn)}});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  LEVELS,
+  UPGRADES,
+  applyGate,
+  applyUpgrade,
+  gateText,
+  initialPlayer,
+  makeGatePair,
+  mulberry32,
+  pickUpgradeSet,
+} from '../src/core.mjs';
+
+test('seeded RNG is deterministic', () => {
+  const a = mulberry32(42);
+  const b = mulberry32(42);
+  assert.deepEqual([a(), a(), a()], [b(), b(), b()]);
+});
+
+test('troop multiplier is capped and troop loss cannot empty the squad', () => {
+  assert.equal(applyGate({ ...initialPlayer(), troops: 600 }, { kind: 'troopsMul', value: 2 }).troops, 999);
+  assert.equal(applyGate({ ...initialPlayer(), troops: 2 }, { kind: 'troops', value: -10 }).troops, 1);
+});
+
+test('each upgrade changes its intended player property', () => {
+  const player = initialPlayer();
+  assert.equal(applyUpgrade(player, 'troops').troops, player.troops + 12);
+  assert.equal(applyUpgrade(player, 'power').power, player.power + 1);
+  assert.ok(applyUpgrade(player, 'rate').fireRate > player.fireRate);
+  assert.equal(applyUpgrade(player, 'spread').projectiles, player.projectiles + 1);
+  assert.equal(applyUpgrade(player, 'coins').coins, player.coins + 600);
+});
+
+test('gate pairs contain one reward and one penalty with display text', () => {
+  for (let seed = 1; seed < 100; seed += 1) {
+    const gates = makeGatePair(mulberry32(seed), seed % LEVELS.length);
+    const penalties = gates.filter(gate => gate.kind === 'slow' || (gate.kind === 'troops' && gate.value < 0));
+    assert.equal(gates.length, 2);
+    assert.equal(penalties.length, 1);
+    assert.ok(gates.every(gate => gateText(gate).length > 0));
+  }
+});
+
+test('upgrade choices are unique without mutating the catalog', () => {
+  const originalIds = UPGRADES.map(({ id }) => id);
+  const picked = pickUpgradeSet(mulberry32(7));
+  assert.equal(picked.length, 3);
+  assert.equal(new Set(picked.map(({ id }) => id)).size, 3);
+  assert.deepEqual(UPGRADES.map(({ id }) => id), originalIds);
+});
+
+test('difficulty escalates across authored levels', () => {
+  for (let index = 1; index < LEVELS.length; index += 1) {
+    const previous = LEVELS[index - 1];
+    const current = LEVELS[index];
+    assert.ok(current.length > previous.length);
+    assert.ok(current.enemies > previous.enemies);
+    assert.ok(current.bossHp > previous.bossHp);
+    assert.ok(current.speed >= previous.speed);
+    assert.ok(current.spawn < previous.spawn);
+  }
+});
