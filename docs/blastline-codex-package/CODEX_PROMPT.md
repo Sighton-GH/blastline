@@ -6,11 +6,22 @@ You are continuing development of the BLASTLINE browser game in:
 
 Use maximum reasoning.
 
-Work from the repository state that contains the BLASTLINE handoff branch:
+## 0. Start from the cleaned repository
 
-`agent/blastline-production-assets`
+The repository has already been consolidated and cleaned up.
 
-Before changing code, inspect branch ancestry, open/merged PRs, and the newest complete visual implementation. Do not blindly discard newer accepted work and do not blindly merge every old `agent/*` branch.
+Use the **current `main` branch as the implementation base** unless the user explicitly tells you otherwise.
+
+Do NOT resurrect, merge, or cherry-pick historical development branches merely because they contain older BLASTLINE work. Historical branches and old PRs are non-authoritative after cleanup unless a specific missing file must be recovered and you have verified that recovery is actually necessary.
+
+Before editing:
+
+1. record the current `main` SHA;
+2. inspect the current repository tree;
+3. inspect the current code/tests/docs on `main`;
+4. work forward from that cleaned state.
+
+Do not spend time reconstructing old branch history when the cleaned `main` already contains the accepted project state.
 
 ---
 
@@ -36,8 +47,8 @@ It defines:
 - waves;
 - upgrades;
 - scoring/currency;
-- victory;
-- game over;
+- Victory;
+- Game Over;
 - persistence;
 - HUD behavior;
 - VFX/audio expectations;
@@ -48,19 +59,30 @@ It defines:
 
 ### Authority rule
 
-When implementation, old tests, README text, prototypes, or historical behavior disagree with `docs/BLASTLINE_GAME_SPECIFICATION.md`, **the game specification wins** unless there is an explicit newer user instruction.
+When current implementation, old tests, README text, prototypes, screenshots, historical branches, or old behavior disagree with `docs/BLASTLINE_GAME_SPECIFICATION.md`, **the game specification wins** unless there is a newer explicit user instruction.
 
 Update code and tests toward the specification rather than preserving accidental old behavior.
 
-In particular:
+### Requirement-language rule
+
+Interpret the specification carefully:
+
+- **MUST / required / non-negotiable / Definition of Done** = mandatory for v1.
+- **SHOULD / recommended / preferred / starting target** = strong design direction, but may be tuned when testing shows a better implementation.
+- **MAY / optional / when supported / future** = non-blocking enhancement. Do not delay completion of the core game to implement an optional system.
+
+For example, optional or recommended systems such as extra elite variants, armor, enemy ranged fire, audio, lifetime currency, or extra meta systems must not become blockers unless the specification explicitly marks them mandatory or the user separately requests them.
+
+In particular, these outcomes ARE mandatory:
 
 - BLASTLINE has six authored waves;
-- every wave ends in a boss;
+- every wave ends with a boss encounter;
 - bosses on Waves 1–5 lead to an upgrade choice;
 - the Wave 6 boss leads to **VICTORY**;
 - do not loop directly from final boss back to Wave 1;
 - squad reaching zero leads to **GAME OVER**;
-- Retry must create a clean run.
+- Retry starts a clean run;
+- controls, auto-fire, gates, enemies, bosses, upgrades, pause, mobile play, and desktop play function correctly.
 
 ---
 
@@ -70,20 +92,9 @@ Inspect the real reference images under:
 
 `docs/blastline-codex-package/references/`
 
-They are:
+Also inspect `docs/art-reference/` where useful.
 
-1. `01-gameplay-lane-choice.webp`
-2. `02-elite-wave.webp`
-3. `03-boss-battle.webp`
-4. `04-between-waves-upgrades.webp`
-5. `05-victory-screen.webp`
-6. `06-game-over.webp`
-7. `07-endgame-chaos.webp`
-8. `08-character-environment-style-guide.webp`
-9. `09-static-web-game-concept-sheet.webp`
-10. `10-before-after-visual-target.webp`
-
-Actually inspect the pixels.
+Actually inspect the image pixels. Do not substitute filenames, prose descriptions, or memory for looking at the references.
 
 Use them to guide:
 
@@ -100,53 +111,62 @@ Use them to guide:
 - combat density and VFX;
 - overall polish.
 
-However, this is a static HTML/CSS/Canvas browser game. It may not be possible or sensible to exactly reproduce a promo/native-mobile 3D render.
+However, BLASTLINE is a lightweight static HTML/CSS/Canvas browser game. A native/promo-quality 3D mobile render may contain lighting, modeling, materials, animation, and depth effects that are unreasonable to reproduce exactly in this stack.
 
-The goal is **the closest practical lightweight browser interpretation**, not literal pixel parity.
+The goal is **the closest practical polished browser interpretation**, not literal pixel parity.
 
-Do not waste large amounts of time chasing tiny material/3D differences after the game already strongly reads as the same visual family.
+Do not use “browser limitations” as an excuse for obvious composition, geometry, scale, silhouette, color, or UI mistakes. Those should still be corrected.
+
+Conversely, do not waste large amounts of time chasing tiny material or 3D-surface differences after the browser game already strongly reads as the same BLASTLINE visual family.
 
 Prioritize visual similarity in this order:
 
 1. camera/composition;
 2. flat road and bridge geometry;
-3. bridge silhouette;
+3. suspension-bridge silhouette;
 4. faction colors;
 5. scale relationships;
-6. character/enemy/boss silhouettes;
+6. player/enemy/elite/boss silhouettes and orientation;
 7. gates;
 8. UI hierarchy;
 9. lighting/shadows/depth;
-10. VFX density;
+10. VFX density and impact;
 11. fine surface/material detail.
 
-Gameplay correctness, readability, responsiveness, and performance are more important than impossible last-mile visual parity.
+Gameplay correctness, readability, responsiveness, stability, and performance are mandatory. Visual fidelity should be pushed as far as practical around those constraints.
 
 ---
 
 ## 3. Production assets
 
-Read:
+Read the current files under:
 
 `docs/blastline-production-assets/`
 
 including:
 
-- `APPROVED_SOURCE_MASTERS.md`
-- `ASSET_PATHS.md`
-- `FILE_SIZE_RULES.md`
-- `ROAD_GEOMETRY.md`
-- `DO_NOT_FAKE_CURRENT_SCREENSHOTS.md`
+- `APPROVED_SOURCE_MASTERS.md`;
+- `ASSET_PATHS.md`;
+- `FILE_SIZE_RULES.md`;
+- `ROAD_GEOMETRY.md`;
+- `DO_NOT_FAKE_CURRENT_SCREENSHOTS.md`.
 
-The user has approved the current Batch 1–10 production art.
+The user has approved the Batch 1–10 production-art direction.
 
-If the approved generated master sheets are available in your coding/session environment:
+Important: do not assume an approved source-master PNG exists as a local runtime file merely because its filename is documented. Verify actual repository/session availability before using it.
 
-- preserve originals under `assets/source/blastline/`;
+If an approved generated master is available in the coding environment:
+
+- preserve the untouched source master under `assets/source/blastline/` when appropriate;
 - crop/repack/resize/encode useful runtime pieces under `assets/blastline/`;
-- do not render giant master sheets directly in production.
+- do not render a giant source sheet directly in gameplay.
 
-If a specific approved binary is unavailable, do not fabricate a replacement and claim it is the approved asset. Continue all independent work and document that individual missing binary as a blocker.
+If a specific approved master binary is unavailable:
+
+- do not fabricate a replacement and falsely label it as that approved master;
+- do not block all game development on that one missing source sheet;
+- continue with current repository assets, Canvas/CSS geometry, and all independent improvements;
+- document the missing asset only if it materially limits the final result.
 
 Preferred runtime budgets:
 
@@ -164,10 +184,7 @@ Prefer cropped WebP and logical atlas splitting.
 
 The bridge roadway must be:
 
-FLAT
-STRAIGHT
-RIGID
-PLANAR
+**FLAT — STRAIGHT — RIGID — PLANAR**
 
 Perspective convergence is correct.
 
@@ -182,7 +199,7 @@ Do not allow the deck to:
 - undulate;
 - twist;
 - resemble a hill/ramp/roller coaster;
-- follow the suspension cable curve.
+- follow the suspension-cable curve.
 
 Only the suspension cables curve.
 
@@ -194,9 +211,9 @@ This applies to gameplay and especially the home screen.
 
 ## 5. Dynamic text stays dynamic
 
-Do not bake changing gameplay words/values into reusable assets.
+Do not bake changing gameplay words or values into reusable art.
 
-Runtime-render:
+Runtime-render changing content such as:
 
 - gate operators/values;
 - troop count;
@@ -205,22 +222,20 @@ Runtime-render:
 - wave number;
 - boss health values if shown;
 - upgrade title/description/stat value;
-- victory/game-over statistics;
-- reusable button labels.
-
-Use the empty structural UI/gate assets with runtime HTML/CSS/Canvas text.
+- Victory/Game Over statistics;
+- reusable button labels where an empty button shell is used.
 
 ---
 
-## 6. Reconcile the current implementation against the spec
+## 6. Audit the current cleaned implementation against the spec
 
-Before large visual work, audit the current code and tests against `docs/BLASTLINE_GAME_SPECIFICATION.md`.
+Before large visual work, audit the **current `main` code and tests** against `docs/BLASTLINE_GAME_SPECIFICATION.md`.
 
 Create a concise implementation checklist containing at least:
 
 - state machine;
 - six-wave progression;
-- final victory transition;
+- final Victory transition;
 - controls;
 - auto-fire;
 - squad logical/visible count;
@@ -228,34 +243,45 @@ Create a concise implementation checklist containing at least:
 - enemy contact/damage;
 - elites;
 - boss phase;
-- boss attack behavior;
-- upgrade pool and 3-choice flow;
+- boss combat behavior;
+- upgrade pool and three-choice flow;
 - score/persistence;
 - pause;
 - retry reset;
 - mobile/desktop behavior.
 
-Where old code/tests conflict with the spec, fix them.
+Classify each as:
 
-Do not preserve a bug because it was already implemented.
+- CORRECT;
+- PARTIAL;
+- INCORRECT;
+- MISSING.
+
+Then implement the fixes. Do not stop after producing the checklist.
+
+Where code or tests conflict with mandatory behavior in the spec, fix them.
+
+Where an optional feature is absent, do not automatically classify the game as incomplete.
 
 ---
 
 ## 7. Implementation order
 
-Work in this order unless a dependency requires a small deviation:
+Work in this order unless a dependency requires a small deviation.
 
-### Phase A — gameplay correctness
+### Phase A — mandatory gameplay correctness
 
 1. normalize game states/state transitions;
 2. make six-wave progression correct;
 3. implement Victory after final boss;
 4. make Game Over/Retry clean;
-5. align player stats/upgrades/gates with the spec;
-6. ensure enemy/elite/boss mechanics work;
-7. add/repair boss attacks if missing;
-8. ensure pause and input work;
+5. align mandatory player stats/upgrades/gates with the spec;
+6. ensure grunt/elite/boss mechanics work;
+7. ensure boss encounters are meaningful and readable;
+8. ensure pause/input work;
 9. update automated tests.
+
+Only after mandatory behavior is reliable should optional systems be added when they clearly improve the game.
 
 ### Phase B — world/camera
 
@@ -285,7 +311,8 @@ Work in this order unless a dependency requires a small deviation:
 24. responsive/mobile polish;
 25. lighting/shadows;
 26. performance;
-27. final bug/edge-case validation.
+27. final bug/edge-case validation;
+28. optional enhancements only if they materially improve the finished game.
 
 ---
 
@@ -301,9 +328,9 @@ Never:
 - AI-edit/Photoshop a current screenshot;
 - use an old planning infographic as current-state proof.
 
-Reference = visual target.
+**Reference = visual target.**
 
-Real browser screenshot = current implementation evidence.
+**Real browser screenshot = current implementation evidence.**
 
 ---
 
@@ -314,7 +341,7 @@ Use fresh real screenshots at:
 - mobile: 390×844, DPR 1;
 - desktop: 1365×768, DPR 1.
 
-Capture important states:
+Capture important states where implemented:
 
 - home;
 - lane/gate gameplay;
@@ -322,13 +349,13 @@ Capture important states:
 - elite/dense combat;
 - boss;
 - upgrade screen;
-- victory;
-- game over.
+- Victory;
+- Game Over.
 
 For each major visual pass:
 
-1. capture real screenshot;
-2. compare with relevant reference;
+1. capture a real screenshot;
+2. compare with the relevant reference;
 3. identify the most important 1–3 differences;
 4. correct them;
 5. recapture;
@@ -336,7 +363,7 @@ For each major visual pass:
 
 Do several meaningful iterations where the gap is large.
 
-Do **not** require endless iterations for tiny differences that are intrinsic to lightweight Canvas/browser rendering.
+Do **not** require endless iterations for tiny differences intrinsic to lightweight browser rendering.
 
 A visual area is good enough when:
 
@@ -345,49 +372,50 @@ A visual area is good enough when:
 - the game is readable and polished;
 - remaining differences are mostly fine material/rendering details that are unreasonable to reproduce in this stack.
 
-Maintain concise notes under:
+Maintain concise evidence/notes under:
 
 `docs/visual-audit/full-fidelity/`
 
-but spend more time improving the actual game than writing audit prose.
+when useful, but prioritize improving the actual game over producing excessive audit prose.
 
 ---
 
-## 10. Required gameplay behavior from the spec
+## 10. Mandatory v1 outcomes
 
-Treat the following as mandatory v1 outcomes:
+Use the full specification for details, but the completed core game must satisfy at least:
 
 - Home -> Play starts a clean run.
 - Forward motion is automatic.
-- Touch/mouse/A-D/arrow steering works.
+- Touch, mouse/pointer, A/D, and arrow steering work.
 - Shooting is automatic.
-- Starting squad is approximately 12 troops.
+- Starting squad is approximately 12 troops unless playtesting justifies a documented tuning change.
 - Troop count is the primary survival resource.
-- Large logical squads render with visible-count compression.
-- Gate pair applies at most one effect.
+- Large logical squads use visible-count compression.
+- A gate pair applies at most one effect.
 - Gate arithmetic cannot reduce troops below 1 by itself.
-- Enemies can reduce troops to zero and cause Game Over.
-- Grunts and elites are mechanically distinct.
-- Later waves are harder/denser.
-- Every wave ends in a boss.
-- Boss has clear health and meaningful attacks.
-- Waves 1–5 boss defeat -> 3-choice upgrade screen.
-- One upgrade is selected and persists for the run.
+- Enemy damage can reduce troops to zero and cause Game Over.
+- Grunts and at least one elite class are mechanically distinct.
+- Later waves are meaningfully harder/denser.
+- Every wave ends with a boss encounter.
+- Boss health is clearly communicated.
+- Waves 1–5 boss defeat -> exactly three unique upgrade choices.
+- Player chooses one upgrade and it persists for that run.
 - Wave 6 boss defeat -> Victory.
-- Retry clears all transient state.
+- Retry clears transient state and starts cleanly.
 - Best score persists locally.
 - Pause freezes gameplay completely.
 - Mobile and desktop are playable.
+- Road geometry remains flat and planar.
 
-Use the detailed rules and baseline values in `docs/BLASTLINE_GAME_SPECIFICATION.md` rather than re-inventing them here.
+Do not elevate optional systems beyond this mandatory set unless they are already implemented cleanly or materially improve the game.
 
 ---
 
 ## 11. Tests
 
-Update/add tests so they enforce the authoritative specification.
+Update/add tests so they enforce the mandatory specification.
 
-At minimum cover:
+At minimum cover, where the architecture permits clean automated testing:
 
 - deterministic RNG;
 - gate effects/caps;
@@ -400,7 +428,7 @@ At minimum cover:
 - kill reward only once;
 - Retry clears transient run state.
 
-Run where applicable:
+Run:
 
 ```bash
 npm test
@@ -408,7 +436,7 @@ node --check src/game.js
 node --check src/core.mjs
 ```
 
-Then real-browser validate:
+Then real-browser validate the implemented core flow:
 
 - load;
 - Play;
@@ -417,7 +445,7 @@ Then real-browser validate:
 - auto-fire;
 - positive gate;
 - negative gate;
-- elites;
+- elite;
 - damage/death;
 - boss;
 - upgrade;
@@ -449,29 +477,27 @@ Measure/inspect:
 - DOM count;
 - resize behavior.
 
-Do not trade away major visual identity unnecessarily, but do not turn the game into a huge fragile asset payload to chase promo-render parity either.
+Do not trade away major visual identity unnecessarily, but do not turn the game into a huge fragile payload to chase promo-render parity either.
 
 ---
 
 ## 13. Final acceptance
 
-Do not judge success solely by whether the reference and screenshot are pixel-identical.
+Judge success on two separate axes.
 
-Judge the project on two axes:
+### A. Behavioral correctness — mandatory
 
-### A. Behavioral correctness
+Does the real game satisfy the mandatory behavior in `docs/BLASTLINE_GAME_SPECIFICATION.md`?
 
-Does the real game satisfy `docs/BLASTLINE_GAME_SPECIFICATION.md`?
-
-This is mandatory.
+Optional/recommended items are not blockers unless explicitly promoted to mandatory by the user/spec.
 
 ### B. Practical visual fidelity
 
-Does the real running game clearly feel like the same BLASTLINE world/aesthetic as the references, within reasonable HTML/CSS/Canvas constraints?
+Does the real running game clearly feel like the same BLASTLINE world/aesthetic as the references within reasonable HTML/CSS/Canvas constraints?
 
-This should be pushed as far as practical, but not at the expense of stability, performance, readability, or completing the actual game.
+Push this as far as practical without sacrificing stability, performance, readability, or completion of the actual game.
 
-The final build should feel like a polished browser adaptation of the reference mobile-game aesthetic.
+The final result should feel like a polished browser adaptation of the premium mobile-game reference aesthetic, not a generic webpage and not a claim of impossible pixel-perfect native-3D parity.
 
 ---
 
@@ -479,10 +505,10 @@ The final build should feel like a polished browser adaptation of the reference 
 
 Provide:
 
-- exact final branch;
-- exact final SHA;
-- summary of gameplay-spec changes implemented;
-- list of tests run and results;
+- exact final branch and SHA;
+- summary of mandatory gameplay-spec changes implemented;
+- optional features added, if any;
+- list of tests actually run and results;
 - genuine mobile screenshot;
 - genuine desktop screenshot;
 - home screenshot;
@@ -490,11 +516,11 @@ Provide:
 - upgrade screenshot;
 - Victory screenshot;
 - Game Over screenshot;
-- runtime asset size summary;
+- runtime asset-size summary;
 - performance notes;
-- any remaining behavior deviations from the game spec;
-- any remaining visual differences that are substantial;
-- any visual differences intentionally accepted as reasonable browser-rendering limitations.
+- any remaining mandatory behavior deviations;
+- any significant remaining visual differences;
+- visual differences intentionally accepted as reasonable browser-rendering limitations.
 
 Do the implementation, testing, browser validation, and practical visual refinement.
 
