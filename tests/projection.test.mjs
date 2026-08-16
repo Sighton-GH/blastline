@@ -14,23 +14,23 @@ import {
 } from '../src/projection.mjs';
 
 const VIEWPORTS = [
-  { width: 1365, height: 768, profile: 'landscape', horizon: .14 },
-  { width: 390, height: 844, profile: 'portrait', horizon: .16 },
+  { width: 1365, height: 768, profile: 'landscape', horizon: .09, farScale: .16 },
+  { width: 390, height: 844, profile: 'portrait', horizon: .1, farScale: .18 },
 ];
 
-test('camera profiles converge to a zero-width centered vanishing point', () => {
+test('camera profiles use a finite fog-clipped cross-section instead of a visible point', () => {
   for (const viewport of VIEWPORTS) {
     const projection = createProjection(viewport.width, viewport.height);
     assert.equal(projection.profile.name, viewport.profile);
     assert.equal(projection.horizon, viewport.height * viewport.horizon);
-    assert.equal(roadHalfWidth(projection, 0), 0);
-    assert.equal(bridgeHalfWidth(projection, 0), 0);
-    assert.deepEqual(projectGround(projection, -.8, 0), {
-      x: viewport.width / 2,
-      y: projection.horizon,
-      scale: 0,
-      visible: false,
-    });
+    assert.ok(Math.abs(depthScale(projection.profile, 0) - viewport.farScale) < 1e-10);
+    assert.ok(roadHalfWidth(projection, 0) > 0);
+    assert.ok(bridgeHalfWidth(projection, 0) > roadHalfWidth(projection, 0));
+    assert.ok(Math.abs(roadHalfWidth(projection, 0) / roadHalfWidth(projection, 1) - viewport.farScale) < 1e-10);
+    const farPoint = projectGround(projection, -.8, 0);
+    assert.equal(farPoint.scale, viewport.farScale);
+    assert.equal(farPoint.visible, false);
+    assert.ok(farPoint.x < projection.centerX && farPoint.y > projection.horizon);
   }
 });
 
@@ -61,6 +61,30 @@ test('road, gates, enemies, health bars, and shadows share one monotonic scale',
         assert.ok(Math.abs(candidate - scale) < 1e-10);
       }
     }
+  }
+});
+
+test('approach, retreat, and lateral animation use one coherent screen-space projection', () => {
+  for (const viewport of VIEWPORTS) {
+    const projection = createProjection(viewport.width, viewport.height);
+    const start = { x: -.31, y: .42 };
+    const motions = [
+      { name: 'enemy', vx: 0, vy: .052 },
+      { name: 'hostile projectile', vx: .04, vy: .052 },
+      { name: 'player projectile', vx: .04, vy: -.052 },
+      { name: 'gate and lane marker', vx: 0, vy: .052 },
+    ];
+    const deltas = new Map();
+    for (const motion of motions) {
+      const from = projectGround(projection, start.x, start.y);
+      const to = projectGround(projection, start.x + motion.vx, start.y + motion.vy);
+      deltas.set(motion.name, { dx: to.x - from.x, dy: to.y - from.y, scale: to.scale - from.scale });
+      assert.equal(Math.sign(to.y - from.y), Math.sign(motion.vy));
+      assert.equal(Math.sign(to.scale - from.scale), Math.sign(motion.vy));
+      if (motion.vx > 0) assert.ok(to.x > projectGround(projection, start.x, start.y + motion.vy).x);
+    }
+    assert.ok(Math.abs(deltas.get('enemy').dy - deltas.get('gate and lane marker').dy) < 1e-10);
+    assert.ok(Math.abs(deltas.get('enemy').scale - deltas.get('gate and lane marker').scale) < 1e-10);
   }
 });
 
@@ -113,10 +137,14 @@ test('landscape camera keeps the reference bridge anchors and uninterrupted road
   const projection = createProjection(1904, 872, 'landscape');
   const geometry = buildBridgeGeometry(projection);
   const [farTower, nearTower] = geometry.towers;
-  assert.ok(Math.abs(projection.horizon / projection.height - .14) < 1e-10);
-  assert.ok(Math.abs(farTower.baseY / projection.height - .3615) < .002);
-  assert.ok(Math.abs(nearTower.baseY / projection.height - .7134) < .002);
+  assert.ok(Math.abs(projection.horizon / projection.height - .09) < 1e-10);
+  assert.ok(Math.abs(farTower.baseY / projection.height - .3687) < .002);
+  assert.ok(Math.abs(nearTower.baseY / projection.height - .735) < .002);
   assert.ok(roadHalfWidth(projection, 1) * 2 / projection.width < .82);
+  assert.ok(roadHalfWidth(projection, 1) * 2 / projection.width > .78);
+  assert.ok(roadHalfWidth(projection, 0) / roadHalfWidth(projection, 1) > .14);
+  assert.ok((farTower.xs[1] - farTower.xs[0]) / projection.width > .25);
+  assert.ok((nearTower.xs[1] - nearTower.xs[0]) / projection.width < .65);
 
   const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   assert.ok(!runtime.includes("asphalt: 'assets/blastline/environment/asphalt.webp'"));

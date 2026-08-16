@@ -4,23 +4,25 @@ const lerp = (start, end, amount) => start + (end - start) * amount;
 export const CAMERA_PROFILES = Object.freeze({
   landscape: Object.freeze({
     name: 'landscape',
-    horizon: .14,
-    nearRoadHalf: .405,
-    shoulderRatio: 1.1,
-    linearDepth: .9,
-    towerStations: Object.freeze([.27, .67]),
-    towerWorldHeight: .63,
-    railWorldHeight: .058,
+    horizon: .09,
+    nearRoadHalf: .4,
+    shoulderRatio: 1.09,
+    farScale: .16,
+    linearDepth: .96,
+    towerStations: Object.freeze([.17, .64]),
+    towerWorldHeight: .6,
+    railWorldHeight: .05,
   }),
   portrait: Object.freeze({
     name: 'portrait',
-    horizon: .16,
-    nearRoadHalf: .43,
-    shoulderRatio: 1.08,
-    linearDepth: .84,
-    towerStations: Object.freeze([.29, .66]),
-    towerWorldHeight: .59,
-    railWorldHeight: .052,
+    horizon: .1,
+    nearRoadHalf: .42,
+    shoulderRatio: 1.07,
+    farScale: .18,
+    linearDepth: .94,
+    towerStations: Object.freeze([.18, .62]),
+    towerWorldHeight: .57,
+    railWorldHeight: .047,
   }),
 });
 
@@ -29,14 +31,16 @@ export function profileForViewport(width, height) {
 }
 
 /**
- * A bounded quadratic perspective curve. Its derivative changes gradually from
- * linearDepth at the horizon to (2 - linearDepth) at the foreground, avoiding
- * the former last-moment screen-speed jump while retaining visible approach.
+ * A bounded, far-clipped perspective curve. The camera never renders the
+ * mathematical vanishing point: farScale is the cross-section where the deck
+ * enters the fog. Keeping that finite cross-section produces the elevated,
+ * less aggressively tapered camera used by the reference while preserving one
+ * scale for the road, structures, actors, gates, shadows, and projectiles.
  */
 export function depthScale(profile, worldY) {
-  if (worldY <= 0) return 0;
   const y = clamp(worldY, 0, 1.08);
-  return y * (profile.linearDepth + (1 - profile.linearDepth) * y);
+  const curve = y * (profile.linearDepth + (1 - profile.linearDepth) * y);
+  return profile.farScale + (1 - profile.farScale) * curve;
 }
 
 export function createProjection(width, height, requestedProfile = null) {
@@ -102,7 +106,7 @@ function railPoint(projection, side, worldY) {
 }
 
 function cableEdgePoint(projection, side, worldY) {
-  const point = bridgeEdgePoint(projection, side, worldY, 1.055);
+  const point = bridgeEdgePoint(projection, side, worldY, 1.045);
   return {
     ...point,
     y: point.y - projection.height * projection.profile.railWorldHeight * point.scale,
@@ -127,12 +131,12 @@ function pointOnSpan(projection, side, span, worldY) {
 export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .064 } = {}) {
   const profile = projection.profile;
   const towerWorldHeight = projection.height * profile.towerWorldHeight;
-  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .074, 28, 58);
-  const beamWorldHeight = clamp(projection.height * .04, 20, 35);
+  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .052, 22, 52);
+  const beamWorldHeight = clamp(projection.height * .032, 16, 30);
   const towers = profile.towerStations.map(worldY => {
     const scale = depthScale(profile, worldY);
     const baseY = groundY(projection, worldY);
-    const xs = [-1, 1].map(side => bridgeEdgePoint(projection, side, worldY, 1.055).x);
+    const xs = [-1, 1].map(side => bridgeEdgePoint(projection, side, worldY, 1.045).x);
     return {
       worldY,
       scale,
@@ -157,7 +161,7 @@ export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep 
     const spans = anchors.slice(0, -1).map((from, index) => {
       const to = anchors[index + 1];
       const meanScale = (depthScale(profile, from.worldY) + depthScale(profile, to.worldY)) / 2;
-      const sagFactors = [.065, .17, .105];
+      const sagFactors = [.045, .145, .09];
       return { side, index, from, to, sag: projection.height * sagFactors[index] * meanScale };
     });
     for (const span of spans) {
@@ -207,8 +211,9 @@ export function projectionAuditGeometry(projection, geometry = buildBridgeGeomet
     horizon: projection.horizon,
     deckBottom: groundY(projection, 1),
     vanishingX: projection.centerX,
-    vanishingRoadWidth: roadHalfWidth(projection, 0) * 2,
-    vanishingBridgeWidth: bridgeHalfWidth(projection, 0) * 2,
+    farClipRoadWidth: roadHalfWidth(projection, 0) * 2,
+    farClipBridgeWidth: bridgeHalfWidth(projection, 0) * 2,
+    farClipScale: depthScale(projection.profile, 0),
     roadWidthRatio: roadHalfWidth(projection, 1) * 2 / projection.width,
     minProjectedStep: Math.min(...speeds),
     maxProjectedStep: Math.max(...speeds),
