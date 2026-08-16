@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT_NAME = 'environment-perspective-upgrade-2026-08-15';
+const OUTPUT_NAME = 'top-down-bridge-projection-2026-08-15';
 const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', OUTPUT_NAME);
 const FULL_SOAK = process.env.BLASTLINE_FULL_SOAK === '1';
 const PERF_ONLY = process.argv.includes('--perf-only');
@@ -160,10 +160,10 @@ async function captureState(context, viewportName, mode) {
   record(`${label}:safeArea`, audit.safeArea, audit.visibleBoxes);
   record(`${label}:hudOverlap`, audit.overlaps.length === 0, audit.overlaps);
   record(`${label}:planarDeck`, audit.projection.leftMaxDeviation < .1 && audit.projection.rightMaxDeviation < .1, audit.projection);
-  record(`${label}:wideRoad`, audit.projection.roadWidthRatio >= .86, audit.projection);
+  record(`${label}:referenceRoadWidth`, audit.projection.roadWidthRatio >= .78 && audit.projection.roadWidthRatio <= .85, audit.projection);
   record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
-  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .16 : .14)) < .002, audit.projection);
-  record(`${label}:noBridgeEnd`, audit.projection.vanishingRoadWidth < .01 && audit.projection.vanishingBridgeWidth < .01, audit.projection);
+  record(`${label}:topDownCamera`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .1 : .09)) < .002, audit.projection);
+  record(`${label}:fogClippedCrossSection`, audit.projection.farClipScale >= .15 && audit.projection.farClipScale <= .19 && audit.projection.farClipRoadWidth > 0 && audit.projection.farClipBridgeWidth > audit.projection.farClipRoadWidth, audit.projection);
   record(`${label}:boundedProjectedSpeed`, audit.projection.projectedSpeedRatio < 1.4, audit.projection);
   record(`${label}:sharedProjectionScale`, audit.projection.sharedScaleError < 1e-8, audit.projection.sharedScaleSamples);
   record(`${label}:cableAndHangerAnchors`, audit.projection.cableAnchorError < 1 && audit.projection.hangerAnchorError < 1 && audit.projection.towerHeightScaleError < 1e-6, audit.projection);
