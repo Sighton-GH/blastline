@@ -116,9 +116,12 @@ test('landscape camera keeps the reference bridge anchors and uninterrupted road
   assert.ok(Math.abs(projection.horizon / projection.height - .14) < 1e-10);
   assert.ok(Math.abs(farTower.baseY / projection.height - .3615) < .002);
   assert.ok(Math.abs(nearTower.baseY / projection.height - .7134) < .002);
+  assert.ok(roadHalfWidth(projection, 1) * 2 / projection.width < .82);
 
   const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   assert.ok(!runtime.includes("asphalt: 'assets/blastline/environment/asphalt.webp'"));
   assert.ok(!runtime.includes('createPattern(runtimeAssets.asphalt'));
   assert.ok(!runtime.includes('Transverse seams'));
+  assert.ok(!runtime.includes('const bands = 22'));
+  assert.ok(runtime.includes('drawAtmosphericFog(target, horizon)'));
 });
