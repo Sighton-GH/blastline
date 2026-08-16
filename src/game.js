@@ -1215,7 +1215,7 @@ function traceDeck(target, halfWidth, yEnd = 1.04) {
   target.beginPath();
   for (let index = 0; index <= segments; index += 1) {
     const y = yEnd * index / segments;
-    index ? target.lineTo(W / 2 - halfWidth(y), perspectiveY(y)) : target.moveTo(W / 2, perspectiveY(0));
+    index ? target.lineTo(W / 2 - halfWidth(y), perspectiveY(y)) : target.moveTo(W / 2 - halfWidth(0), perspectiveY(0));
   }
   for (let index = segments; index >= 0; index -= 1) {
     const y = yEnd * index / segments;
@@ -1247,61 +1247,53 @@ function traceWaterRegions(target) {
 }
 
 function drawBridgeStructure(target, geometry) {
-  const red = '#c83e38';
-  const mid = '#a82d30';
-  const dark = '#762229';
-  const deep = '#4b1b22';
-  const light = '#ef765d';
+  const red = '#c9443e';
+  const warm = '#e86855';
+  const mid = '#a83234';
+  const dark = '#702129';
+  const deep = '#41171d';
   const railHeight = y => H * cameraProfile().railWorldHeight * depthCurve(y);
   const edgePoint = (side, y, factor = 1.035) => ({
     x: W / 2 + side * bridgeHalfWidth(y) * factor,
     y: perspectiveY(y),
   });
 
-  // Deep side girders keep the road from reading as a paper-thin runway.
+  // A clean, weight-bearing fascia replaces the former ladder-like side mesh.
   for (const side of [-1, 1]) {
-    target.fillStyle = deep;
-    target.beginPath();
-    for (let index = 0; index <= 40; index += 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.035);
-      index ? target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 7)) : target.moveTo(point.x, point.y);
-    }
-    for (let index = 40; index >= 0; index -= 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.085);
-      target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 31));
-    }
-    target.closePath();
-    target.fill();
-    for (let index = 2; index < 18; index += 1) {
-      const y0 = (index - 1) / 18;
-      const y1 = index / 18;
-      const from = edgePoint(side, index % 2 ? y0 : y1, 1.042);
-      const to = edgePoint(side, index % 2 ? y1 : y0, 1.078);
-      target.strokeStyle = index % 2 ? mid : dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y1, 3.8));
-      target.beginPath();
-      target.moveTo(from.x, from.y + projectedPixels(sceneProjection, y0, 4));
-      target.lineTo(to.x, to.y + projectedPixels(sceneProjection, y1, 27));
-      target.stroke();
-    }
-    target.beginPath();
+    const topPoints = [];
+    const lowerPoints = [];
     for (let index = 0; index <= 44; index += 1) {
       const y = index / 44 * 1.03;
-      const point = edgePoint(side, y, 1.083);
-      const yy = point.y + projectedPixels(sceneProjection, y, 29);
-      index ? target.lineTo(point.x, yy) : target.moveTo(point.x, yy);
+      const top = edgePoint(side, y, 1.025);
+      const lower = edgePoint(side, y, 1.075);
+      topPoints.push({ x: top.x, y: top.y + projectedPixels(sceneProjection, y, 4) });
+      lowerPoints.push({ x: lower.x, y: lower.y + projectedPixels(sceneProjection, y, 22) });
     }
-    target.strokeStyle = '#36151b';
-    target.lineWidth = Math.max(1, W * .0021);
+    const fascia = target.createLinearGradient(0, sceneHorizon(), 0, H);
+    fascia.addColorStop(0, mid);
+    fascia.addColorStop(1, deep);
+    target.fillStyle = fascia;
+    target.beginPath();
+    topPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    for (let index = lowerPoints.length - 1; index >= 0; index -= 1) target.lineTo(lowerPoints[index].x, lowerPoints[index].y);
+    target.closePath();
+    target.fill();
+    target.strokeStyle = warm;
+    target.lineWidth = Math.max(1, projectedPixels(sceneProjection, .74, 3.2));
+    target.beginPath();
+    topPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    target.stroke();
+    target.strokeStyle = '#321219';
+    target.lineWidth = Math.max(1, projectedPixels(sceneProjection, .74, 2.3));
+    target.beginPath();
+    lowerPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
     target.stroke();
   }
 
-  // Hangers use the exact cable samples and matching rail points from geometry.
+  // Main suspension cables and vertical hangers use the same world anchors.
   for (const hanger of geometry.hangers) {
-    target.strokeStyle = `rgba(91,25,31,${lerp(.5, .9, clamp(hanger.worldY, 0, 1))})`;
-    target.lineWidth = Math.max(.5, projectedPixels(sceneProjection, hanger.worldY, 2.15));
+    target.strokeStyle = `rgba(68,18,25,${lerp(.54, .9, clamp(hanger.worldY, 0, 1))})`;
+    target.lineWidth = Math.max(.55, projectedPixels(sceneProjection, hanger.worldY, 1.75));
     target.beginPath();
     target.moveTo(hanger.cable.x, hanger.cable.y);
     target.lineTo(hanger.rail.x, hanger.rail.y);
@@ -1316,105 +1308,89 @@ function drawBridgeStructure(target, geometry) {
       target.moveTo(from.x, from.y);
       target.lineTo(to.x, to.y);
       target.strokeStyle = deep;
-      target.lineWidth = Math.max(.8, lerp(1.1, W * .003, scale));
+      target.lineWidth = Math.max(1.1, lerp(1.4, W * .0026, scale));
       target.stroke();
-      target.strokeStyle = 'rgba(244,115,89,.78)';
-      target.lineWidth = Math.max(.42, lerp(.45, W * .00095, scale));
+      target.strokeStyle = 'rgba(239,102,80,.9)';
+      target.lineWidth = Math.max(.55, lerp(.65, W * .0009, scale));
       target.stroke();
     }
   }
 
-  // Both tower stations project the same world-space dimensions.
+  // Tapered portal towers: solid columns, readable depth faces, one substantial
+  // crossbeam, and concrete bearing blocks matching the reference silhouette.
   for (const tower of geometry.towers) {
     const beamH = tower.beamHeight;
     for (const [index, x] of tower.xs.entries()) {
       const side = index ? 1 : -1;
       const width = tower.pillarWidth;
-      const lean = side * width * .09;
-      const gradient = target.createLinearGradient(x - width, tower.topY, x + width, tower.baseY);
-      gradient.addColorStop(0, light);
-      gradient.addColorStop(.28, red);
-      gradient.addColorStop(.7, mid);
-      gradient.addColorStop(1, deep);
-      target.fillStyle = gradient;
+      const outward = side * width * .08;
+      const column = target.createLinearGradient(x - width, tower.topY, x + width, tower.baseY);
+      column.addColorStop(0, warm);
+      column.addColorStop(.25, red);
+      column.addColorStop(.7, mid);
+      column.addColorStop(1, dark);
+      target.fillStyle = column;
       target.beginPath();
-      target.moveTo(x - width * .62, tower.baseY + beamH * .24);
-      target.lineTo(x + width * .62, tower.baseY + beamH * .24);
-      target.lineTo(x + width * .43 + lean, tower.topY);
-      target.lineTo(x - width * .43 + lean, tower.topY);
+      target.moveTo(x - width * .62, tower.baseY + beamH * .16);
+      target.lineTo(x + width * .62, tower.baseY + beamH * .16);
+      target.lineTo(x + width * .43 + outward, tower.topY);
+      target.lineTo(x - width * .43 + outward, tower.topY);
       target.closePath();
       target.fill();
-      target.fillStyle = 'rgba(255,158,119,.48)';
+
+      target.fillStyle = 'rgba(255,171,128,.34)';
       target.beginPath();
-      target.moveTo(x - width * .43 + lean, tower.topY);
-      target.lineTo(x - width * .19 + lean, tower.topY);
-      target.lineTo(x - width * .34, tower.baseY);
-      target.lineTo(x - width * .58, tower.baseY);
+      target.moveTo(x - width * .43 + outward, tower.topY);
+      target.lineTo(x - width * .17 + outward, tower.topY);
+      target.lineTo(x - width * .32, tower.baseY);
+      target.lineTo(x - width * .57, tower.baseY);
       target.closePath();
       target.fill();
-      target.fillStyle = 'rgba(42,12,18,.32)';
+      target.fillStyle = 'rgba(45,9,15,.3)';
       target.beginPath();
-      target.moveTo(x + side * width * .12, tower.topY + beamH * .12);
-      target.lineTo(x + side * width * .43 + lean, tower.topY);
-      target.lineTo(x + side * width * .62, tower.baseY + beamH * .24);
+      target.moveTo(x + side * width * .12, tower.topY);
+      target.lineTo(x + side * width * .43 + outward, tower.topY);
+      target.lineTo(x + side * width * .61, tower.baseY);
       target.lineTo(x + side * width * .22, tower.baseY);
       target.closePath();
       target.fill();
-      target.fillStyle = 'rgba(255,179,137,.24)';
-      target.fillRect(x - width * .5, tower.topY + beamH * .72, Math.max(1, width * .12), tower.height - beamH * .9);
-      target.fillStyle = '#555d5e';
+
+      target.fillStyle = '#555d5d';
       target.beginPath();
-      target.roundRect(x - width * .92, tower.baseY - beamH * .12, width * 1.84, beamH * .72, Math.max(1, beamH * .12));
+      target.roundRect(x - width * .88, tower.baseY - beamH * .08, width * 1.76, beamH * .64, Math.max(1, beamH * .1));
       target.fill();
-      const pedestal = target.createLinearGradient(x - width, tower.baseY - beamH * .4, x + width, tower.baseY + beamH * .2);
-      pedestal.addColorStop(0, red);
-      pedestal.addColorStop(.58, mid);
-      pedestal.addColorStop(1, deep);
-      target.fillStyle = pedestal;
+      target.fillStyle = mid;
       target.beginPath();
-      target.roundRect(x - width * .72, tower.baseY - beamH * .34, width * 1.44, beamH * .52, Math.max(1, beamH * .08));
+      target.roundRect(x - width * .7, tower.baseY - beamH * .25, width * 1.4, beamH * .44, Math.max(1, beamH * .08));
       target.fill();
     }
-    const left = tower.xs[0] - tower.pillarWidth * .46;
-    const width = tower.xs[1] - tower.xs[0] + tower.pillarWidth * .92;
+
+    const beamLeft = tower.xs[0] - tower.pillarWidth * .53;
+    const beamRight = tower.xs[1] + tower.pillarWidth * .53;
+    const beamWidth = beamRight - beamLeft;
     target.fillStyle = deep;
     target.beginPath();
-    target.moveTo(left + beamH * .16, tower.topY - beamH * .28);
-    target.lineTo(left + width, tower.topY - beamH * .28);
-    target.lineTo(left + width - beamH * .16, tower.topY + beamH * 1.3);
-    target.lineTo(left, tower.topY + beamH * 1.3);
-    target.closePath();
+    target.roundRect(beamLeft - beamH * .08, tower.topY - beamH * .2, beamWidth + beamH * .16, beamH * 1.22, Math.max(1, beamH * .1));
     target.fill();
     const beam = target.createLinearGradient(0, tower.topY, 0, tower.topY + beamH);
-    beam.addColorStop(0, light);
+    beam.addColorStop(0, warm);
     beam.addColorStop(.22, red);
     beam.addColorStop(.72, mid);
-    beam.addColorStop(1, mid);
+    beam.addColorStop(1, dark);
     target.fillStyle = beam;
     target.beginPath();
-    target.moveTo(left, tower.topY);
-    target.lineTo(left + width - beamH * .14, tower.topY);
-    target.lineTo(left + width, tower.topY + beamH * .88);
-    target.lineTo(left + beamH * .14, tower.topY + beamH * .88);
-    target.closePath();
+    target.roundRect(beamLeft, tower.topY, beamWidth, beamH * .82, Math.max(1, beamH * .07));
     target.fill();
-    target.fillStyle = 'rgba(255,186,140,.55)';
-    target.fillRect(left + beamH * .24, tower.topY + beamH * .1, width - beamH * .48, Math.max(.6, beamH * .11));
-    target.fillStyle = 'rgba(72,18,24,.68)';
-    for (const [index, x] of tower.xs.entries()) {
-      const side = index ? 1 : -1;
-      target.beginPath();
-      target.moveTo(x - side * tower.pillarWidth * .12, tower.topY + beamH * .88);
-      target.lineTo(x - side * tower.pillarWidth * .9, tower.topY + beamH * 2.15);
-      target.lineTo(x + side * tower.pillarWidth * .28, tower.topY + beamH * .88);
-      target.closePath();
-      target.fill();
-    }
+    target.fillStyle = 'rgba(255,190,148,.48)';
+    target.fillRect(beamLeft + beamH * .3, tower.topY + beamH * .1, beamWidth - beamH * .6, Math.max(.7, beamH * .1));
+    target.fillStyle = 'rgba(66,14,21,.5)';
+    target.fillRect(beamLeft + beamH * .36, tower.topY + beamH * .54, beamWidth - beamH * .72, Math.max(.8, beamH * .13));
   }
 
-  // Rails, uprights, and small lamps stay outside the playable road.
+  // Two simple guard rails and proportionally spaced uprights keep the deck
+  // readable without turning the bridge sides into a visual grid.
   for (const side of [-1, 1]) {
-    for (const level of [1, .48]) {
+    for (const level of [1, .46]) {
       target.beginPath();
       for (let index = 0; index <= 52; index += 1) {
         const y = index / 52 * 1.03;
@@ -1423,35 +1399,35 @@ function drawBridgeStructure(target, geometry) {
         index ? target.lineTo(point.x, yy) : target.moveTo(point.x, yy);
       }
       target.strokeStyle = level === 1 ? red : dark;
-      target.lineWidth = Math.max(.7, projectedPixels(sceneProjection, .72, level === 1 ? 3.3 : 2));
+      target.lineWidth = Math.max(.8, projectedPixels(sceneProjection, .72, level === 1 ? 3 : 1.8));
       target.stroke();
     }
-    for (let index = 2; index < 19; index += 1) {
-      const y = index / 19;
+    for (let index = 2; index < 17; index += 1) {
+      const y = index / 17;
       const point = edgePoint(side, y);
       target.strokeStyle = dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 2.4));
+      target.lineWidth = Math.max(.5, projectedPixels(sceneProjection, y, 2));
       target.beginPath();
       target.moveTo(point.x, point.y + projectedPixels(sceneProjection, y, 2));
       target.lineTo(point.x, point.y - railHeight(y));
       target.stroke();
     }
-    for (const y of [.2, .47, .78]) {
-      const base = edgePoint(side, y, 1.065);
+    for (const y of [.3, .77]) {
+      const base = edgePoint(side, y, 1.06);
       const scale = depthCurve(y);
-      const postHeight = 57 * scale;
-      const arm = 15 * scale;
-      target.strokeStyle = '#24343a';
-      target.lineWidth = Math.max(.65, 3.3 * scale);
+      const postHeight = 54 * scale;
+      const arm = 14 * scale;
+      target.strokeStyle = '#26383e';
+      target.lineWidth = Math.max(.7, 3.1 * scale);
       target.lineCap = 'round';
       target.beginPath();
       target.moveTo(base.x, base.y);
       target.lineTo(base.x, base.y - postHeight);
-      target.quadraticCurveTo(base.x, base.y - postHeight - arm * .3, base.x - side * arm, base.y - postHeight - arm * .3);
+      target.quadraticCurveTo(base.x, base.y - postHeight - arm * .25, base.x - side * arm, base.y - postHeight - arm * .25);
       target.stroke();
       target.fillStyle = '#ffe5a1';
       target.beginPath();
-      target.ellipse(base.x - side * arm, base.y - postHeight, Math.max(.5, arm * .42), Math.max(.35, arm * .23), 0, 0, Math.PI * 2);
+      target.ellipse(base.x - side * arm, base.y - postHeight, Math.max(.6, arm * .4), Math.max(.4, arm * .22), 0, 0, Math.PI * 2);
       target.fill();
     }
   }
@@ -1459,27 +1435,28 @@ function drawBridgeStructure(target, geometry) {
 
 function drawAtmosphericFog(target, horizon) {
   const top = Math.max(0, horizon - H * .1);
-  const bottom = horizon + H * .235;
+  const bottom = horizon + H * .31;
   const bank = target.createLinearGradient(0, top, 0, bottom);
   bank.addColorStop(0, 'rgba(190,229,236,0)');
-  bank.addColorStop(.17, 'rgba(195,231,237,.32)');
-  bank.addColorStop(.28, 'rgba(207,237,240,.96)');
-  bank.addColorStop(.5, 'rgba(211,239,241,.97)');
-  bank.addColorStop(.72, 'rgba(156,211,222,.48)');
+  bank.addColorStop(.18, 'rgba(195,231,237,.36)');
+  bank.addColorStop(.31, 'rgba(207,237,240,.97)');
+  bank.addColorStop(.58, 'rgba(211,239,241,.96)');
+  bank.addColorStop(.82, 'rgba(156,211,222,.38)');
   bank.addColorStop(1, 'rgba(132,198,213,0)');
   target.fillStyle = bank;
   target.fillRect(0, top, W, bottom - top);
 
   // A dense central bank erases the actual vanishing point so the bridge
   // appears to continue into weather instead of terminating on the horizon.
-  const veilRadius = Math.max(W * .34, H * .52);
+  const veilRadius = Math.max(W * .39, H * .58);
+  const farDeckY = perspectiveY(0);
   target.save();
-  target.translate(W / 2, horizon + H * .018);
-  target.scale(1, H * .13 / veilRadius);
+  target.translate(W / 2, farDeckY - H * .018);
+  target.scale(1, H * .115 / veilRadius);
   const veil = target.createRadialGradient(0, 0, 0, 0, 0, veilRadius);
   veil.addColorStop(0, 'rgba(211,239,242,.99)');
-  veil.addColorStop(.27, 'rgba(203,234,239,.84)');
-  veil.addColorStop(.62, 'rgba(167,218,228,.3)');
+  veil.addColorStop(.3, 'rgba(203,234,239,.94)');
+  veil.addColorStop(.68, 'rgba(167,218,228,.34)');
   veil.addColorStop(1, 'rgba(156,211,222,0)');
   target.fillStyle = veil;
   target.beginPath();
@@ -1614,15 +1591,16 @@ function drawDynamicEnvironment() {
   const glintCount = stressMode ? 16 : 34;
   for (let index = 0; index < glintCount; index += 1) {
     const depth = ((index * 37 + waterClock * (1 + index % 3) * .1) % 100) / 100;
-    const y = horizon + depth * (H - horizon);
+    const y = perspectiveY(depth);
     const side = index % 2 ? -1 : 1;
-    const center = W / 2 + side * lerp(W * .19, W * .47, ((index * 53) % 97) / 97);
-    const width = lerp(5, 34, depth) * (.75 + (index % 5) * .09);
+    const bridgeEdge = Math.min(W * .475, bridgeHalfWidth(depth) * 1.13 + 8);
+    const center = W / 2 + side * lerp(bridgeEdge, W * .48, ((index * 53) % 97) / 97);
+    const width = projectedPixels(sceneProjection, depth, 38) * (.75 + (index % 5) * .09);
     ctx.strokeStyle = `rgba(225,251,255,${lerp(.14,.44,depth)})`;
-    ctx.lineWidth = lerp(.6, 1.8, depth);
+    ctx.lineWidth = Math.max(.6, projectedPixels(sceneProjection, depth, 1.8));
     ctx.beginPath();
     ctx.moveTo(center - width / 2, y);
-    ctx.quadraticCurveTo(center, y - lerp(.5, 3, depth), center + width / 2, y);
+    ctx.quadraticCurveTo(center, y - projectedPixels(sceneProjection, depth, 3), center + width / 2, y);
     ctx.stroke();
   }
   const whitecaps = runtimeAssets.oceanWhitecaps;
@@ -1630,13 +1608,14 @@ function drawDynamicEnvironment() {
     ctx.globalCompositeOperation = 'screen';
     for (let index = 0; index < 8; index += 1) {
       const depth = .16 + ((index * .117 + ambientTime * .006 * (index % 2 ? 1 : -1) + 1) % .78);
-      const scale = lerp(.16, .72, depth);
+      const scale = depthCurve(depth) * .72;
       const width = Math.min(W * .13, whitecaps.width * scale * .34);
       const height = width * whitecaps.height / whitecaps.width;
       const side = index % 2 ? -1 : 1;
-      const outer = lerp(W * .32, W * .48, ((index * 43) % 91) / 91);
+      const bridgeEdge = Math.min(W * .475, bridgeHalfWidth(depth) * 1.13 + width * .55);
+      const outer = lerp(bridgeEdge, W * .48, ((index * 43) % 91) / 91);
       const x = W / 2 + side * outer - width / 2;
-      const y = lerp(horizon + H * .035, H * .88, depth) - height / 2;
+      const y = perspectiveY(depth) - height / 2;
       ctx.globalAlpha = lerp(.1, .3, depth);
       ctx.drawImage(whitecaps, x, y, width, height);
     }
@@ -1651,12 +1630,12 @@ function drawDynamicEnvironment() {
       if (y1 <= 0 || y0 >= 1) continue;
       const a = clamp(y0, 0, 1);
       const b = clamp(y1, 0, 1);
-      const fogVisibility = clamp((b - .14) / .18, 0, 1);
+      const fogVisibility = horizonFade(sceneProjection, b, .2);
       if (fogVisibility <= 0) continue;
       const start = worldToScreen(separator, a);
       const end = worldToScreen(separator, b);
-      const w0 = lerp(1, 3.3, a);
-      const w1 = lerp(1, 4, b);
+      const w0 = projectedPixels(sceneProjection, a, 3.3);
+      const w1 = projectedPixels(sceneProjection, b, 4);
       ctx.fillStyle = `rgba(247,248,239,${.9 * fogVisibility})`;
       ctx.beginPath();
       ctx.moveTo(start.x - w0, start.y);
