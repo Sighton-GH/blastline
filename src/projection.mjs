@@ -5,8 +5,8 @@ export const CAMERA_PROFILES = Object.freeze({
   landscape: Object.freeze({
     name: 'landscape',
     horizon: .14,
-    nearRoadHalf: .445,
-    shoulderRatio: 1.12,
+    nearRoadHalf: .405,
+    shoulderRatio: 1.1,
     linearDepth: .9,
     towerStations: Object.freeze([.27, .67]),
     towerWorldHeight: .63,
@@ -15,8 +15,8 @@ export const CAMERA_PROFILES = Object.freeze({
   portrait: Object.freeze({
     name: 'portrait',
     horizon: .16,
-    nearRoadHalf: .475,
-    shoulderRatio: 1.075,
+    nearRoadHalf: .43,
+    shoulderRatio: 1.08,
     linearDepth: .84,
     towerStations: Object.freeze([.29, .66]),
     towerWorldHeight: .59,
@@ -124,11 +124,11 @@ function pointOnSpan(projection, side, span, worldY) {
  * width and height are scaled at both stations; cable samples and hangers are
  * then derived from those exact anchor objects.
  */
-export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .043 } = {}) {
+export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .064 } = {}) {
   const profile = projection.profile;
   const towerWorldHeight = projection.height * profile.towerWorldHeight;
-  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .062, 24, 46);
-  const beamWorldHeight = clamp(projection.height * .035, 18, 30);
+  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .074, 28, 58);
+  const beamWorldHeight = clamp(projection.height * .04, 20, 35);
   const towers = profile.towerStations.map(worldY => {
     const scale = depthScale(profile, worldY);
     const baseY = groundY(projection, worldY);
