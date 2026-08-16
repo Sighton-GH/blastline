@@ -55,7 +55,6 @@ import {
 
 const RUNTIME_ASSET_PATHS = Object.freeze({
   homeHero: 'assets/blastline/characters/home-hero.webp',
-  oceanSurface: 'assets/blastline/environment/ocean-surface-v2.webp',
   oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
@@ -1247,27 +1246,6 @@ function traceWaterRegions(target) {
   target.closePath();
 }
 
-function drawPerspectiveOceanTexture(target, ocean, horizon) {
-  if (!ocean) return;
-  target.save();
-  target.globalAlpha = .24;
-  target.globalCompositeOperation = 'screen';
-  const bands = 22;
-  for (let index = 0; index < bands; index += 1) {
-    const depth0 = index / bands;
-    const depth1 = (index + 1) / bands;
-    const y0 = lerp(horizon, H, depth0);
-    const y1 = lerp(horizon, H, depth1);
-    const tileWidth = lerp(68, Math.min(520, W * .42), Math.pow(depth1, .82));
-    const sourceY = Math.floor((index * 31) % Math.max(1, ocean.height - 3));
-    const sourceHeight = Math.min(3 + Math.ceil(depth1 * 8), ocean.height - sourceY);
-    for (let x = -tileWidth * ((index * .37) % 1); x < W; x += tileWidth) {
-      target.drawImage(ocean, 0, sourceY, ocean.width, Math.max(1, sourceHeight), x, y0, tileWidth + 1, y1 - y0 + 1);
-    }
-  }
-  target.restore();
-}
-
 function drawBridgeStructure(target, geometry) {
   const red = '#c83e38';
   const mid = '#a82d30';
@@ -1280,34 +1258,44 @@ function drawBridgeStructure(target, geometry) {
     y: perspectiveY(y),
   });
 
-  // Deep side girders and alternating cross braces give the deck real thickness.
+  // Deep side girders keep the road from reading as a paper-thin runway.
   for (const side of [-1, 1]) {
     target.fillStyle = deep;
     target.beginPath();
     for (let index = 0; index <= 40; index += 1) {
       const y = index / 40 * 1.03;
       const point = edgePoint(side, y, 1.035);
-      index ? target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 4)) : target.moveTo(point.x, point.y);
+      index ? target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 7)) : target.moveTo(point.x, point.y);
     }
     for (let index = 40; index >= 0; index -= 1) {
       const y = index / 40 * 1.03;
       const point = edgePoint(side, y, 1.085);
-      target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 19));
+      target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 31));
     }
     target.closePath();
     target.fill();
-    for (let index = 2; index < 25; index += 1) {
-      const y0 = (index - 1) / 25;
-      const y1 = index / 25;
+    for (let index = 2; index < 18; index += 1) {
+      const y0 = (index - 1) / 18;
+      const y1 = index / 18;
       const from = edgePoint(side, index % 2 ? y0 : y1, 1.042);
       const to = edgePoint(side, index % 2 ? y1 : y0, 1.078);
       target.strokeStyle = index % 2 ? mid : dark;
       target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y1, 3.8));
       target.beginPath();
       target.moveTo(from.x, from.y + projectedPixels(sceneProjection, y0, 4));
-      target.lineTo(to.x, to.y + projectedPixels(sceneProjection, y1, 17));
+      target.lineTo(to.x, to.y + projectedPixels(sceneProjection, y1, 27));
       target.stroke();
     }
+    target.beginPath();
+    for (let index = 0; index <= 44; index += 1) {
+      const y = index / 44 * 1.03;
+      const point = edgePoint(side, y, 1.083);
+      const yy = point.y + projectedPixels(sceneProjection, y, 29);
+      index ? target.lineTo(point.x, yy) : target.moveTo(point.x, yy);
+    }
+    target.strokeStyle = '#36151b';
+    target.lineWidth = Math.max(1, W * .0021);
+    target.stroke();
   }
 
   // Hangers use the exact cable samples and matching rail points from geometry.
@@ -1320,14 +1308,20 @@ function drawBridgeStructure(target, geometry) {
     target.stroke();
   }
   for (const cable of geometry.cables) {
-    target.beginPath();
-    cable.points.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
-    target.strokeStyle = deep;
-    target.lineWidth = Math.max(1.4, W * .0031);
-    target.stroke();
-    target.strokeStyle = 'rgba(244,115,89,.82)';
-    target.lineWidth = Math.max(.55, W * .00105);
-    target.stroke();
+    for (let index = 1; index < cable.points.length; index += 1) {
+      const from = cable.points[index - 1];
+      const to = cable.points[index];
+      const scale = depthCurve((from.worldY + to.worldY) / 2);
+      target.beginPath();
+      target.moveTo(from.x, from.y);
+      target.lineTo(to.x, to.y);
+      target.strokeStyle = deep;
+      target.lineWidth = Math.max(.8, lerp(1.1, W * .003, scale));
+      target.stroke();
+      target.strokeStyle = 'rgba(244,115,89,.78)';
+      target.lineWidth = Math.max(.42, lerp(.45, W * .00095, scale));
+      target.stroke();
+    }
   }
 
   // Both tower stations project the same world-space dimensions.
@@ -1358,25 +1352,64 @@ function drawBridgeStructure(target, geometry) {
       target.lineTo(x - width * .58, tower.baseY);
       target.closePath();
       target.fill();
-      target.fillStyle = '#777d7d';
+      target.fillStyle = 'rgba(42,12,18,.32)';
       target.beginPath();
-      target.roundRect(x - width * .86, tower.baseY - beamH * .16, width * 1.72, beamH * .64, Math.max(1, beamH * .12));
+      target.moveTo(x + side * width * .12, tower.topY + beamH * .12);
+      target.lineTo(x + side * width * .43 + lean, tower.topY);
+      target.lineTo(x + side * width * .62, tower.baseY + beamH * .24);
+      target.lineTo(x + side * width * .22, tower.baseY);
+      target.closePath();
       target.fill();
-      target.fillStyle = dark;
-      target.fillRect(x - width * .68, tower.baseY - beamH * .28, width * 1.36, beamH * .43);
+      target.fillStyle = 'rgba(255,179,137,.24)';
+      target.fillRect(x - width * .5, tower.topY + beamH * .72, Math.max(1, width * .12), tower.height - beamH * .9);
+      target.fillStyle = '#555d5e';
+      target.beginPath();
+      target.roundRect(x - width * .92, tower.baseY - beamH * .12, width * 1.84, beamH * .72, Math.max(1, beamH * .12));
+      target.fill();
+      const pedestal = target.createLinearGradient(x - width, tower.baseY - beamH * .4, x + width, tower.baseY + beamH * .2);
+      pedestal.addColorStop(0, red);
+      pedestal.addColorStop(.58, mid);
+      pedestal.addColorStop(1, deep);
+      target.fillStyle = pedestal;
+      target.beginPath();
+      target.roundRect(x - width * .72, tower.baseY - beamH * .34, width * 1.44, beamH * .52, Math.max(1, beamH * .08));
+      target.fill();
     }
-    const left = tower.xs[0] - tower.pillarWidth * .25;
-    const width = tower.xs[1] - tower.xs[0] + tower.pillarWidth * .5;
+    const left = tower.xs[0] - tower.pillarWidth * .46;
+    const width = tower.xs[1] - tower.xs[0] + tower.pillarWidth * .92;
     target.fillStyle = deep;
-    target.fillRect(left, tower.topY - beamH * .18, width, beamH * 1.22);
+    target.beginPath();
+    target.moveTo(left + beamH * .16, tower.topY - beamH * .28);
+    target.lineTo(left + width, tower.topY - beamH * .28);
+    target.lineTo(left + width - beamH * .16, tower.topY + beamH * 1.3);
+    target.lineTo(left, tower.topY + beamH * 1.3);
+    target.closePath();
+    target.fill();
     const beam = target.createLinearGradient(0, tower.topY, 0, tower.topY + beamH);
     beam.addColorStop(0, light);
-    beam.addColorStop(.28, red);
+    beam.addColorStop(.22, red);
+    beam.addColorStop(.72, mid);
     beam.addColorStop(1, mid);
     target.fillStyle = beam;
-    target.fillRect(tower.xs[0], tower.topY, tower.xs[1] - tower.xs[0], beamH * .72);
+    target.beginPath();
+    target.moveTo(left, tower.topY);
+    target.lineTo(left + width - beamH * .14, tower.topY);
+    target.lineTo(left + width, tower.topY + beamH * .88);
+    target.lineTo(left + beamH * .14, tower.topY + beamH * .88);
+    target.closePath();
+    target.fill();
     target.fillStyle = 'rgba(255,186,140,.55)';
-    target.fillRect(tower.xs[0] + tower.pillarWidth * .16, tower.topY + beamH * .08, tower.xs[1] - tower.xs[0] - tower.pillarWidth * .32, Math.max(.6, beamH * .12));
+    target.fillRect(left + beamH * .24, tower.topY + beamH * .1, width - beamH * .48, Math.max(.6, beamH * .11));
+    target.fillStyle = 'rgba(72,18,24,.68)';
+    for (const [index, x] of tower.xs.entries()) {
+      const side = index ? 1 : -1;
+      target.beginPath();
+      target.moveTo(x - side * tower.pillarWidth * .12, tower.topY + beamH * .88);
+      target.lineTo(x - side * tower.pillarWidth * .9, tower.topY + beamH * 2.15);
+      target.lineTo(x + side * tower.pillarWidth * .28, tower.topY + beamH * .88);
+      target.closePath();
+      target.fill();
+    }
   }
 
   // Rails, uprights, and small lamps stay outside the playable road.
@@ -1393,8 +1426,8 @@ function drawBridgeStructure(target, geometry) {
       target.lineWidth = Math.max(.7, projectedPixels(sceneProjection, .72, level === 1 ? 3.3 : 2));
       target.stroke();
     }
-    for (let index = 2; index < 32; index += 1) {
-      const y = index / 32;
+    for (let index = 2; index < 19; index += 1) {
+      const y = index / 19;
       const point = edgePoint(side, y);
       target.strokeStyle = dark;
       target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 2.4));
@@ -1424,6 +1457,56 @@ function drawBridgeStructure(target, geometry) {
   }
 }
 
+function drawAtmosphericFog(target, horizon) {
+  const top = Math.max(0, horizon - H * .1);
+  const bottom = horizon + H * .235;
+  const bank = target.createLinearGradient(0, top, 0, bottom);
+  bank.addColorStop(0, 'rgba(190,229,236,0)');
+  bank.addColorStop(.17, 'rgba(195,231,237,.32)');
+  bank.addColorStop(.28, 'rgba(207,237,240,.96)');
+  bank.addColorStop(.5, 'rgba(211,239,241,.97)');
+  bank.addColorStop(.72, 'rgba(156,211,222,.48)');
+  bank.addColorStop(1, 'rgba(132,198,213,0)');
+  target.fillStyle = bank;
+  target.fillRect(0, top, W, bottom - top);
+
+  // A dense central bank erases the actual vanishing point so the bridge
+  // appears to continue into weather instead of terminating on the horizon.
+  const veilRadius = Math.max(W * .34, H * .52);
+  target.save();
+  target.translate(W / 2, horizon + H * .018);
+  target.scale(1, H * .13 / veilRadius);
+  const veil = target.createRadialGradient(0, 0, 0, 0, 0, veilRadius);
+  veil.addColorStop(0, 'rgba(211,239,242,.99)');
+  veil.addColorStop(.27, 'rgba(203,234,239,.84)');
+  veil.addColorStop(.62, 'rgba(167,218,228,.3)');
+  veil.addColorStop(1, 'rgba(156,211,222,0)');
+  target.fillStyle = veil;
+  target.beginPath();
+  target.arc(0, 0, veilRadius, 0, Math.PI * 2);
+  target.fill();
+  target.restore();
+
+  target.save();
+  target.globalCompositeOperation = 'screen';
+  target.filter = `blur(${Math.max(7, H * .014)}px)`;
+  for (let index = 0; index < 7; index += 1) {
+    const x = W * (.02 + index * .16);
+    const y = horizon + H * (.035 + (index % 2) * .018);
+    const radiusX = W * (.18 + (index % 3) * .025);
+    const radiusY = H * (.06 + (index % 2) * .016);
+    const wisp = target.createRadialGradient(x, y, 0, x, y, radiusX);
+    wisp.addColorStop(0, 'rgba(245,254,254,.18)');
+    wisp.addColorStop(.55, 'rgba(226,247,249,.09)');
+    wisp.addColorStop(1, 'rgba(226,247,249,0)');
+    target.fillStyle = wisp;
+    target.beginPath();
+    target.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    target.fill();
+  }
+  target.restore();
+}
+
 function drawStaticEnvironment(target) {
   const horizon = sceneHorizon();
   const sky = target.createLinearGradient(0, 0, 0, horizon + H * .08);
@@ -1449,13 +1532,12 @@ function drawStaticEnvironment(target) {
   target.restore();
 
   const water = target.createLinearGradient(0, horizon, 0, H);
-  water.addColorStop(0, '#27c4dc');
-  water.addColorStop(.24, '#0aa9c8');
-  water.addColorStop(.66, '#0785ad');
-  water.addColorStop(1, '#076b91');
+  water.addColorStop(0, '#54d6e4');
+  water.addColorStop(.2, '#20bfd4');
+  water.addColorStop(.62, '#0a91b8');
+  water.addColorStop(1, '#086f95');
   target.fillStyle = water;
   target.fillRect(0, horizon, W, H - horizon);
-  drawPerspectiveOceanTexture(target, runtimeAssets.oceanSurface, horizon);
 
   // The bridge and its shadow converge to the same single vanishing point.
   target.save();
@@ -1511,15 +1593,7 @@ function drawStaticEnvironment(target) {
 
   const geometry = buildBridgeGeometry(sceneProjection);
   drawBridgeStructure(target, geometry);
-
-  // A narrow marine haze band sits above distant structure, hiding no deck edge.
-  const haze = target.createLinearGradient(0, horizon - H * .025, 0, horizon + H * .075);
-  haze.addColorStop(0, 'rgba(231,249,249,0)');
-  haze.addColorStop(.42, 'rgba(231,249,249,.62)');
-  haze.addColorStop(.72, 'rgba(185,231,235,.25)');
-  haze.addColorStop(1, 'rgba(185,231,235,0)');
-  target.fillStyle = haze;
-  target.fillRect(0, horizon - H * .03, W, H * .11);
+  drawAtmosphericFog(target, horizon);
 }
 
 function ensureEnvironment() {
@@ -1577,11 +1651,13 @@ function drawDynamicEnvironment() {
       if (y1 <= 0 || y0 >= 1) continue;
       const a = clamp(y0, 0, 1);
       const b = clamp(y1, 0, 1);
+      const fogVisibility = clamp((b - .14) / .18, 0, 1);
+      if (fogVisibility <= 0) continue;
       const start = worldToScreen(separator, a);
       const end = worldToScreen(separator, b);
       const w0 = lerp(1, 3.3, a);
       const w1 = lerp(1, 4, b);
-      ctx.fillStyle = 'rgba(247,248,239,.9)';
+      ctx.fillStyle = `rgba(247,248,239,${.9 * fogVisibility})`;
       ctx.beginPath();
       ctx.moveTo(start.x - w0, start.y);
       ctx.lineTo(start.x + w0, start.y);
