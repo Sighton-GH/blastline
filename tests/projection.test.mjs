@@ -108,3 +108,17 @@ test('removed gameplay wording and panel markup do not remain in presentation so
   const removed = ['enemy' + 'Counter', 'HOST' + 'ILES', 'SAFE' + ' LANE', "'SAFE'", 'safe' + '-gap'];
   for (const wording of removed) assert.ok(!`${html}\n${css}\n${runtime}`.includes(wording));
 });
+
+test('landscape camera keeps the reference bridge anchors and uninterrupted road surface', () => {
+  const projection = createProjection(1904, 872, 'landscape');
+  const geometry = buildBridgeGeometry(projection);
+  const [farTower, nearTower] = geometry.towers;
+  assert.ok(Math.abs(projection.horizon / projection.height - .14) < 1e-10);
+  assert.ok(Math.abs(farTower.baseY / projection.height - .3615) < .002);
+  assert.ok(Math.abs(nearTower.baseY / projection.height - .7134) < .002);
+
+  const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  assert.ok(!runtime.includes("asphalt: 'assets/blastline/environment/asphalt.webp'"));
+  assert.ok(!runtime.includes('createPattern(runtimeAssets.asphalt'));
+  assert.ok(!runtime.includes('Transverse seams'));
+});

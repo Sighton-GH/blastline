@@ -57,7 +57,6 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
   homeHero: 'assets/blastline/characters/home-hero.webp',
   oceanSurface: 'assets/blastline/environment/ocean-surface-v2.webp',
   oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
-  asphalt: 'assets/blastline/environment/asphalt.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
   playerRun3: 'assets/blastline/characters/player-run-3.webp',
@@ -1488,21 +1487,15 @@ function drawStaticEnvironment(target) {
   }
 
   traceDeck(target, roadHalfWidth);
-  const road = target.createLinearGradient(W * .25, horizon, W * .72, H);
-  road.addColorStop(0, '#696e6d');
-  road.addColorStop(.55, '#505758');
-  road.addColorStop(1, '#394144');
+  // The reference road is one uninterrupted planar surface. Keep the shading
+  // aligned with depth so it reinforces the vanishing point without laying a
+  // screen-space texture or tile grid across the deck.
+  const road = target.createLinearGradient(0, horizon, 0, H);
+  road.addColorStop(0, '#596061');
+  road.addColorStop(.34, '#4a5152');
+  road.addColorStop(1, '#31393b');
   target.fillStyle = road;
   target.fill();
-  if (runtimeAssets.asphalt) {
-    target.save();
-    target.clip();
-    target.globalAlpha = .21;
-    target.globalCompositeOperation = 'multiply';
-    const pattern = target.createPattern(runtimeAssets.asphalt, 'repeat');
-    if (pattern) { target.fillStyle = pattern; target.fillRect(0, horizon, W, H - horizon); }
-    target.restore();
-  }
 
   for (const side of [-1, 1]) {
     target.beginPath();
@@ -1513,18 +1506,6 @@ function drawStaticEnvironment(target) {
     }
     target.strokeStyle = 'rgba(248,244,226,.82)';
     target.lineWidth = Math.max(1.2, W * .0018);
-    target.stroke();
-  }
-
-  // Transverse seams narrow into the distance and reinforce the shared plane.
-  for (let y = .12; y < 1; y += .12) {
-    const left = worldToScreen(-.98, y);
-    const right = worldToScreen(.98, y);
-    target.strokeStyle = `rgba(29,39,41,${lerp(.08, .2, y)})`;
-    target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 1.6));
-    target.beginPath();
-    target.moveTo(left.x, left.y);
-    target.lineTo(right.x, right.y);
     target.stroke();
   }
 
