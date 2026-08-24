@@ -135,7 +135,7 @@ function pointOnSpan(projection, side, span, worldY) {
 export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .043 } = {}) {
   const profile = projection.profile;
   const towerWorldHeight = projection.height * profile.towerWorldHeight;
-  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .032, 12, 26);
+  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .04, 15, 32);
   const beamWorldHeight = clamp(projection.height * .035, 18, 30);
   const towers = profile.towerDepths.map(worldY => {
     const scale = depthScale(profile, worldY);

@@ -1370,33 +1370,24 @@ function traceWaterRegions(target) {
 function drawPerspectiveOceanTexture(target, ocean, horizon) {
   if (!ocean) return;
   target.save();
-  target.globalAlpha = .55;
-  target.globalCompositeOperation = 'screen';
-  const bands = 22;
-  const baseTileWorld = 150;
-  // Fixed source strip per band -- no jittered sourceY -- kills the vertical streaking;
-  // 1px vertical overlap between bands kills seams between fixed-alpha tiles.
+  const bands = 14;
+  // One full-width, unrepeated drawImage per band -- no horizontal tiling. Tiling a
+  // narrow strip of a photographic texture edge-to-edge is what produced the visible
+  // repeating diamond/scale seam; stretching one sample across the whole band avoids
+  // any seam by construction. Nearer bands sample more of the source height (bigger,
+  // more detailed ripples); far bands compress toward a thin strip. A 1px vertical
+  // overlap between bands hides any residual seam there.
   for (let index = 0; index < bands; index += 1) {
     const depth0 = index / bands;
     const depth1 = (index + 1) / bands;
     const y0 = lerp(horizon, H, depth0);
     const y1 = lerp(horizon, H, depth1);
-    const worldY = lerp(.02, 1, depth1);
-    const tileWidth = Math.max(10, projectedPixels(sceneProjection, worldY, baseTileWorld));
-    const sourceHeight = Math.max(2, Math.min(ocean.height, Math.round(ocean.height * .12)));
-    const sourceY = Math.floor((ocean.height - sourceHeight) * depth1);
-    for (let x = -tileWidth * .5; x < W; x += tileWidth) {
-      target.drawImage(ocean, 0, sourceY, ocean.width, sourceHeight, x, y0 - 1, tileWidth + 1, y1 - y0 + 2);
-    }
+    const sourceHeight = Math.max(28, Math.round(ocean.height * lerp(.07, .4, depth1)));
+    const sourceY = Math.round((ocean.height - sourceHeight) * (.28 + .22 * Math.sin(index * 2.6)));
+    target.globalAlpha = lerp(.3, .58, depth1);
+    target.drawImage(ocean, 0, sourceY, ocean.width, sourceHeight, 0, y0 - 1, W, y1 - y0 + 2);
   }
-  // Cross-fade the final two bands into the horizon colour instead of a hard haze rectangle.
-  const fade = target.createLinearGradient(0, horizon, 0, lerp(horizon, H, 2 / bands));
-  fade.addColorStop(0, 'rgba(28,156,216,.9)');
-  fade.addColorStop(1, 'rgba(28,156,216,0)');
   target.globalAlpha = 1;
-  target.globalCompositeOperation = 'source-over';
-  target.fillStyle = fade;
-  target.fillRect(0, horizon, W, lerp(horizon, H, 2 / bands) - horizon);
   target.restore();
 }
 
@@ -1406,6 +1397,11 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
     const side = index ? 1 : -1;
     const width = tower.pillarWidth;
     const lean = side * width * .09;
+    const topL = x - width * .43 + lean;
+    const topR = x + width * .43 + lean;
+    const baseL = x - width * .62;
+    const baseR = x + width * .62;
+    const baseY = tower.baseY + beamH * .24;
     const gradient = target.createLinearGradient(x - width, tower.topY, x + width, tower.baseY);
     gradient.addColorStop(0, light);
     gradient.addColorStop(.28, red);
@@ -1413,20 +1409,50 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
     gradient.addColorStop(1, deep);
     target.fillStyle = gradient;
     target.beginPath();
-    target.moveTo(x - width * .62, tower.baseY + beamH * .24);
-    target.lineTo(x + width * .62, tower.baseY + beamH * .24);
-    target.lineTo(x + width * .43 + lean, tower.topY);
-    target.lineTo(x - width * .43 + lean, tower.topY);
+    target.moveTo(baseL, baseY);
+    target.lineTo(baseR, baseY);
+    target.lineTo(topR, tower.topY);
+    target.lineTo(topL, tower.topY);
     target.closePath();
     target.fill();
+
+    // Shadow face on the side away from the upper-left key light -- gives the
+    // pillar real volume instead of one flat painted trapezoid.
+    target.fillStyle = 'rgba(18,7,6,.26)';
+    target.beginPath();
+    target.moveTo(lerp(topL, topR, .55), tower.topY);
+    target.lineTo(topR, tower.topY);
+    target.lineTo(baseR, baseY);
+    target.lineTo(lerp(baseL, baseR, .34), baseY);
+    target.closePath();
+    target.fill();
+
+    // Key-light streak, upper-left face.
     target.fillStyle = 'rgba(255,158,119,.48)';
     target.beginPath();
-    target.moveTo(x - width * .43 + lean, tower.topY);
-    target.lineTo(x - width * .19 + lean, tower.topY);
-    target.lineTo(x - width * .34, tower.baseY);
-    target.lineTo(x - width * .58, tower.baseY);
+    target.moveTo(topL, tower.topY);
+    target.lineTo(lerp(topL, topR, .43), tower.topY);
+    target.lineTo(lerp(baseL, baseR, .29), baseY);
+    target.lineTo(lerp(baseL, baseR, .08), baseY);
     target.closePath();
     target.fill();
+
+    // Riveted segment seams along the pillar height so it reads as built steel
+    // plate sections rather than one smooth gradient fill top to bottom.
+    const segments = 6;
+    for (let s = 1; s < segments; s += 1) {
+      const t = s / segments;
+      const yy = lerp(tower.topY, baseY, t);
+      const left = lerp(topL, baseL, t);
+      const right = lerp(topR, baseR, t);
+      target.strokeStyle = s % 2 ? 'rgba(30,10,8,.3)' : 'rgba(255,214,190,.2)';
+      target.lineWidth = Math.max(.6, width * .045);
+      target.beginPath();
+      target.moveTo(left, yy);
+      target.lineTo(right, yy);
+      target.stroke();
+    }
+
     target.fillStyle = '#777d7d';
     target.beginPath();
     target.roundRect(x - width * .86, tower.baseY - beamH * .16, width * 1.72, beamH * .64, Math.max(1, beamH * .12));
@@ -1446,6 +1472,14 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
   target.fillRect(tower.xs[0], tower.topY, tower.xs[1] - tower.xs[0], beamH * .72);
   target.fillStyle = 'rgba(255,186,140,.55)';
   target.fillRect(tower.xs[0] + tower.pillarWidth * .16, tower.topY + beamH * .08, tower.xs[1] - tower.xs[0] - tower.pillarWidth * .32, Math.max(.6, beamH * .12));
+
+  // A second, thinner crossbeam partway down the tower -- real suspension towers
+  // carry multiple horizontal struts, not just the one at deck level.
+  const midBeamY = lerp(tower.topY, tower.baseY, .42);
+  target.fillStyle = dark;
+  target.fillRect(tower.xs[0], midBeamY - beamH * .18, tower.xs[1] - tower.xs[0], beamH * .36);
+  target.fillStyle = 'rgba(255,158,119,.3)';
+  target.fillRect(tower.xs[0] + tower.pillarWidth * .12, midBeamY - beamH * .05, tower.xs[1] - tower.xs[0] - tower.pillarWidth * .24, Math.max(.5, beamH * .07));
 }
 
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
@@ -1502,13 +1536,17 @@ function drawBridgeStructure(target, geometry) {
     target.stroke();
   }
   for (const cable of geometry.cables) {
+    target.lineCap = 'round';
     target.beginPath();
     cable.points.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
     target.strokeStyle = deep;
-    target.lineWidth = Math.max(1.4, W * .0031);
+    target.lineWidth = Math.max(2.4, W * .0052);
     target.stroke();
-    target.strokeStyle = 'rgba(244,115,89,.82)';
-    target.lineWidth = Math.max(.55, W * .00105);
+    target.strokeStyle = dark;
+    target.lineWidth = Math.max(1.6, W * .0034);
+    target.stroke();
+    target.strokeStyle = 'rgba(255,171,138,.85)';
+    target.lineWidth = Math.max(.7, W * .0013);
     target.stroke();
   }
 
@@ -1674,14 +1712,20 @@ function drawStaticEnvironment(target) {
   cachedGeometry = buildBridgeGeometry(sceneProjection);
   drawBridgeStructure(target, cachedGeometry);
 
-  // A narrow marine haze band sits above distant structure, hiding no deck edge.
-  const haze = target.createLinearGradient(0, horizon - H * .015, 0, horizon + H * .035);
-  haze.addColorStop(0, 'rgba(231,249,249,0)');
-  haze.addColorStop(.42, 'rgba(231,249,249,.22)');
-  haze.addColorStop(.72, 'rgba(185,231,235,.09)');
-  haze.addColorStop(1, 'rgba(185,231,235,0)');
+  // Atmospheric depth fog: reaches from the horizon down past the far tower and the
+  // worldY=0 gameplay plane (~horizon + .22H at the landscape depthRatio), so distant
+  // structure genuinely fades into haze instead of a thin cosmetic strip that sits
+  // above everything real. Colour matches the sky's horizon stop so the fade reads as
+  // one continuous sky, not a separate white band pasted over the scene.
+  const fogReach = H * .34;
+  const haze = target.createLinearGradient(0, horizon - H * .025, 0, horizon + fogReach);
+  haze.addColorStop(0, 'rgba(197,229,244,.92)');
+  haze.addColorStop(.16, 'rgba(197,229,244,.62)');
+  haze.addColorStop(.38, 'rgba(188,224,241,.34)');
+  haze.addColorStop(.64, 'rgba(180,219,238,.15)');
+  haze.addColorStop(1, 'rgba(180,219,238,0)');
   target.fillStyle = haze;
-  target.fillRect(0, horizon - H * .015, W, H * .05);
+  target.fillRect(0, horizon - H * .025, W, fogReach + H * .025);
 }
 
 function ensureEnvironment() {
