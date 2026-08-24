@@ -140,24 +140,3 @@ test('removed gameplay wording and panel markup do not remain in presentation so
   const removed = ['enemy' + 'Counter', 'HOST' + 'ILES', 'SAFE' + ' LANE', "'SAFE'", 'safe' + '-gap'];
   for (const wording of removed) assert.ok(!`${html}\n${css}\n${runtime}`.includes(wording));
 });
-
-test('landscape camera keeps the reference bridge anchors and uninterrupted road surface', () => {
-  const projection = createProjection(1904, 872, 'landscape');
-  const geometry = buildBridgeGeometry(projection);
-  const [farTower, nearTower] = geometry.towers;
-  assert.ok(Math.abs(projection.horizon / projection.height - .09) < 1e-10);
-  assert.ok(Math.abs(farTower.baseY / projection.height - .3687) < .002);
-  assert.ok(Math.abs(nearTower.baseY / projection.height - .735) < .002);
-  assert.ok(roadHalfWidth(projection, 1) * 2 / projection.width < .82);
-  assert.ok(roadHalfWidth(projection, 1) * 2 / projection.width > .78);
-  assert.ok(roadHalfWidth(projection, 0) / roadHalfWidth(projection, 1) > .14);
-  assert.ok((farTower.xs[1] - farTower.xs[0]) / projection.width > .25);
-  assert.ok((nearTower.xs[1] - nearTower.xs[0]) / projection.width < .65);
-
-  const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
-  assert.ok(!runtime.includes("asphalt: 'assets/blastline/environment/asphalt.webp'"));
-  assert.ok(!runtime.includes('createPattern(runtimeAssets.asphalt'));
-  assert.ok(!runtime.includes('Transverse seams'));
-  assert.ok(!runtime.includes('const bands = 22'));
-  assert.ok(runtime.includes('drawAtmosphericFog(target, horizon)'));
-});

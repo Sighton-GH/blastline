@@ -110,7 +110,7 @@ function railPoint(projection, side, worldY) {
 }
 
 function cableEdgePoint(projection, side, worldY) {
-  const point = bridgeEdgePoint(projection, side, worldY, 1.045);
+  const point = bridgeEdgePoint(projection, side, worldY, 1.055);
   return {
     ...point,
     y: point.y - projection.height * projection.profile.railWorldHeight * point.scale,
@@ -132,7 +132,7 @@ function pointOnSpan(projection, side, span, worldY) {
  * width and height are scaled at both stations; cable samples and hangers are
  * then derived from those exact anchor objects.
  */
-export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .064 } = {}) {
+export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .043 } = {}) {
   const profile = projection.profile;
   const towerWorldHeight = projection.height * profile.towerWorldHeight;
   const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .04, 15, 32);
@@ -140,7 +140,7 @@ export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep 
   const towers = profile.towerDepths.map(worldY => {
     const scale = depthScale(profile, worldY);
     const baseY = groundY(projection, worldY);
-    const xs = [-1, 1].map(side => bridgeEdgePoint(projection, side, worldY, 1.045).x);
+    const xs = [-1, 1].map(side => bridgeEdgePoint(projection, side, worldY, 1.055).x);
     return {
       worldY,
       scale,
@@ -165,7 +165,7 @@ export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep 
     const spans = anchors.slice(0, -1).map((from, index) => {
       const to = anchors[index + 1];
       const meanScale = (depthScale(profile, from.worldY) + depthScale(profile, to.worldY)) / 2;
-      const sagFactors = [.045, .145, .09];
+      const sagFactors = [.065, .17, .105];
       return { side, index, from, to, sag: projection.height * sagFactors[index] * meanScale };
     });
     for (const span of spans) {
@@ -215,9 +215,8 @@ export function projectionAuditGeometry(projection, geometry = buildBridgeGeomet
     horizon: projection.horizon,
     deckBottom: groundY(projection, 1),
     vanishingX: projection.centerX,
-    farClipRoadWidth: roadHalfWidth(projection, 0) * 2,
-    farClipBridgeWidth: bridgeHalfWidth(projection, 0) * 2,
-    farClipScale: depthScale(projection.profile, 0),
+    vanishingRoadWidth: roadHalfWidth(projection, 0) * 2,
+    vanishingBridgeWidth: bridgeHalfWidth(projection, 0) * 2,
     roadWidthRatio: roadHalfWidth(projection, 1) * 2 / projection.width,
     minProjectedStep: Math.min(...speeds),
     maxProjectedStep: Math.max(...speeds),
