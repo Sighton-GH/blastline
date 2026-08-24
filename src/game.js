@@ -56,9 +56,7 @@ import {
 
 const RUNTIME_ASSET_PATHS = Object.freeze({
   homeHero: 'assets/blastline/characters/home-hero.webp',
-  oceanSurface: 'assets/blastline/environment/ocean-surface-v2.webp',
   oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
-  asphalt: 'assets/blastline/environment/asphalt.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
   playerRun3: 'assets/blastline/characters/player-run-3.webp',
@@ -1496,40 +1494,42 @@ function drawBridgeStructure(target, geometry) {
     y: perspectiveY(y),
   });
 
-  // Deep side girders and alternating cross braces give the deck real thickness.
+  // A clean, weight-bearing fascia replaces the former ladder-like side mesh.
   for (const side of [-1, 1]) {
-    target.fillStyle = deep;
+    const topPoints = [];
+    const lowerPoints = [];
+    for (let index = 0; index <= 44; index += 1) {
+      const y = index / 44 * 1.03;
+      const top = edgePoint(side, y, 1.025);
+      const lower = edgePoint(side, y, 1.075);
+      topPoints.push({ x: top.x, y: top.y + projectedPixels(sceneProjection, y, 4) });
+      lowerPoints.push({ x: lower.x, y: lower.y + projectedPixels(sceneProjection, y, 22) });
+    }
+    const fascia = target.createLinearGradient(0, sceneHorizon(), 0, H);
+    fascia.addColorStop(0, mid);
+    fascia.addColorStop(1, deep);
+    target.fillStyle = fascia;
     target.beginPath();
-    for (let index = 0; index <= 40; index += 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.035);
-      index ? target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 4)) : target.moveTo(point.x, point.y);
-    }
-    for (let index = 40; index >= 0; index -= 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.085);
-      target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 19));
-    }
+    topPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    for (let index = lowerPoints.length - 1; index >= 0; index -= 1) target.lineTo(lowerPoints[index].x, lowerPoints[index].y);
     target.closePath();
     target.fill();
-    for (let index = 2; index < 25; index += 1) {
-      const y0 = (index - 1) / 25;
-      const y1 = index / 25;
-      const from = edgePoint(side, index % 2 ? y0 : y1, 1.042);
-      const to = edgePoint(side, index % 2 ? y1 : y0, 1.078);
-      target.strokeStyle = index % 2 ? mid : dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y1, 3.8));
-      target.beginPath();
-      target.moveTo(from.x, from.y + projectedPixels(sceneProjection, y0, 4));
-      target.lineTo(to.x, to.y + projectedPixels(sceneProjection, y1, 17));
-      target.stroke();
-    }
+    target.strokeStyle = warm;
+    target.lineWidth = Math.max(1, projectedPixels(sceneProjection, .74, 3.2));
+    target.beginPath();
+    topPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    target.stroke();
+    target.strokeStyle = '#321219';
+    target.lineWidth = Math.max(1, projectedPixels(sceneProjection, .74, 2.3));
+    target.beginPath();
+    lowerPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    target.stroke();
   }
 
-  // Hangers use the exact cable samples and matching rail points from geometry.
+  // Main suspension cables and vertical hangers use the same world anchors.
   for (const hanger of geometry.hangers) {
-    target.strokeStyle = `rgba(91,25,31,${lerp(.5, .9, clamp(hanger.worldY, 0, 1))})`;
-    target.lineWidth = Math.max(.5, projectedPixels(sceneProjection, hanger.worldY, 2.15));
+    target.strokeStyle = `rgba(68,18,25,${lerp(.54, .9, clamp(hanger.worldY, 0, 1))})`;
+    target.lineWidth = Math.max(.55, projectedPixels(sceneProjection, hanger.worldY, 1.75));
     target.beginPath();
     target.moveTo(hanger.cable.x, hanger.cable.y);
     target.lineTo(hanger.rail.x, hanger.rail.y);
@@ -1553,9 +1553,10 @@ function drawBridgeStructure(target, geometry) {
   // Both tower stations project the same world-space dimensions.
   for (const tower of geometry.towers) drawTower(target, tower, { red, mid, dark, deep, light });
 
-  // Rails, uprights, and small lamps stay outside the playable road.
+  // Two simple guard rails and proportionally spaced uprights keep the deck
+  // readable without turning the bridge sides into a visual grid.
   for (const side of [-1, 1]) {
-    for (const level of [1, .48]) {
+    for (const level of [1, .46]) {
       target.beginPath();
       for (let index = 0; index <= 52; index += 1) {
         const y = index / 52 * 1.03;
@@ -1564,38 +1565,89 @@ function drawBridgeStructure(target, geometry) {
         index ? target.lineTo(point.x, yy) : target.moveTo(point.x, yy);
       }
       target.strokeStyle = level === 1 ? red : dark;
-      target.lineWidth = Math.max(.7, projectedPixels(sceneProjection, .72, level === 1 ? 3.3 : 2));
+      target.lineWidth = Math.max(.8, projectedPixels(sceneProjection, .72, level === 1 ? 3 : 1.8));
       target.stroke();
     }
-    for (let index = 2; index < 32; index += 1) {
-      const y = index / 32;
+    for (let index = 2; index < 17; index += 1) {
+      const y = index / 17;
       const point = edgePoint(side, y);
       target.strokeStyle = dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 2.4));
+      target.lineWidth = Math.max(.5, projectedPixels(sceneProjection, y, 2));
       target.beginPath();
       target.moveTo(point.x, point.y + projectedPixels(sceneProjection, y, 2));
       target.lineTo(point.x, point.y - railHeight(y));
       target.stroke();
     }
-    for (const y of [.2, .47, .78]) {
-      const base = edgePoint(side, y, 1.065);
+    for (const y of [.3, .77]) {
+      const base = edgePoint(side, y, 1.06);
       const scale = depthCurve(y);
-      const postHeight = 57 * scale;
-      const arm = 15 * scale;
-      target.strokeStyle = '#24343a';
-      target.lineWidth = Math.max(.65, 3.3 * scale);
+      const postHeight = 54 * scale;
+      const arm = 14 * scale;
+      target.strokeStyle = '#26383e';
+      target.lineWidth = Math.max(.7, 3.1 * scale);
       target.lineCap = 'round';
       target.beginPath();
       target.moveTo(base.x, base.y);
       target.lineTo(base.x, base.y - postHeight);
-      target.quadraticCurveTo(base.x, base.y - postHeight - arm * .3, base.x - side * arm, base.y - postHeight - arm * .3);
+      target.quadraticCurveTo(base.x, base.y - postHeight - arm * .25, base.x - side * arm, base.y - postHeight - arm * .25);
       target.stroke();
       target.fillStyle = '#ffe5a1';
       target.beginPath();
-      target.ellipse(base.x - side * arm, base.y - postHeight, Math.max(.5, arm * .42), Math.max(.35, arm * .23), 0, 0, Math.PI * 2);
+      target.ellipse(base.x - side * arm, base.y - postHeight, Math.max(.6, arm * .4), Math.max(.4, arm * .22), 0, 0, Math.PI * 2);
       target.fill();
     }
   }
+}
+
+function drawAtmosphericFog(target, horizon) {
+  const top = Math.max(0, horizon - H * .1);
+  const bottom = horizon + H * .31;
+  const bank = target.createLinearGradient(0, top, 0, bottom);
+  bank.addColorStop(0, 'rgba(190,229,236,0)');
+  bank.addColorStop(.18, 'rgba(195,231,237,.36)');
+  bank.addColorStop(.31, 'rgba(207,237,240,.97)');
+  bank.addColorStop(.58, 'rgba(211,239,241,.96)');
+  bank.addColorStop(.82, 'rgba(156,211,222,.38)');
+  bank.addColorStop(1, 'rgba(132,198,213,0)');
+  target.fillStyle = bank;
+  target.fillRect(0, top, W, bottom - top);
+
+  // A dense central bank erases the actual vanishing point so the bridge
+  // appears to continue into weather instead of terminating on the horizon.
+  const veilRadius = Math.max(W * .39, H * .58);
+  const farDeckY = perspectiveY(0);
+  target.save();
+  target.translate(W / 2, farDeckY - H * .018);
+  target.scale(1, H * .115 / veilRadius);
+  const veil = target.createRadialGradient(0, 0, 0, 0, 0, veilRadius);
+  veil.addColorStop(0, 'rgba(211,239,242,.99)');
+  veil.addColorStop(.3, 'rgba(203,234,239,.94)');
+  veil.addColorStop(.68, 'rgba(167,218,228,.34)');
+  veil.addColorStop(1, 'rgba(156,211,222,0)');
+  target.fillStyle = veil;
+  target.beginPath();
+  target.arc(0, 0, veilRadius, 0, Math.PI * 2);
+  target.fill();
+  target.restore();
+
+  target.save();
+  target.globalCompositeOperation = 'screen';
+  target.filter = `blur(${Math.max(7, H * .014)}px)`;
+  for (let index = 0; index < 7; index += 1) {
+    const x = W * (.02 + index * .16);
+    const y = horizon + H * (.035 + (index % 2) * .018);
+    const radiusX = W * (.18 + (index % 3) * .025);
+    const radiusY = H * (.06 + (index % 2) * .016);
+    const wisp = target.createRadialGradient(x, y, 0, x, y, radiusX);
+    wisp.addColorStop(0, 'rgba(245,254,254,.18)');
+    wisp.addColorStop(.55, 'rgba(226,247,249,.09)');
+    wisp.addColorStop(1, 'rgba(226,247,249,0)');
+    target.fillStyle = wisp;
+    target.beginPath();
+    target.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    target.fill();
+  }
+  target.restore();
 }
 
 function drawStaticEnvironment(target) {
@@ -1628,7 +1680,6 @@ function drawStaticEnvironment(target) {
   water.addColorStop(1, '#0196d6');
   target.fillStyle = water;
   target.fillRect(0, horizon, W, H - horizon);
-  drawPerspectiveOceanTexture(target, runtimeAssets.oceanSurface, horizon);
 
   // The bridge and its shadow converge to the same single vanishing point.
   target.save();
@@ -1666,15 +1717,6 @@ function drawStaticEnvironment(target) {
   road.addColorStop(1, '#454c5b');
   target.fillStyle = road;
   target.fill();
-  if (runtimeAssets.asphalt) {
-    target.save();
-    target.clip();
-    target.globalAlpha = .21;
-    target.globalCompositeOperation = 'multiply';
-    const pattern = target.createPattern(runtimeAssets.asphalt, 'repeat');
-    if (pattern) { target.fillStyle = pattern; target.fillRect(0, horizon, W, H - horizon); }
-    target.restore();
-  }
 
   // Tapered fill ribbon instead of a constant-width stroke: the edge line converges
   // to the vanishing point exactly like everything else instead of staying one width
@@ -1746,15 +1788,16 @@ function drawDynamicEnvironment() {
   const glintCount = stressMode ? 16 : 34;
   for (let index = 0; index < glintCount; index += 1) {
     const depth = ((index * 37 + waterClock * (1 + index % 3) * .1) % 100) / 100;
-    const y = horizon + depth * (H - horizon);
+    const y = perspectiveY(depth);
     const side = index % 2 ? -1 : 1;
-    const center = W / 2 + side * lerp(W * .19, W * .47, ((index * 53) % 97) / 97);
-    const width = lerp(5, 34, depth) * (.75 + (index % 5) * .09);
+    const bridgeEdge = Math.min(W * .475, bridgeHalfWidth(depth) * 1.13 + 8);
+    const center = W / 2 + side * lerp(bridgeEdge, W * .48, ((index * 53) % 97) / 97);
+    const width = projectedPixels(sceneProjection, depth, 38) * (.75 + (index % 5) * .09);
     ctx.strokeStyle = `rgba(225,251,255,${lerp(.14,.44,depth)})`;
-    ctx.lineWidth = lerp(.6, 1.8, depth);
+    ctx.lineWidth = Math.max(.6, projectedPixels(sceneProjection, depth, 1.8));
     ctx.beginPath();
     ctx.moveTo(center - width / 2, y);
-    ctx.quadraticCurveTo(center, y - lerp(.5, 3, depth), center + width / 2, y);
+    ctx.quadraticCurveTo(center, y - projectedPixels(sceneProjection, depth, 3), center + width / 2, y);
     ctx.stroke();
   }
   const whitecaps = runtimeAssets.oceanWhitecaps;
@@ -1762,13 +1805,14 @@ function drawDynamicEnvironment() {
     ctx.globalCompositeOperation = 'screen';
     for (let index = 0; index < 8; index += 1) {
       const depth = .16 + ((index * .117 + ambientTime * .006 * (index % 2 ? 1 : -1) + 1) % .78);
-      const scale = lerp(.16, .72, depth);
+      const scale = depthCurve(depth) * .72;
       const width = Math.min(W * .13, whitecaps.width * scale * .34);
       const height = width * whitecaps.height / whitecaps.width;
       const side = index % 2 ? -1 : 1;
-      const outer = lerp(W * .32, W * .48, ((index * 43) % 91) / 91);
+      const bridgeEdge = Math.min(W * .475, bridgeHalfWidth(depth) * 1.13 + width * .55);
+      const outer = lerp(bridgeEdge, W * .48, ((index * 43) % 91) / 91);
       const x = W / 2 + side * outer - width / 2;
-      const y = lerp(horizon + H * .035, H * .88, depth) - height / 2;
+      const y = perspectiveY(depth) - height / 2;
       ctx.globalAlpha = lerp(.1, .3, depth);
       ctx.drawImage(whitecaps, x, y, width, height);
     }
@@ -1783,6 +1827,8 @@ function drawDynamicEnvironment() {
       if (y1 <= 0 || y0 >= 1) continue;
       const a = clamp(y0, 0, 1);
       const b = clamp(y1, 0, 1);
+      const fogVisibility = horizonFade(sceneProjection, b, .2);
+      if (fogVisibility <= 0) continue;
       const start = worldToScreen(separator, a);
       const end = worldToScreen(separator, b);
       const w0 = Math.max(.6, projectedPixels(sceneProjection, a, 3.4));

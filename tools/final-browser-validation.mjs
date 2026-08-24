@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT_NAME = 'environment-perspective-upgrade-2026-08-15';
+const OUTPUT_NAME = 'top-down-bridge-projection-2026-08-15';
 const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', OUTPUT_NAME);
 const FULL_SOAK = process.env.BLASTLINE_FULL_SOAK === '1';
 const PERF_ONLY = process.argv.includes('--perf-only');
