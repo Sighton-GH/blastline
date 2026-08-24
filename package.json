@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node tools/static-preview-server.mjs",
     "test": "node --test",
     "validate": "node tools/final-browser-validation.mjs",
     "validate:perf": "node tools/final-browser-validation.mjs --perf-only",
