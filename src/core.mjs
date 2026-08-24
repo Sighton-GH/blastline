@@ -90,7 +90,7 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const wave = clamp(Math.floor(Number.isFinite(waveIndex) ? waveIndex : 1), 1, 1_000_000);
   const mode = DIFFICULTIES[normalizeDifficulty(difficulty)];
   const logScale = Math.log2(wave + 1);
-  const duration = Math.min(65, 45 + (wave - 1) * 1.25);
+  const duration = Math.min(48, 32 + (wave - 1) * 0.9);
   const activeTarget = Math.min(
     MAX_ACTIVE_ENEMIES,
     Math.round((32 + (wave - 1) * 8.5) * mode.density),

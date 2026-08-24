@@ -206,8 +206,20 @@ Protection prevents troop loss for its full displayed duration.
 
 Portrait and landscape use separate camera profiles; neither is a stretched copy of the other.
 
-- The planar road projects to straight deck edges and fills most of the foreground width.
-- Tower bases, cables, trusses, rails, shoulders, anchors, and lamps frame the corridor without covering enemies or dividing the playable road.
+The camera is a true pinhole-perspective projection: `worldY` is linear in distance from the
+camera, and `depthScale(y) = 1 / (depthRatio − (depthRatio − 1)·y)` maps it to a screen scale.
+`worldY = 0` — where enemies spawn and gates first appear — is a real, finite-width reference
+plane sitting below the horizon at `depthScale = 1/depthRatio`, not a zero-width vanishing point;
+the horizon itself is approached only as `worldY → −∞`. `depthRatio` (landscape 5.0, portrait 5.6)
+is the one knob that controls how hard the far field compresses, tuned by rendering the road
+against the concept boards rather than picked from the math alone.
+
+- The planar road projects to straight deck edges and occupies the central 55–72% of the
+  foreground width depending on camera profile, leaving visible ocean at both foreground corners.
+- Tower bases, cables, trusses, rails, shoulders, anchors, and lamps frame the corridor without
+  covering enemies or dividing the playable road; the near tower's above-deck portion is
+  redrawn in a foreground pass after entities so distant enemies can never render in front of
+  structure that is visually closer to the camera.
 - Landscape uses a lower, wider cinematic view.
 - Portrait preserves side structure and ocean while keeping the full decision space visible.
 

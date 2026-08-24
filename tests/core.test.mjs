@@ -48,7 +48,7 @@ test('wave generation is endless, bounded, and numerically stable', () => {
       assert.ok(Number.isFinite(config.duration));
       assert.ok(Number.isFinite(config.activeTarget));
       assert.ok(Number.isFinite(config.bossHp));
-      assert.ok(config.duration >= 45 && config.duration <= 65);
+      assert.ok(config.duration >= 32 && config.duration <= 48);
       assert.ok(config.activeTarget > 0 && config.activeTarget <= MAX_ACTIVE_ENEMIES);
       assert.ok(config.hordeSize > 0 && config.hordeSize <= 54);
       assert.ok(config.spawnInterval >= .5);
@@ -57,7 +57,7 @@ test('wave generation is endless, bounded, and numerically stable', () => {
       assert.ok(Math.abs(compositionTotal - 1) < 1e-9);
     }
   }
-  assert.equal(getWaveConfig(1_000_000).duration, 65);
+  assert.equal(getWaveConfig(1_000_000).duration, 48);
   assert.equal(getWaveConfig(1_000_000).activeTarget, MAX_ACTIVE_ENEMIES);
   assert.ok(getWaveConfig(30).bossHp > getWaveConfig(1).bossHp);
 });

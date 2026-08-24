@@ -160,11 +160,26 @@ async function captureState(context, viewportName, mode) {
   record(`${label}:safeArea`, audit.safeArea, audit.visibleBoxes);
   record(`${label}:hudOverlap`, audit.overlaps.length === 0, audit.overlaps);
   record(`${label}:planarDeck`, audit.projection.leftMaxDeviation < .1 && audit.projection.rightMaxDeviation < .1, audit.projection);
-  record(`${label}:wideRoad`, audit.projection.roadWidthRatio >= .86, audit.projection);
+  // Renamed from wideRoad: the true-perspective camera (see docs/BLASTLINE_GAME_SPECIFICATION.md
+  // §13) deliberately narrows the road to 60%/71% of the viewport (landscape/portrait) so the
+  // foreground shows ocean at both corners, matching the concept art. .54 is a floor against a
+  // regression toward the old near-full-width road, not the target itself.
+  record(`${label}:roadCorridorWidth`, audit.projection.roadWidthRatio >= .54, audit.projection);
   record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
-  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .16 : .14)) < .002, audit.projection);
-  record(`${label}:noBridgeEnd`, audit.projection.vanishingRoadWidth < .01 && audit.projection.vanishingBridgeWidth < .01, audit.projection);
-  record(`${label}:boundedProjectedSpeed`, audit.projection.projectedSpeedRatio < 1.4, audit.projection);
+  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .165 : .145)) < .002, audit.projection);
+  // Renamed from noBridgeEnd: worldY = 0 is now a real, finite-width reference plane below the
+  // horizon (depthScale(0) = 1/depthRatio), not a zero-width vanishing point -- that finite far
+  // plane is what fixed the cables drawing an X across the deck. Assert it stays comfortably
+  // finite (roughly an eighth of the viewport width) rather than collapsing back to ~0.
+  record(`${label}:finiteFarPlane`,
+    audit.projection.vanishingRoadWidth / page.viewportSize().width > .08 &&
+    audit.projection.vanishingBridgeWidth / page.viewportSize().width > .08,
+    audit.projection);
+  // Renamed from boundedProjectedSpeed: a true 1/Z camera has projected speed ratio ~= depthRatio^2
+  // (25-31 for the locked profiles) by design -- the old < 1.4 ceiling enforced the near-linear,
+  // "nothing accelerates" curve this overhaul replaced. Keep only a sanity band against a runaway
+  // fisheye.
+  record(`${label}:perspectiveSpeedRatio`, audit.projection.projectedSpeedRatio > 12 && audit.projection.projectedSpeedRatio < 45, audit.projection);
   record(`${label}:sharedProjectionScale`, audit.projection.sharedScaleError < 1e-8, audit.projection.sharedScaleSamples);
   record(`${label}:cableAndHangerAnchors`, audit.projection.cableAnchorError < 1 && audit.projection.hangerAnchorError < 1 && audit.projection.towerHeightScaleError < 1e-6, audit.projection);
   record(`${label}:entityGrounding`, audit.projection.entityGroundingError === 0, audit.projection);

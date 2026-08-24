@@ -10,8 +10,10 @@
 </head>
 <body>
   <main id="app">
-    <canvas id="environment" aria-hidden="true"></canvas>
-    <canvas id="game" aria-label="BLASTLINE endless bridge combat game"></canvas>
+    <div id="stage">
+      <canvas id="environment" aria-hidden="true"></canvas>
+      <canvas id="game" aria-label="BLASTLINE endless bridge combat game"></canvas>
+    </div>
 
     <header id="hud" class="panel hidden" aria-label="Run status">
       <div class="hud-cluster hud-primary">
@@ -26,6 +28,7 @@
           <em><span id="waveProgress"></span></em>
         </div>
         <div id="livesHud" class="lives-pill" aria-label="Reserve lives"><small>RESERVES</small><b id="livesLabel">0</b></div>
+        <button id="muteBtn" class="icon-btn" type="button" aria-label="Mute sound" aria-pressed="false">🔊</button>
         <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game">❚❚</button>
       </div>
     </header>

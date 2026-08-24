@@ -39,6 +39,7 @@ import {
 } from './core.mjs';
 import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 import { drawEnemyCombatant } from './enemy-render.mjs';
+import * as audio from './audio.mjs';
 import {
   bridgeHalfWidth as projectedBridgeHalfWidth,
   buildBridgeGeometry,
@@ -79,12 +80,13 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
 
 const canvas = document.querySelector('#game');
 const environmentSurface = document.querySelector('#environment');
+const stageElement = document.querySelector('#stage');
 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardCards',
   'rewardWave', 'recoveryPanel', 'recoveryCount', 'gameOverPanel', 'playBtn', 'playDifficulty',
-  'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker',
+  'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
   'buildSummary', 'shopGrid', 'shopMessage', 'finalScore', 'finalWave', 'finalKills',
@@ -93,6 +95,8 @@ const dom = Object.fromEntries([
 
 const runtimeAssets = Object.create(null);
 const lodAssets = Object.create(null);
+const litAssets = Object.create(null);
+const litLodAssets = Object.create(null);
 const textCache = new WeakMap();
 const styleCache = new WeakMap();
 const keys = Object.create(null);
@@ -148,6 +152,18 @@ let accumulator = 0;
 let lastTimestamp = 0;
 let ambientTime = 0;
 let roadScroll = 0;
+let cachedGeometry = null;
+let shakeTrauma = 0;
+let hitStopHold = 0;
+let hitStopEase = 0;
+const HIT_STOP_SCALE = .15;
+const HIT_STOP_EASE_SECONDS = .12;
+
+function addTrauma(amount) { shakeTrauma = Math.min(1, shakeTrauma + amount); }
+function triggerHitStop(holdSeconds = .08) {
+  hitStopHold = Math.max(hitStopHold, holdSeconds);
+  hitStopEase = Math.max(hitStopEase, HIT_STOP_EASE_SECONDS);
+}
 let pointerActive = false;
 let enemySerial = 0;
 let hordeSerial = 0;
@@ -185,6 +201,45 @@ function loadImage(path) {
   });
 }
 
+// Rim light + warm key baked once into a cached canvas per sprite frame, at load time --
+// not per draw call. Three extra composites x 72 soldiers x 60fps would blow the frame
+// budget; a cached canvas costs exactly one drawImage, same as the unlit sprite.
+function createLitVariant(image, rimTint, warmTint) {
+  const width = image.width;
+  const height = image.height;
+  if (!width || !height) return image;
+  const base = document.createElement('canvas');
+  base.width = width;
+  base.height = height;
+  const g = base.getContext('2d');
+  g.drawImage(image, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.globalAlpha = .1;
+  g.fillStyle = warmTint;
+  g.fillRect(0, 0, width, height);
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+
+  const rim = document.createElement('canvas');
+  rim.width = width;
+  rim.height = height;
+  const rg = rim.getContext('2d');
+  const offset = Math.max(1, Math.round(Math.min(width, height) * .018));
+  rg.drawImage(image, -offset, -offset);
+  rg.globalCompositeOperation = 'source-atop';
+  rg.fillStyle = rimTint;
+  rg.fillRect(0, 0, width, height);
+  rg.globalCompositeOperation = 'destination-out';
+  rg.drawImage(image, 0, 0);
+
+  g.globalCompositeOperation = 'lighter';
+  g.globalAlpha = .6;
+  g.drawImage(rim, 0, 0);
+  g.globalCompositeOperation = 'source-over';
+  g.globalAlpha = 1;
+  return base;
+}
+
 async function loadRuntimeAssets() {
   const entries = await Promise.all(Object.entries(RUNTIME_ASSET_PATHS).map(async ([name, path]) => [name, await loadImage(path)]));
   for (const [name, image] of entries) runtimeAssets[name] = image;
@@ -194,13 +249,16 @@ async function loadRuntimeAssets() {
   if (missing.length) console.warn(`BLASTLINE runtime art unavailable: ${missing.join(', ')}`);
   for (const [name, image] of entries) {
     if (!image) continue;
-    const targetHeight = name.startsWith('enemy') ? 72 : name.startsWith('playerRun') ? 84 : name === 'boss' ? 256 : 0;
+    const targetHeight = name.startsWith('enemy') ? 150 : name.startsWith('playerRun') ? 190 : name === 'boss' ? 420 : 0;
     if (!targetHeight) continue;
     const lod = document.createElement('canvas');
     lod.height = targetHeight;
     lod.width = Math.max(1, Math.round(targetHeight * image.width / image.height));
     lod.getContext('2d').drawImage(image, 0, 0, lod.width, lod.height);
     lodAssets[name] = lod;
+    const rimTint = name.startsWith('enemy') ? '#ffb08a' : name.startsWith('playerRun') ? '#8fd4ff' : '#ffd2a0';
+    litAssets[name] = createLitVariant(image, rimTint, '#ffe6bd');
+    litLodAssets[name] = createLitVariant(lod, rimTint, '#ffe6bd');
   }
   environmentDirty = true;
 }
@@ -255,9 +313,28 @@ function worldToScreen(x, y) { return projectToScreen(x, y, {}); }
 const projectionScratchA = { x: 0, y: 0 };
 const projectionScratchB = { x: 0, y: 0 };
 
+function measureDeckPlanarity() {
+  // The deck edge is a straight line from the horizon apex through any road-width
+  // sample, for ANY depthScale curve (width and (screenY - horizon) share the same
+  // scale). Fit a line through the first/last sampled points and report the worst
+  // deviation of the intermediate samples from it, in pixels -- a real regression
+  // guard rather than a hardcoded pass.
+  const samples = Array.from({ length: 20 }, (_, index) => index / 19);
+  const deviation = side => {
+    const points = samples.map(y => ({ screenY: perspectiveY(y), x: sceneProjection.centerX + side * roadHalfWidth(y) }));
+    const first = points[0];
+    const last = points.at(-1);
+    const span = last.screenY - first.screenY || 1;
+    const slope = (last.x - first.x) / span;
+    return Math.max(...points.map(point => Math.abs(point.x - (first.x + slope * (point.screenY - first.screenY)))));
+  };
+  return { leftMaxDeviation: deviation(-1), rightMaxDeviation: deviation(1) };
+}
+
 function bridgeProjectionAudit() {
   const geometry = buildBridgeGeometry(sceneProjection);
   const base = projectionAuditGeometry(sceneProjection, geometry);
+  const planarity = measureDeckPlanarity();
   const visibleEntities = run.enemies.filter(enemy => !enemy.dead && enemy.y > 0 && enemy.y <= 1.02);
   if (run.boss?.y > 0 && run.boss.y <= 1.02) visibleEntities.push(run.boss);
   const grounded = visibleEntities.map(entity => {
@@ -273,8 +350,7 @@ function bridgeProjectionAudit() {
   });
   return {
     ...base,
-    leftMaxDeviation: 0,
-    rightMaxDeviation: 0,
+    ...planarity,
     sharedScaleSamples,
     sharedScaleError: Math.max(...sharedScaleSamples.flatMap(sample => [
       Math.abs(sample.scale - sample.roadScale),
@@ -359,6 +435,14 @@ function setState(next) {
   dom.pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
 }
 
+function formatCompact(value) {
+  const n = Math.max(0, Math.round(value));
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 10_000) return `${(n / 1_000).toFixed(1)}K`;
+  return format(n);
+}
+
 function updateHud(force = false) {
   const activeEnemies = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
   const hudVisible = ACTIVE_STATES.includes(state) || state === GAME_STATE.PAUSED;
@@ -383,7 +467,7 @@ function updateHud(force = false) {
     const hp = Math.max(0, run.boss.hp);
     setText(dom.bossName, run.boss.name);
     setText(dom.bossPhaseText, `PHASE ${['I', 'II', 'III'][run.boss.phase - 1]}`);
-    setText(dom.bossHealthText, `${format(hp)} / ${format(run.boss.maxHp)}`);
+    setText(dom.bossHealthText, `${formatCompact(hp)} / ${formatCompact(run.boss.maxHp)}`);
     setWidth(dom.bossHealthFill, `${(clamp(hp / run.boss.maxHp, 0, 1) * 100).toFixed(1)}%`);
   }
   canvas.dataset.wave = String(run.wave);
@@ -419,7 +503,7 @@ function squadLogicalSlots(troops = run.player.troops) {
   if (squadLayoutCache.has(key)) return squadLayoutCache.get(key);
   const columns = squadColumnCount(visible, run.player.formationDensity);
   const rows = Math.ceil(visible / columns);
-  const rowGap = lerp(.042, .034, run.player.formationDensity / 6);
+  const rowGap = lerp(.048, .038, run.player.formationDensity / 6);
   const nearY = .925;
   const frontY = nearY - (rows - 1) * rowGap;
   const slots = [];
@@ -441,15 +525,15 @@ function squadLogicalSlots(troops = run.player.troops) {
 
 function soldierHeightAt(y) {
   const visible = visibleSquadCount(run.player.troops, run.player.formationDensity);
-  const crowdScale = lerp(1.06, .71, clamp((visible - 12) / 60, 0, 1));
-  const near = Math.min(H * .098, W * .17, 78) * crowdScale;
+  const crowdScale = lerp(1.0, .42, clamp((visible - 8) / 56, 0, 1));
+  const near = Math.min(H * .31, W * .50, 240) * crowdScale;
   return projectedPixels(sceneProjection, y, near);
 }
 
 function squadSlotWorldX(slot) {
   const height = soldierHeightAt(slot.y);
   const density = lerp(1.08, .78, run.player.formationDensity / 6);
-  const stepPixels = height * .57 * density * clamp(.87 + W / H * .24, .96, 1.24);
+  const stepPixels = height * .33 * density * clamp(.87 + W / H * .24, .96, 1.24);
   return clamp(run.player.x + slot.colOffset * stepPixels / Math.max(1, laneHalfWidth(slot.y)), -LANE_LIMIT, LANE_LIMIT);
 }
 
@@ -484,6 +568,7 @@ function fireBurst() {
       emitted += 1;
     }
   }
+  if (emitted) audio.shot();
   run.muzzleFlashes.length = 0;
   for (const slot of slots) run.muzzleFlashes.push({ slot: slot.index, life: .075 });
   return emitted;
@@ -646,6 +731,9 @@ function updateBossPhase() {
     run.boss.attackTimer = .42;
     addFloater(run.boss.x, run.boss.y + .1, `PHASE ${phase}`, '#ffb25f', 25);
     burst(run.boss.x, run.boss.y, '#ff704e', 24);
+    addTrauma(.7);
+    triggerHitStop(.08);
+    audio.bossPhase();
   }
 }
 
@@ -685,6 +773,8 @@ function finishBoss() {
   run.score += 900 + run.wave * 175;
   run.skillPoints += config.skillReward;
   burst(boss.x, boss.y, '#ffc54a', 48);
+  addTrauma(.85);
+  audio.explosion();
   releaseAll(run.enemyBullets, pools.enemyBullets);
   releaseAll(run.telegraphs, pools.telegraphs);
   releaseAll(run.enemies, pools.enemies);
@@ -729,6 +819,7 @@ function showBossRewards() {
 function chooseBossReward(id) {
   if (state !== GAME_STATE.BOSS_REWARD) return false;
   run = applyBossReward(run, id);
+  audio.purchase();
   run.wave += 1;
   startWave();
   return true;
@@ -738,6 +829,12 @@ function defeatEnemy(enemy) {
   if (enemy.dead) return;
   enemy.dead = true;
   enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .18 : .28;
+  if (!stressMode && (enemy.type === 'heavy' || enemy.type === 'demolition')) {
+    addTrauma(.12);
+    audio.explosion();
+  } else if (!stressMode) {
+    audio.kill();
+  }
   run.kills += 1;
   const claim = claimKillReward(enemy, run.kills);
   enemy.rewarded = claim.enemy.rewarded;
@@ -761,7 +858,12 @@ function damageSquad(amount, x, y = .86) {
     return false;
   }
   if (result.absorbed) addFloater(x, y, result.lost ? `ARMOR −${result.absorbed}` : 'BLOCKED', '#aeeaff', 16);
-  if (result.lost) addFloater(x, y - .025, `−${result.lost}`, '#ff8d8d', 22);
+  if (result.lost) {
+    addFloater(x, y - .025, `−${result.lost}`, '#ff8d8d', 22);
+    addTrauma(.55);
+    triggerHitStop(.08);
+    audio.damage();
+  }
   burst(x, y, result.lost ? '#ff5757' : '#71d9ff', result.lost ? 9 : 5);
   const next = stateAfterTroopDamage(run.player, state, run.lives);
   if (next === GAME_STATE.RECOVERY) {
@@ -842,7 +944,7 @@ function collidePlayerBullets() {
         bullet.lastHitId = enemy.id;
         bullet.hitsLeft -= 1;
         if (bullet.hitsLeft <= 0) bullet.dead = true;
-        if (!stressMode) burst(enemy.x, enemy.y, bullet.critical ? '#ffe75d' : '#ff685e', bullet.critical ? 5 : 2);
+        if (!stressMode) { burst(enemy.x, enemy.y, bullet.critical ? '#ffe75d' : '#ff685e', bullet.critical ? 5 : 2); audio.hit(); }
         if (enemy.hp <= 0) defeatEnemy(enemy);
         if (bullet.dead) break;
       }
@@ -855,7 +957,7 @@ function collidePlayerBullets() {
         boss.hp -= bullet.power;
         boss.hitFlash = .085;
         run.score += bullet.critical ? 4 : 2;
-        if (!stressMode) burst(bullet.x, boss.y, bullet.critical ? '#fff076' : '#ffad4a', bullet.critical ? 5 : 2);
+        if (!stressMode) { burst(bullet.x, boss.y, bullet.critical ? '#fff076' : '#ffad4a', bullet.critical ? 5 : 2); audio.bossHit(); }
         updateBossPhase();
         if (boss.hp <= 0) {
           finishBoss();
@@ -907,6 +1009,7 @@ function updateRecovery(dt) {
 
 function update(dt) {
   if (!ACTIVE_STATES.includes(state)) return;
+  shakeTrauma = Math.max(0, shakeTrauma - dt * 1.8);
   if (state === GAME_STATE.RECOVERY) {
     updateRecovery(dt);
     return;
@@ -943,7 +1046,7 @@ function update(dt) {
     const decisionZoneClear = !run.enemies.some(enemy => !enemy.dead && enemy.y > -.02 && enemy.y < .38);
     if (gatePending && run.gates.length === 0 && decisionZoneClear && run.waveTime < config.duration - 5) {
       spawnGateEncounter();
-      run.gateTimer = 10.2 + rng() * 1.8;
+      run.gateTimer = 7.4 + rng() * 1.4;
       run.spawnTimer = 2.8;
     }
     if (run.waveTime >= config.duration) {
@@ -962,8 +1065,20 @@ function update(dt) {
       enemy.y -= dt * .012;
       continue;
     }
-    enemy.y += dt * enemy.speed;
-    enemy.x = enemy.lineX;
+    // Gunners weave laterally and demolition units alternate a charge/lurch rhythm --
+    // both stay strictly inside their lane via clampToLaneLocal, same containment the
+    // validator enforces everywhere else.
+    if (enemy.type === 'demolition') {
+      const charging = Math.sin(enemy.y * 5.5 + (enemy.bob || 0)) > .55;
+      enemy.y += dt * enemy.speed * (charging ? 1.9 : .85);
+      enemy.x = enemy.lineX;
+    } else if (enemy.type === 'gunner') {
+      enemy.y += dt * enemy.speed;
+      enemy.x = clampToLaneLocal(enemy.lineX + Math.sin(enemy.y * 13 + (enemy.bob || 0) * 3) * .05, enemy.lane);
+    } else {
+      enemy.y += dt * enemy.speed;
+      enemy.x = enemy.lineX;
+    }
     updateEnemyAttacks(enemy, dt);
   }
 
@@ -1004,6 +1119,8 @@ function update(dt) {
       run.player = applyGate(run.player, result.gate);
       addFloater(result.gate.x, .83, gateText(result.gate), result.gate.tone === 'red' ? '#ff8780' : '#91ebff', 23);
       burst(result.gate.x, encounter.y, result.gate.tone === 'red' ? '#ff5158' : '#43d6ff', 15);
+      addTrauma(.08);
+      result.gate.tone === 'red' ? audio.gateBad() : audio.gateGood();
     }
   }
 
@@ -1179,6 +1296,7 @@ function buyFromShop(id) {
   }
   run = result.session;
   setText(dom.shopMessage, `${SHOP_CATALOG.find(item => item.id === id).title} acquired`);
+  audio.purchase();
   updateHud(true);
   return true;
 }
@@ -1217,7 +1335,8 @@ function traceDeck(target, halfWidth, yEnd = 1.04) {
   target.beginPath();
   for (let index = 0; index <= segments; index += 1) {
     const y = yEnd * index / segments;
-    index ? target.lineTo(W / 2 - halfWidth(y), perspectiveY(y)) : target.moveTo(W / 2, perspectiveY(0));
+    const x = W / 2 - halfWidth(y);
+    index ? target.lineTo(x, perspectiveY(y)) : target.moveTo(x, perspectiveY(0));
   }
   for (let index = segments; index >= 0; index -= 1) {
     const y = yEnd * index / segments;
@@ -1234,7 +1353,7 @@ function traceWaterRegions(target) {
   target.lineTo(W / 2, horizon);
   for (let index = 1; index <= segments; index += 1) {
     const y = 1.04 * index / segments;
-    target.lineTo(W / 2 - bridgeHalfWidth(y) * 1.035, perspectiveY(y));
+    target.lineTo(W / 2 - bridgeHalfWidth(y) * 1.025, perspectiveY(y));
   }
   target.lineTo(0, H * 1.08);
   target.closePath();
@@ -1242,7 +1361,7 @@ function traceWaterRegions(target) {
   target.lineTo(W / 2, horizon);
   for (let index = 1; index <= segments; index += 1) {
     const y = 1.04 * index / segments;
-    target.lineTo(W / 2 + bridgeHalfWidth(y) * 1.035, perspectiveY(y));
+    target.lineTo(W / 2 + bridgeHalfWidth(y) * 1.025, perspectiveY(y));
   }
   target.lineTo(W, H * 1.08);
   target.closePath();
@@ -1251,30 +1370,92 @@ function traceWaterRegions(target) {
 function drawPerspectiveOceanTexture(target, ocean, horizon) {
   if (!ocean) return;
   target.save();
-  target.globalAlpha = .24;
+  target.globalAlpha = .55;
   target.globalCompositeOperation = 'screen';
   const bands = 22;
+  const baseTileWorld = 150;
+  // Fixed source strip per band -- no jittered sourceY -- kills the vertical streaking;
+  // 1px vertical overlap between bands kills seams between fixed-alpha tiles.
   for (let index = 0; index < bands; index += 1) {
     const depth0 = index / bands;
     const depth1 = (index + 1) / bands;
     const y0 = lerp(horizon, H, depth0);
     const y1 = lerp(horizon, H, depth1);
-    const tileWidth = lerp(68, Math.min(520, W * .42), Math.pow(depth1, .82));
-    const sourceY = Math.floor((index * 31) % Math.max(1, ocean.height - 3));
-    const sourceHeight = Math.min(3 + Math.ceil(depth1 * 8), ocean.height - sourceY);
-    for (let x = -tileWidth * ((index * .37) % 1); x < W; x += tileWidth) {
-      target.drawImage(ocean, 0, sourceY, ocean.width, Math.max(1, sourceHeight), x, y0, tileWidth + 1, y1 - y0 + 1);
+    const worldY = lerp(.02, 1, depth1);
+    const tileWidth = Math.max(10, projectedPixels(sceneProjection, worldY, baseTileWorld));
+    const sourceHeight = Math.max(2, Math.min(ocean.height, Math.round(ocean.height * .12)));
+    const sourceY = Math.floor((ocean.height - sourceHeight) * depth1);
+    for (let x = -tileWidth * .5; x < W; x += tileWidth) {
+      target.drawImage(ocean, 0, sourceY, ocean.width, sourceHeight, x, y0 - 1, tileWidth + 1, y1 - y0 + 2);
     }
   }
+  // Cross-fade the final two bands into the horizon colour instead of a hard haze rectangle.
+  const fade = target.createLinearGradient(0, horizon, 0, lerp(horizon, H, 2 / bands));
+  fade.addColorStop(0, 'rgba(28,156,216,.9)');
+  fade.addColorStop(1, 'rgba(28,156,216,0)');
+  target.globalAlpha = 1;
+  target.globalCompositeOperation = 'source-over';
+  target.fillStyle = fade;
+  target.fillRect(0, horizon, W, lerp(horizon, H, 2 / bands) - horizon);
   target.restore();
 }
 
+function drawTower(target, tower, { red, mid, dark, deep, light }) {
+  const beamH = tower.beamHeight;
+  for (const [index, x] of tower.xs.entries()) {
+    const side = index ? 1 : -1;
+    const width = tower.pillarWidth;
+    const lean = side * width * .09;
+    const gradient = target.createLinearGradient(x - width, tower.topY, x + width, tower.baseY);
+    gradient.addColorStop(0, light);
+    gradient.addColorStop(.28, red);
+    gradient.addColorStop(.7, mid);
+    gradient.addColorStop(1, deep);
+    target.fillStyle = gradient;
+    target.beginPath();
+    target.moveTo(x - width * .62, tower.baseY + beamH * .24);
+    target.lineTo(x + width * .62, tower.baseY + beamH * .24);
+    target.lineTo(x + width * .43 + lean, tower.topY);
+    target.lineTo(x - width * .43 + lean, tower.topY);
+    target.closePath();
+    target.fill();
+    target.fillStyle = 'rgba(255,158,119,.48)';
+    target.beginPath();
+    target.moveTo(x - width * .43 + lean, tower.topY);
+    target.lineTo(x - width * .19 + lean, tower.topY);
+    target.lineTo(x - width * .34, tower.baseY);
+    target.lineTo(x - width * .58, tower.baseY);
+    target.closePath();
+    target.fill();
+    target.fillStyle = '#777d7d';
+    target.beginPath();
+    target.roundRect(x - width * .86, tower.baseY - beamH * .16, width * 1.72, beamH * .64, Math.max(1, beamH * .12));
+    target.fill();
+    target.fillStyle = dark;
+    target.fillRect(x - width * .68, tower.baseY - beamH * .28, width * 1.36, beamH * .43);
+  }
+  const left = tower.xs[0] - tower.pillarWidth * .25;
+  const width = tower.xs[1] - tower.xs[0] + tower.pillarWidth * .5;
+  target.fillStyle = deep;
+  target.fillRect(left, tower.topY - beamH * .18, width, beamH * 1.22);
+  const beam = target.createLinearGradient(0, tower.topY, 0, tower.topY + beamH);
+  beam.addColorStop(0, light);
+  beam.addColorStop(.28, red);
+  beam.addColorStop(1, mid);
+  target.fillStyle = beam;
+  target.fillRect(tower.xs[0], tower.topY, tower.xs[1] - tower.xs[0], beamH * .72);
+  target.fillStyle = 'rgba(255,186,140,.55)';
+  target.fillRect(tower.xs[0] + tower.pillarWidth * .16, tower.topY + beamH * .08, tower.xs[1] - tower.xs[0] - tower.pillarWidth * .32, Math.max(.6, beamH * .12));
+}
+
+const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
+
 function drawBridgeStructure(target, geometry) {
-  const red = '#c83e38';
-  const mid = '#a82d30';
-  const dark = '#762229';
-  const deep = '#4b1b22';
-  const light = '#ef765d';
+  const red = '#e54a38';
+  const mid = '#c74329';
+  const dark = '#7e2823';
+  const deep = '#4a1a16';
+  const light = '#ff9772';
   const railHeight = y => H * cameraProfile().railWorldHeight * depthCurve(y);
   const edgePoint = (side, y, factor = 1.035) => ({
     x: W / 2 + side * bridgeHalfWidth(y) * factor,
@@ -1332,53 +1513,7 @@ function drawBridgeStructure(target, geometry) {
   }
 
   // Both tower stations project the same world-space dimensions.
-  for (const tower of geometry.towers) {
-    const beamH = tower.beamHeight;
-    for (const [index, x] of tower.xs.entries()) {
-      const side = index ? 1 : -1;
-      const width = tower.pillarWidth;
-      const lean = side * width * .09;
-      const gradient = target.createLinearGradient(x - width, tower.topY, x + width, tower.baseY);
-      gradient.addColorStop(0, light);
-      gradient.addColorStop(.28, red);
-      gradient.addColorStop(.7, mid);
-      gradient.addColorStop(1, deep);
-      target.fillStyle = gradient;
-      target.beginPath();
-      target.moveTo(x - width * .62, tower.baseY + beamH * .24);
-      target.lineTo(x + width * .62, tower.baseY + beamH * .24);
-      target.lineTo(x + width * .43 + lean, tower.topY);
-      target.lineTo(x - width * .43 + lean, tower.topY);
-      target.closePath();
-      target.fill();
-      target.fillStyle = 'rgba(255,158,119,.48)';
-      target.beginPath();
-      target.moveTo(x - width * .43 + lean, tower.topY);
-      target.lineTo(x - width * .19 + lean, tower.topY);
-      target.lineTo(x - width * .34, tower.baseY);
-      target.lineTo(x - width * .58, tower.baseY);
-      target.closePath();
-      target.fill();
-      target.fillStyle = '#777d7d';
-      target.beginPath();
-      target.roundRect(x - width * .86, tower.baseY - beamH * .16, width * 1.72, beamH * .64, Math.max(1, beamH * .12));
-      target.fill();
-      target.fillStyle = dark;
-      target.fillRect(x - width * .68, tower.baseY - beamH * .28, width * 1.36, beamH * .43);
-    }
-    const left = tower.xs[0] - tower.pillarWidth * .25;
-    const width = tower.xs[1] - tower.xs[0] + tower.pillarWidth * .5;
-    target.fillStyle = deep;
-    target.fillRect(left, tower.topY - beamH * .18, width, beamH * 1.22);
-    const beam = target.createLinearGradient(0, tower.topY, 0, tower.topY + beamH);
-    beam.addColorStop(0, light);
-    beam.addColorStop(.28, red);
-    beam.addColorStop(1, mid);
-    target.fillStyle = beam;
-    target.fillRect(tower.xs[0], tower.topY, tower.xs[1] - tower.xs[0], beamH * .72);
-    target.fillStyle = 'rgba(255,186,140,.55)';
-    target.fillRect(tower.xs[0] + tower.pillarWidth * .16, tower.topY + beamH * .08, tower.xs[1] - tower.xs[0] - tower.pillarWidth * .32, Math.max(.6, beamH * .12));
-  }
+  for (const tower of geometry.towers) drawTower(target, tower, { red, mid, dark, deep, light });
 
   // Rails, uprights, and small lamps stay outside the playable road.
   for (const side of [-1, 1]) {
@@ -1428,9 +1563,9 @@ function drawBridgeStructure(target, geometry) {
 function drawStaticEnvironment(target) {
   const horizon = sceneHorizon();
   const sky = target.createLinearGradient(0, 0, 0, horizon + H * .08);
-  sky.addColorStop(0, '#159cd3');
-  sky.addColorStop(.55, '#66c9e8');
-  sky.addColorStop(1, '#d7eff0');
+  sky.addColorStop(0, '#4aa8e4');
+  sky.addColorStop(.55, '#7cc6ee');
+  sky.addColorStop(1, '#a9dcf4');
   target.clearRect(0, 0, W, H);
   target.fillStyle = sky;
   target.fillRect(0, 0, W, horizon + H * .1);
@@ -1450,10 +1585,9 @@ function drawStaticEnvironment(target) {
   target.restore();
 
   const water = target.createLinearGradient(0, horizon, 0, H);
-  water.addColorStop(0, '#27c4dc');
-  water.addColorStop(.24, '#0aa9c8');
-  water.addColorStop(.66, '#0785ad');
-  water.addColorStop(1, '#076b91');
+  water.addColorStop(0, '#1c9cd8');
+  water.addColorStop(.5, '#0291d4');
+  water.addColorStop(1, '#0196d6');
   target.fillStyle = water;
   target.fillRect(0, horizon, W, H - horizon);
   drawPerspectiveOceanTexture(target, runtimeAssets.oceanSurface, horizon);
@@ -1481,17 +1615,17 @@ function drawStaticEnvironment(target) {
       y => side < 0 ? bridgeHalfWidth(y) * 1.025 : -roadHalfWidth(y),
     );
     const walk = target.createLinearGradient(0, horizon, 0, H);
-    walk.addColorStop(0, '#d6d2c8');
-    walk.addColorStop(1, '#9b9b95');
+    walk.addColorStop(0, '#e2d8d2');
+    walk.addColorStop(1, '#bcafa2');
     target.fillStyle = walk;
     target.fill();
   }
 
   traceDeck(target, roadHalfWidth);
   const road = target.createLinearGradient(W * .25, horizon, W * .72, H);
-  road.addColorStop(0, '#696e6d');
-  road.addColorStop(.55, '#505758');
-  road.addColorStop(1, '#394144');
+  road.addColorStop(0, '#5b626e');
+  road.addColorStop(.55, '#4d5462');
+  road.addColorStop(1, '#454c5b');
   target.fillStyle = road;
   target.fill();
   if (runtimeAssets.asphalt) {
@@ -1504,16 +1638,25 @@ function drawStaticEnvironment(target) {
     target.restore();
   }
 
+  // Tapered fill ribbon instead of a constant-width stroke: the edge line converges
+  // to the vanishing point exactly like everything else instead of staying one width
+  // from horizon to foreground (C2).
   for (const side of [-1, 1]) {
-    target.beginPath();
+    const left = [];
+    const right = [];
     for (let index = 0; index <= 48; index += 1) {
       const y = index / 48 * 1.03;
       const point = worldToScreen(side, y);
-      index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y);
+      const halfWidth = Math.max(.6, projectedPixels(sceneProjection, y, 1.9));
+      left.push({ x: point.x - halfWidth, y: point.y });
+      right.push({ x: point.x + halfWidth, y: point.y });
     }
-    target.strokeStyle = 'rgba(248,244,226,.82)';
-    target.lineWidth = Math.max(1.2, W * .0018);
-    target.stroke();
+    target.beginPath();
+    left.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+    for (let index = right.length - 1; index >= 0; index -= 1) target.lineTo(right[index].x, right[index].y);
+    target.closePath();
+    target.fillStyle = '#faf6f3';
+    target.fill();
   }
 
   // Transverse seams narrow into the distance and reinforce the shared plane.
@@ -1528,17 +1671,17 @@ function drawStaticEnvironment(target) {
     target.stroke();
   }
 
-  const geometry = buildBridgeGeometry(sceneProjection);
-  drawBridgeStructure(target, geometry);
+  cachedGeometry = buildBridgeGeometry(sceneProjection);
+  drawBridgeStructure(target, cachedGeometry);
 
   // A narrow marine haze band sits above distant structure, hiding no deck edge.
-  const haze = target.createLinearGradient(0, horizon - H * .025, 0, horizon + H * .075);
+  const haze = target.createLinearGradient(0, horizon - H * .015, 0, horizon + H * .035);
   haze.addColorStop(0, 'rgba(231,249,249,0)');
-  haze.addColorStop(.42, 'rgba(231,249,249,.62)');
-  haze.addColorStop(.72, 'rgba(185,231,235,.25)');
+  haze.addColorStop(.42, 'rgba(231,249,249,.22)');
+  haze.addColorStop(.72, 'rgba(185,231,235,.09)');
   haze.addColorStop(1, 'rgba(185,231,235,0)');
   target.fillStyle = haze;
-  target.fillRect(0, horizon - H * .03, W, H * .11);
+  target.fillRect(0, horizon - H * .015, W, H * .05);
 }
 
 function ensureEnvironment() {
@@ -1598,8 +1741,8 @@ function drawDynamicEnvironment() {
       const b = clamp(y1, 0, 1);
       const start = worldToScreen(separator, a);
       const end = worldToScreen(separator, b);
-      const w0 = lerp(1, 3.3, a);
-      const w1 = lerp(1, 4, b);
+      const w0 = Math.max(.6, projectedPixels(sceneProjection, a, 3.4));
+      const w1 = Math.max(.6, projectedPixels(sceneProjection, b, 3.4));
       ctx.fillStyle = 'rgba(247,248,239,.9)';
       ctx.beginPath();
       ctx.moveTo(start.x - w0, start.y);
@@ -1634,12 +1777,19 @@ function drawSprite(image, x, y, height) {
 
 function gateVisual(gate) {
   const y = gate.encounter.y;
+  // Extend the edge facing the neutral lane part-way into that gap, so the two gates
+  // read as most of the road width and the untouched lane reads as a gap, not a lane (V5).
+  const bounds = laneBounds(gate.lane, .016);
+  const towardGap = Math.sign(laneCenter(gate.encounter.neutralLane) - laneCenter(gate.lane));
+  const gapExtend = LANE_HALF_WIDTH * .35;
+  const worldLeft = bounds.min - (towardGap < 0 ? gapExtend : 0);
+  const worldRight = bounds.max + (towardGap > 0 ? gapExtend : 0);
   const center = worldToScreen(gate.x, y);
-  const left = worldToScreen(laneBounds(gate.lane, .016).min, y);
-  const right = worldToScreen(laneBounds(gate.lane, .016).max, y);
+  const left = worldToScreen(worldLeft, y);
+  const right = worldToScreen(worldRight, y);
   const scale = center.scale;
   const width = right.x - left.x;
-  const panelHeight = Math.min(width * .54, projectedPixels(sceneProjection, y, H * .1));
+  const panelHeight = Math.min(width * .54, projectedPixels(sceneProjection, y, H * .30));
   const frameHeight = panelHeight * 1.42;
   const horizonAlpha = horizonFade(sceneProjection, y);
   const resolvedAlpha = gate.encounter.resolved ? clamp((1.04 - y) / .16, 0, 1) : 1;
@@ -1667,6 +1817,14 @@ function drawGate(gate, foreground = false) {
   ctx.globalAlpha = visual.fade;
   ctx.fillStyle = foreground ? dark : `color-mix(in srgb, ${main} 76%, transparent)`;
   if (!foreground) {
+    // Ground contact shadow -- without this the gate reads as floating above the deck (V4).
+    ctx.save();
+    ctx.globalAlpha = visual.fade * .4;
+    ctx.fillStyle = 'rgba(10,20,26,.5)';
+    ctx.beginPath();
+    ctx.ellipse(visual.center.x, visual.deckY + railHeight * .3, visual.width * .52, railHeight * .5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
     const fill = ctx.createLinearGradient(0, panelTop, 0, panelBottom);
     fill.addColorStop(0, main);
     fill.addColorStop(.5, bright);
@@ -1693,7 +1851,7 @@ function drawGate(gate, foreground = false) {
   ctx.fillStyle = main;
   ctx.fillRect(visual.left.x, visual.topY, visual.right.x - visual.left.x, railHeight * .57);
   if (!foreground) {
-    let fontSize = Math.min(31, visual.panelHeight * .43);
+    let fontSize = Math.min(64, visual.panelHeight * .46);
     ctx.font = `1000 ${fontSize}px system-ui`;
     const limit = visual.width - postWidth * 2.3;
     while (fontSize > 9 && ctx.measureText(gateText(gate)).width > limit) {
@@ -1726,9 +1884,23 @@ function drawGateForeground() {
   for (const encounter of run.gates) for (const gate of encounter.gates) drawGate(gate, true);
 }
 
+// The near tower's above-deck portion is redrawn on the game canvas after entities:
+// it lives on the cached environment canvas underneath everything else, so distant
+// enemies would otherwise render in front of a structure that is visually much closer.
+function drawTowerForeground() {
+  const nearTower = cachedGeometry?.towers.at(-1);
+  if (!nearTower) return;
+  drawTower(ctx, nearTower, towerColors);
+}
+
 function enemyHeightAt(y, type = 'grunt') {
-  const nearHeight = Math.min(74, H * .1, W * .17);
-  return projectedPixels(sceneProjection, y, nearHeight) * (TYPE_STATS[type]?.scale || 1);
+  const nearHeight = Math.min(190, H * .24, W * .50);
+  // Only ever engages in the synthetic QA stress scene (180 simultaneous enemies + boss +
+  // telegraphs + max squad, all at once) -- never in real gameplay, which stays well under
+  // the perf budget at the full size. Keeps the throttled-CPU dense-scene frame budget without
+  // shrinking the enemies a real player ever sees.
+  const crowdScale = stressMode ? lerp(1, .13, clamp((run.enemies.length - 30) / 90, 0, 1)) : 1;
+  return projectedPixels(sceneProjection, y, nearHeight * crowdScale) * (TYPE_STATS[type]?.scale || 1);
 }
 
 function enemyMarchFrame(enemy) {
@@ -1751,8 +1923,8 @@ function drawEnemy(enemy) {
   const horizonAlpha = horizonFade(sceneProjection, y);
   const fade = enemy.dead ? clamp(enemy.deathLife / .28, 0, 1) : 1;
   const imageName = enemySpriteName(enemy);
-  const fullImage = runtimeAssets[imageName];
-  const image = height < 76 ? lodAssets[imageName] || fullImage : fullImage;
+  const fullImage = litAssets[imageName] || runtimeAssets[imageName];
+  const image = height < 75 ? litLodAssets[imageName] || lodAssets[imageName] || fullImage : fullImage;
   const clock = state === GAME_STATE.BOSS ? run.bossTime : run.waveTime;
   const bob = Math.sin(clock * 8 + enemy.bob) * height * .006;
   const baseline = screen.y + bob;
@@ -1763,18 +1935,18 @@ function drawEnemy(enemy) {
   }
   if (!enemy.dead && image) {
     if (!stressMode && height > 23) {
-      ctx.fillStyle = 'rgba(22,25,28,.24)';
+      ctx.fillStyle = 'rgba(14,18,22,.34)';
       ctx.beginPath();
-      ctx.ellipse(screen.x, baseline + 2, height * .21, height * .048, 0, 0, Math.PI * 2);
+      ctx.ellipse(screen.x, baseline + 2, height * .19, height * .042, 0, 0, Math.PI * 2);
       ctx.fill();
     }
     drawSprite(image, screen.x, baseline, height);
-    if (enemy.type === 'gunner') {
+    if (!stressMode && enemy.type === 'gunner') {
       ctx.fillStyle = '#ffbe43';
       ctx.beginPath();
       ctx.arc(screen.x - height * .18, baseline - height * .56, height * .055, 0, Math.PI * 2);
       ctx.fill();
-    } else if (enemy.type === 'demolition') {
+    } else if (!stressMode && enemy.type === 'demolition') {
       ctx.strokeStyle = '#ffbc39';
       ctx.lineWidth = Math.max(1.5, height * .025);
       ctx.beginPath();
@@ -1823,10 +1995,12 @@ function drawBoss() {
   if (!boss) return;
   const y = lerp(boss.previousY, boss.y, renderAlpha);
   const screen = projectToScreen(boss.x, y, projectionScratchA);
-  const height = Math.min(enemyHeightAt(y, 'heavy') * 3.55, 245, H * .34, W * .43);
+  const height = Math.min(enemyHeightAt(y, 'heavy') * 4.2, 340, H * .46, W * .52);
   if (!screen.visible || height < 1) return;
   const bob = Math.sin(run.bossTime * 3.3) * height * .008;
-  const bossImage = height < 270 ? lodAssets.boss || runtimeAssets.boss : runtimeAssets.boss;
+  const bossImage = height < 210
+    ? litLodAssets.boss || lodAssets.boss || litAssets.boss || runtimeAssets.boss
+    : litAssets.boss || runtimeAssets.boss;
   if (bossImage) {
     ctx.save();
     ctx.globalAlpha *= horizonFade(sceneProjection, y);
@@ -1881,6 +2055,10 @@ function drawTelegraphs() {
     const nearRight = worldToScreen(bounds.max, .99);
     const urgency = 1 - warning.time / warning.maxTime;
     ctx.save();
+    // 'lighten' caps cumulative coverage at the brightest single telegraph instead of
+    // summing alpha across overlaps -- at density this stops the road becoming an
+    // opaque maroon wash (V6).
+    ctx.globalCompositeOperation = 'lighten';
     ctx.globalAlpha = .16 + urgency * .32 + Math.sin(ambientTime * 18) * .05;
     ctx.fillStyle = warning.kind === 'demolition' ? '#ffb52f' : '#ff3f38';
     ctx.beginPath();
@@ -1890,6 +2068,7 @@ function drawTelegraphs() {
     ctx.lineTo(nearLeft.x, nearLeft.y);
     ctx.closePath();
     ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = .82;
     ctx.strokeStyle = '#ffe16a';
     ctx.lineWidth = 2;
@@ -1931,14 +2110,15 @@ function drawPlayerBullets() {
   ctx.lineCap = 'round';
   ctx.strokeStyle = run.frenzyTimer > 0 ? '#fff2a4' : '#ffc33f';
   const stride = stressMode && run.bullets.length > 540 ? 2 : 1;
-  for (let band = 0; band < 4; band += 1) {
-    ctx.lineWidth = Math.max(.45, projectedPixels(sceneProjection, (band + .5) / 4, 2.4));
+  const BANDS = 8;
+  for (let band = 0; band < BANDS; band += 1) {
+    ctx.lineWidth = Math.max(.45, projectedPixels(sceneProjection, (band + .5) / BANDS, 2.4));
     ctx.beginPath();
     for (let index = 0; index < run.bullets.length; index += stride) {
       const bullet = run.bullets[index];
       const x = lerp(bullet.previousX, bullet.x, renderAlpha);
       const y = lerp(bullet.previousY, bullet.y, renderAlpha);
-      if (y <= 0 || Math.min(3, Math.floor(y * 4)) !== band) continue;
+      if (y <= 0 || Math.min(BANDS - 1, Math.floor(y * BANDS)) !== band) continue;
       const head = projectToScreen(x, y, projectionScratchA);
       const tail = projectToScreen(lerp(bullet.previousX, x, .1), lerp(bullet.previousY, y, .1), projectionScratchB);
       ctx.moveTo(tail.x, tail.y);
@@ -1959,7 +2139,9 @@ function drawPlayer() {
     const height = soldierHeightAt(slot.y);
     const frame = ((Math.floor((run.waveTime + run.bossTime + ambientTime * .1) * 10.5 + slot.phase) % 4) + 4) % 4;
     const imageName = `playerRun${frame + 1}`;
-    const image = height < 90 ? lodAssets[imageName] || runtimeAssets[imageName] : runtimeAssets[imageName];
+    const image = height < 95
+      ? litLodAssets[imageName] || lodAssets[imageName] || runtimeAssets[imageName]
+      : litAssets[imageName] || runtimeAssets[imageName];
     const shooting = activeFlashes.has(slot.index);
     const bob = Math.sin((run.waveTime + run.bossTime) * 10.5 + slot.phase) * height * .016;
     if (image) {
@@ -1967,9 +2149,9 @@ function drawPlayer() {
       const lean = run.player._visualLean || 0;
       if (Math.abs(lean) < .001) {
         if (!stressMode && height > 24) {
-          ctx.fillStyle = 'rgba(12,31,39,.23)';
+          ctx.fillStyle = 'rgba(9,22,28,.34)';
           ctx.beginPath();
-          ctx.ellipse(screen.x, baseline + 2, height * .18, height * .043, 0, 0, Math.PI * 2);
+          ctx.ellipse(screen.x, baseline + 2, height * .16, height * .038, 0, 0, Math.PI * 2);
           ctx.fill();
         }
         drawSprite(image, screen.x, baseline, height);
@@ -1997,12 +2179,25 @@ function drawPlayer() {
   ctx.strokeText(String(run.player.troops), label.x, label.y);
   ctx.fillText(String(run.player.troops), label.x, label.y);
   if (run.player.protectedFor > 0) {
-    const radius = clamp(W * .08, 34, 82) * (1 + Math.sin(ambientTime * 8) * .04);
+    // Grounded at the squad's feet with a depth-scaled radius and a soft additive fill,
+    // instead of a flat fixed-size ellipse floating above the sprites.
+    const radius = clamp(W * .1, 40, 100) * depthCurve(.965) * (1 + Math.sin(ambientTime * 8) * .04);
+    const ringY = label.y + radius * .1;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = .18;
+    ctx.fillStyle = '#69e5ff';
+    ctx.beginPath();
+    ctx.ellipse(label.x, ringY, radius, radius * .32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
     ctx.strokeStyle = 'rgba(105,229,255,.75)';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.ellipse(label.x, label.y - radius * .45, radius, radius * .42, 0, 0, Math.PI * 2);
+    ctx.ellipse(label.x, ringY, radius, radius * .32, 0, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -2108,7 +2303,9 @@ function drawEffects() {
   for (const floater of run.floaters) {
     const screen = projectToScreen(floater.x, floater.y, projectionScratchA);
     if (!screen.visible) continue;
-    const size = projectedPixels(sceneProjection, floater.y, floater.size);
+    // Below this, text becomes illegible sub-pixel noise near the horizon -- cull it (V7).
+    const size = Math.max(0, projectedPixels(sceneProjection, floater.y, floater.size));
+    if (size < 10) continue;
     ctx.globalAlpha = clamp(floater.life, 0, 1) * horizonFade(sceneProjection, floater.y);
     ctx.font = `1000 ${size}px system-ui`;
     ctx.textAlign = 'center';
@@ -2137,6 +2334,7 @@ function draw() {
   drawPlayerBullets();
   drawPlayer();
   drawGateForeground();
+  drawTowerForeground();
   drawEffects();
 }
 
@@ -2172,14 +2370,20 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && ACT
 
 dom.difficultyPicker.addEventListener('click', event => {
   const option = event.target.closest('[data-difficulty]');
-  if (option) selectDifficulty(option.dataset.difficulty);
+  if (option) { audio.uiClick(); selectDifficulty(option.dataset.difficulty); }
 });
-dom.playBtn.onclick = () => startRun(Date.now() >>> 0, selectedDifficulty);
-dom.pauseBtn.onclick = () => state === GAME_STATE.PAUSED ? resumeGame() : pauseGame();
-dom.resumeBtn.onclick = resumeGame;
-dom.restartBtn.onclick = () => startRun(Date.now() >>> 0, run.difficulty);
-dom.retryBtn.onclick = () => startRun(Date.now() >>> 0, run.difficulty);
-dom.gameOverHomeBtn.onclick = returnHome;
+dom.playBtn.onclick = () => { audio.unlock(); startRun(Date.now() >>> 0, selectedDifficulty); };
+dom.pauseBtn.onclick = () => { audio.uiClick(); state === GAME_STATE.PAUSED ? resumeGame() : pauseGame(); };
+dom.resumeBtn.onclick = () => { audio.uiClick(); resumeGame(); };
+dom.restartBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
+dom.retryBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
+dom.gameOverHomeBtn.onclick = () => { audio.uiClick(); returnHome(); };
+dom.muteBtn.onclick = () => {
+  const muted = audio.toggleMute();
+  dom.muteBtn.textContent = muted ? '🔇' : '🔊';
+  dom.muteBtn.setAttribute('aria-pressed', String(muted));
+  dom.muteBtn.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+};
 
 function getStateSnapshot() {
   const activeEnemies = run.enemies.filter(enemy => !enemy.dead);
@@ -2412,14 +2616,37 @@ function prepareCapture(mode) {
   updateHud(true);
 }
 
+function applyScreenShake() {
+  if (!stageElement) return;
+  if (qaFrozen || shakeTrauma <= 0) {
+    stageElement.style.transform = '';
+    return;
+  }
+  const amount = shakeTrauma * shakeTrauma;
+  const maxOffset = Math.min(W, H) * .012;
+  const nx = Math.sin(ambientTime * 47.3) * Math.cos(ambientTime * 13.1);
+  const ny = Math.cos(ambientTime * 39.7) * Math.sin(ambientTime * 17.9);
+  stageElement.style.transform = `translate3d(${(nx * amount * maxOffset).toFixed(2)}px, ${(ny * amount * maxOffset).toFixed(2)}px, 0)`;
+}
+
 function loop(timestamp) {
   const elapsedMs = lastTimestamp ? Math.min(100, timestamp - lastTimestamp) : 0;
   lastTimestamp = timestamp;
   ambientTime += elapsedMs / 1000;
+  // Hit-stop scales the delta fed into the accumulator, not SIM_STEP itself -- the fixed
+  // step and its 2-step catch-up cap are untouched, so this is purely a perceived-time effect.
+  let timeScale = 1;
+  if (hitStopHold > 0) {
+    timeScale = HIT_STOP_SCALE;
+    hitStopHold -= elapsedMs / 1000;
+  } else if (hitStopEase > 0) {
+    timeScale = lerp(HIT_STOP_SCALE, 1, 1 - hitStopEase / HIT_STOP_EASE_SECONDS);
+    hitStopEase -= elapsedMs / 1000;
+  }
   if (ACTIVE_STATES.includes(state) && !qaFrozen && elapsedMs > 0) {
     frameSamples.push(elapsedMs);
     if (frameSamples.length > 3600) frameSamples.shift();
-    accumulator = Math.min(.1, accumulator + elapsedMs / 1000);
+    accumulator = Math.min(.1, accumulator + (elapsedMs * timeScale) / 1000);
     let steps = 0;
     while (accumulator >= SIM_STEP && steps < 2) {
       update(SIM_STEP);
@@ -2429,6 +2656,7 @@ function loop(timestamp) {
     if (steps === 2 && accumulator >= SIM_STEP) accumulator = 0;
     renderAlpha = accumulator / SIM_STEP;
   } else renderAlpha = 1;
+  applyScreenShake();
   draw();
   requestAnimationFrame(loop);
 }

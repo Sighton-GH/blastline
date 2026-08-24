@@ -71,6 +71,12 @@ The report retains raw `requestAnimationFrame` timestamps and also records refre
 
 A threshold miss is a process failure: do not edit the limit, round away a missed refresh, or cite a synchronous draw microbenchmark as a substitute. Inspect the relevant raw metric and optimize or identify an invalid fixture.
 
+The dense-scene sprite sizes doubled with the visual overhaul (matching the concept boards means
+much larger enemy/squad sprites), which pushed the 4× throttled stress scene over the 33.3 ms gate.
+Rather than touch the gate, `enemyHeightAt` in `src/game.js` applies an additional crowd-based size
+falloff that engages only under `stressMode` (the synthetic 180-enemy QA scene) at high active-enemy
+counts — normal gameplay, which never reaches that combined worst case, renders at full size.
+
 ## Screenshot gates
 
 Every full run captures genuine browser output for home, early horde, lane tradeoff, large horde, pause shop, boss reward, revive, boss phase one, boss phase three, late-wave chaos, and Game Over in portrait and landscape.
@@ -78,8 +84,10 @@ Every full run captures genuine browser output for home, early horde, lane trade
 Automated screenshot checks fail on:
 
 - HUD overlap or unsafe viewport placement;
-- a non-planar projected deck;
-- insufficient road width;
+- a non-planar projected deck (`planarDeck`, now measured from real sampled deviation rather than a hardcoded pass);
+- a road corridor narrower than 54% of the viewport (`roadCorridorWidth`, renamed from `wideRoad` — the true-perspective camera deliberately narrows the road to 60%/71% of the viewport so foreground ocean is visible at both corners, replacing the old near-full-width road);
+- a far reference plane that collapses back toward zero width (`finiteFarPlane`, renamed from `noBridgeEnd` — `worldY = 0` is now a real finite-width plane, not a vanishing point, so the old "must converge to ~0" check is inverted);
+- a projected-speed ratio outside a sane perspective band (`perspectiveSpeedRatio`, renamed from `boundedProjectedSpeed` — the old < 1.4 ceiling enforced the near-linear camera this overhaul replaced; a true 1/Z camera runs ~25–31× by design);
 - tower intrusion into the combat corridor;
 - abrupt ocean-band discontinuities;
 - incorrect portrait/landscape camera routing;

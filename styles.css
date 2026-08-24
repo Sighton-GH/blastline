@@ -39,6 +39,7 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 #app { position: relative; width: 100%; height: 100%; isolation: isolate; }
+#stage { position: absolute; inset: 0; will-change: transform; }
 #environment,
 #game { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 #environment { z-index: 0; background: #27a9d2; }

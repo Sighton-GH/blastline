@@ -16,7 +16,7 @@ const run = createCleanRun(42, 'veteran');
 assert.equal(run.phase, GAME_STATE.PLAYING);
 assert.equal(run.wave, 1);
 assert.equal(run.player.troops, 14);
-assert.equal(getWaveConfig(500).duration, 65);
+assert.equal(getWaveConfig(500).duration, 48);
 const encounter = makeGateEncounter(1, makeGatePair(rng, 4), -.06, rng);
 assert.equal(encounter.gates.length, 2);
 assert.ok(encounter.gates.every(gate => laneContains(gate.lane, gate.x)));

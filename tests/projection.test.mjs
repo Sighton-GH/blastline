@@ -14,33 +14,41 @@ import {
 } from '../src/projection.mjs';
 
 const VIEWPORTS = [
-  { width: 1365, height: 768, profile: 'landscape', horizon: .14 },
-  { width: 390, height: 844, profile: 'portrait', horizon: .16 },
+  { width: 1365, height: 768, profile: 'landscape', horizon: .145 },
+  { width: 390, height: 844, profile: 'portrait', horizon: .165 },
 ];
 
-test('camera profiles converge to a zero-width centered vanishing point', () => {
+test('camera profiles place a finite-width far gameplay plane below the horizon', () => {
   for (const viewport of VIEWPORTS) {
     const projection = createProjection(viewport.width, viewport.height);
     assert.equal(projection.profile.name, viewport.profile);
     assert.equal(projection.horizon, viewport.height * viewport.horizon);
-    assert.equal(roadHalfWidth(projection, 0), 0);
-    assert.equal(bridgeHalfWidth(projection, 0), 0);
-    assert.deepEqual(projectGround(projection, -.8, 0), {
-      x: viewport.width / 2,
-      y: projection.horizon,
-      scale: 0,
-      visible: false,
-    });
+    // worldY = 0 is a real, visible reference plane with finite width (1 / depthRatio),
+    // not the horizon itself -- the horizon is only approached as worldY -> -Infinity.
+    const farScale = 1 / projection.profile.depthRatio;
+    assert.ok(Math.abs(depthScale(projection.profile, 0) - farScale) < 1e-10);
+    assert.ok(roadHalfWidth(projection, 0) > 0);
+    assert.ok(bridgeHalfWidth(projection, 0) > 0);
+    const point = projectGround(projection, -.8, 0);
+    assert.ok(point.visible);
+    assert.ok(point.y > projection.horizon);
+    assert.ok(Math.abs(point.scale - farScale) < 1e-10);
   }
 });
 
-test('equal logical approach steps have bounded projected acceleration', () => {
+test('equal logical approach steps accelerate with the true 1/Z perspective curve', () => {
   for (const viewport of VIEWPORTS) {
     const projection = createProjection(viewport.width, viewport.height);
     const screenY = Array.from({ length: 21 }, (_, index) => groundY(projection, index / 20));
     const steps = screenY.slice(1).map((value, index) => value - screenY[index]);
     assert.ok(steps.every((value, index) => index === 0 || value >= steps[index - 1]));
-    assert.ok(Math.max(...steps) / Math.min(...steps) < 1.4);
+    const ratio = Math.max(...steps) / Math.min(...steps);
+    // Analytically the instantaneous speed ratio for depthScale = 1/(r-(r-1)y) is r^2; the
+    // 20-step finite-difference ratio sits below that (chords, not derivatives) but above r.
+    const { depthRatio } = projection.profile;
+    assert.ok(ratio > depthRatio * 2 && ratio < depthRatio ** 2,
+      `speed ratio ${ratio} should sit between depthRatio and depthRatio^2`);
+    assert.ok(ratio > 12 && ratio < 45, `speed ratio ${ratio} should stay in a bounded perspective band`);
   }
 });
 

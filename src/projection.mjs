@@ -4,23 +4,23 @@ const lerp = (start, end, amount) => start + (end - start) * amount;
 export const CAMERA_PROFILES = Object.freeze({
   landscape: Object.freeze({
     name: 'landscape',
-    horizon: .14,
-    nearRoadHalf: .445,
-    shoulderRatio: 1.12,
-    linearDepth: .9,
-    towerStations: Object.freeze([.27, .67]),
-    towerWorldHeight: .63,
-    railWorldHeight: .058,
+    horizon: .145,
+    nearRoadHalf: .300,
+    shoulderRatio: 1.32,
+    depthRatio: 5.0,
+    towerDepths: Object.freeze([.26, 1.00]),
+    towerWorldHeight: 1.00,
+    railWorldHeight: .075,
   }),
   portrait: Object.freeze({
     name: 'portrait',
-    horizon: .16,
-    nearRoadHalf: .475,
-    shoulderRatio: 1.075,
-    linearDepth: .84,
-    towerStations: Object.freeze([.29, .66]),
-    towerWorldHeight: .59,
-    railWorldHeight: .052,
+    horizon: .165,
+    nearRoadHalf: .355,
+    shoulderRatio: 1.26,
+    depthRatio: 5.6,
+    towerDepths: Object.freeze([.28, 1.00]),
+    towerWorldHeight: .95,
+    railWorldHeight: .068,
   }),
 });
 
@@ -29,14 +29,16 @@ export function profileForViewport(width, height) {
 }
 
 /**
- * A bounded quadratic perspective curve. Its derivative changes gradually from
- * linearDepth at the horizon to (2 - linearDepth) at the foreground, avoiding
- * the former last-moment screen-speed jump while retaining visible approach.
+ * A true pinhole-camera 1/Z curve. worldY is linear in distance from the
+ * camera; depthRatio = Zfar / Znear sets how hard the curve compresses the
+ * far field. depthScale(1) === 1 exactly (near reference plane), and the
+ * far gameplay plane worldY = 0 sits at depthScale = 1 / depthRatio, not at
+ * the horizon — the horizon is only reached as worldY -> -Infinity.
  */
 export function depthScale(profile, worldY) {
-  if (worldY <= 0) return 0;
-  const y = clamp(worldY, 0, 1.08);
-  return y * (profile.linearDepth + (1 - profile.linearDepth) * y);
+  const r = profile.depthRatio;
+  const y = Math.min(worldY, 1.08);
+  return Math.max(.02, 1 / (r - (r - 1) * y));
 }
 
 export function createProjection(width, height, requestedProfile = null) {
@@ -59,7 +61,7 @@ export function projectGround(projection, worldX, worldY, result = {}) {
   result.scale = scale;
   result.x = projection.centerX + worldX * projection.width * projection.profile.nearRoadHalf * scale;
   result.y = projection.horizon + (projection.deckBottom - projection.horizon) * scale;
-  result.visible = worldY > 0 && result.y >= projection.horizon && result.y <= projection.height * 1.075;
+  result.visible = worldY > -.5 && result.y >= projection.horizon && result.y <= projection.height * 1.075;
   return result;
 }
 
@@ -75,11 +77,17 @@ export function bridgeHalfWidth(projection, worldY) {
   return roadHalfWidth(projection, worldY) * projection.profile.shoulderRatio;
 }
 
+/** Road half-width derived from a screen row directly, for tracing shapes top-down without inverting depthScale. */
+export function roadHalfWidthAtRow(projection, screenY) {
+  const span = projection.deckBottom - projection.horizon;
+  return projection.width * projection.profile.nearRoadHalf * clamp((screenY - projection.horizon) / span, 0, 1.1);
+}
+
 export function projectedPixels(projection, worldY, nearPixelSize) {
   return nearPixelSize * depthScale(projection.profile, worldY);
 }
 
-export function horizonFade(projection, worldY, fadeWorldDepth = .085) {
+export function horizonFade(projection, worldY, fadeWorldDepth = .16) {
   if (worldY <= 0) return 0;
   return clamp(worldY / fadeWorldDepth, 0, 1);
 }
@@ -127,9 +135,9 @@ function pointOnSpan(projection, side, span, worldY) {
 export function buildBridgeGeometry(projection, { cableSamples = 28, hangerStep = .043 } = {}) {
   const profile = projection.profile;
   const towerWorldHeight = projection.height * profile.towerWorldHeight;
-  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .062, 24, 46);
+  const pillarWorldWidth = clamp(Math.min(projection.width, projection.height) * .032, 12, 26);
   const beamWorldHeight = clamp(projection.height * .035, 18, 30);
-  const towers = profile.towerStations.map(worldY => {
+  const towers = profile.towerDepths.map(worldY => {
     const scale = depthScale(profile, worldY);
     const baseY = groundY(projection, worldY);
     const xs = [-1, 1].map(side => bridgeEdgePoint(projection, side, worldY, 1.055).x);
