@@ -396,6 +396,10 @@ async function runPerformanceValidation() {
     updateMs: __blastlineTest.benchmarkUpdate(30),
     layers: __blastlineTest.benchmarkLayers(8),
   }));
+  // Let synchronous diagnostics, JIT compilation, and any pending GC settle before
+  // measuring animation cadence. Otherwise the diagnostic itself contaminates the
+  // first seconds of the frame sample on slower hosts.
+  await page.waitForTimeout(3500);
   performance.stress4x = await measureRaf(page, STRESS_DURATION_MS);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   performance.stress4x.refreshNormalizedP95 = normalizeRefreshQuantization(performance.stress4x.p95, 1000 / 30);

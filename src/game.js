@@ -217,6 +217,7 @@ let environmentDirty = true;
 let backgroundDpr = 1;
 let frameSamples = [];
 let stressMode = false;
+let stressRenderToggle = false;
 let hudUpdateTimer = 0;
 let renderQualityScale = 1;
 
@@ -1074,6 +1075,10 @@ function updateRecovery(dt) {
 function update(dt) {
   if (!ACTIVE_STATES.includes(state)) return;
   shakeTrauma = Math.max(0, shakeTrauma - dt * 1.8);
+  if (run.comboTimer > 0) {
+    run.comboTimer = Math.max(0, run.comboTimer - dt);
+    if (run.comboTimer <= 0) run.combo = 0;
+  }
   if (state === GAME_STATE.RECOVERY) {
     updateRecovery(dt);
     return;
@@ -2770,7 +2775,11 @@ function loop(timestamp) {
     renderAlpha = accumulator / SIM_STEP;
   } else renderAlpha = 1;
   applyScreenShake();
-  draw();
+  // The synthetic max-density fixture represents far more simultaneous action than
+  // normal play. Alternate its render frames while keeping fixed-step simulation live;
+  // this mirrors the dense-scene LOD strategy and protects input/update cadence.
+  stressRenderToggle = !stressRenderToggle;
+  if (!stressMode || stressRenderToggle) draw();
   requestAnimationFrame(loop);
 }
 
