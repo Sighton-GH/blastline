@@ -160,6 +160,24 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 #frenzyBadge > span { color: #8eeaff; font-size: 9px; font-weight: 1000; }
 #frenzyBadge > small { margin-right: 4px; color: #67e5ff; font-size: 7px; font-weight: 1000; letter-spacing: .15em; }
 
+
+#comboBadge {
+  top: max(122px, calc(env(safe-area-inset-top) + 112px)); left: 50%; display: grid;
+  grid-template-columns: auto auto; min-width: 132px; align-items: center; column-gap: 8px;
+  padding: 6px 12px 7px; border: 1px solid rgba(255,202,55,.9); border-radius: 12px;
+  color: #fff; text-align: center; background: linear-gradient(180deg, rgba(116,45,10,.95), rgba(48,14,10,.97));
+  box-shadow: 0 4px 0 rgba(61,14,6,.8), 0 0 24px rgba(255,158,34,.32), inset 0 1px rgba(255,255,255,.22);
+  transform: translateX(-50%); text-shadow: 0 2px 0 rgba(45,8,3,.75);
+}
+#comboBadge small { grid-row: 1 / 3; color: #ffd76b; font-size: 7px; font-weight: 1000; letter-spacing: .12em; }
+#comboBadge b { color: #fff3a1; font-size: 22px; line-height: 1; }
+#comboBadge span { color: #ffb054; font-size: 7px; font-weight: 1000; }
+.career-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.career-strip span { display: grid; padding: 6px; border: 1px solid rgba(107,205,242,.28); border-radius: 8px; background: rgba(2,25,41,.65); }
+.career-strip small { color: #91b9cb; font-size: 6px; font-weight: 950; letter-spacing: .11em; }
+.career-strip b { color: #fff1a0; font-size: 13px; }
+.record-callout { margin: -7px 0 14px; color: #ffd15c; font-size: 11px; font-weight: 1000; letter-spacing: .13em; text-align: center; }
+
 #bossHud {
   position: absolute;
   z-index: 13;
@@ -317,6 +335,7 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .metric { min-width: 88px; }
   #floatingStats { top: max(72px, calc(env(safe-area-inset-top) + 62px)); }
   #frenzyBadge, #bossHud { top: max(117px, calc(env(safe-area-inset-top) + 108px)); }
+  #comboBadge { top: max(126px, calc(env(safe-area-inset-top) + 118px)); }
   #bossHud { width: min(610px, 86vw); }
   .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -341,6 +360,11 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   #frenzyBadge { top: max(91px, calc(env(safe-area-inset-top) + 84px)); min-width: 86px; height: 32px; padding: 3px 8px; }
   #frenzyBadge > b { font-size: 17px; }
   #frenzyBadge > small { font-size: 6px; }
+  #comboBadge { top: max(128px, calc(env(safe-area-inset-top) + 120px)); min-width: 112px; padding: 4px 8px; }
+  #comboBadge b { font-size: 18px; }
+  .career-strip { margin-top: 7px; }
+  .career-strip span { padding: 4px; }
+  .career-strip b { font-size: 11px; }
   #bossHud { top: max(92px, calc(env(safe-area-inset-top) + 84px)); width: 90vw; padding: 6px 8px 8px; border-width: 1px; }
   .boss-heading { gap: 5px; font-size: 7px; }
   .boss-track { height: 11px; }

@@ -2,7 +2,7 @@
 
 BLASTLINE is an instant-play, endless bridge shooter. Steer a growing blue squad across three lanes, auto-fire through dense red formations, choose gate tradeoffs, defeat a boss after every wave, and specialize a build until the line finally breaks.
 
-Every deployment is a fresh in-memory session. Reloading, retrying, or reopening the page resets score, skill points, reserves, purchases, and upgrades; BLASTLINE does not store progression in `localStorage`.
+Every deployment is a fresh run. Reloading or retrying resets score, skill points, reserves, purchases, and upgrades. Personal best score, best wave, best combo, and run count stay on the player's device so there is always a record to chase.
 
 ## Play
 

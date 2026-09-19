@@ -44,6 +44,10 @@
       <small>FRENZY</small><b id="frenzyTimeLabel">0.0</b><span>s</span>
     </section>
 
+    <section id="comboBadge" class="panel hidden" aria-label="Kill combo">
+      <small>HOT STREAK</small><b id="comboLabel">×2</b><span id="comboTimerLabel">2.4s</span>
+    </section>
+
     <section id="bossHud" class="hidden" aria-label="Boss health">
       <div class="boss-heading"><span id="bossName">REDLINE JUGGERNAUT</span><b id="bossPhaseText">PHASE I</b><strong id="bossHealthText">0 / 0</strong></div>
       <div class="boss-track"><i id="bossHealthFill"></i></div>
@@ -66,7 +70,12 @@
           </div>
           <button id="playBtn" class="primary play-button" type="button"><span>DEPLOY</span><small id="playDifficulty">VETERAN RUN</small></button>
           <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P PAUSE</span></div>
-          <p class="fresh-run-note">Every deployment starts fresh. No saves. No finish line.</p>
+          <div id="careerStrip" class="career-strip" aria-label="Personal records">
+            <span><small>BEST SCORE</small><b id="homeBestScore">0</b></span>
+            <span><small>BEST WAVE</small><b id="homeBestWave">1</b></span>
+            <span><small>RUNS</small><b id="homeRuns">0</b></span>
+          </div>
+          <p class="fresh-run-note">Every run starts fresh. Personal records stay on this device.</p>
         </div>
       </div>
     </section>
@@ -111,6 +120,7 @@
           <div><span>Kills</span><b id="finalKills">0</b></div>
           <div><span>Mode</span><b id="finalDifficulty">Veteran</b></div>
         </div>
+        <p id="recordCallout" class="record-callout">PERSONAL BEST</p>
         <div class="button-row"><button id="retryBtn" class="primary danger-button" type="button">REDEPLOY</button><button id="gameOverHomeBtn" class="secondary" type="button">CHANGE MODE</button></div>
         <p class="fresh-run-note">Redeploying resets score, points, lives, and every upgrade.</p>
       </div>

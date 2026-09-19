@@ -241,12 +241,22 @@ test('visible squad sprites remain individual through stress scale', () => {
   assert.equal(visibleSquadCount(240, 6), 72);
 });
 
-test('the runtime contains no persistence API', () => {
+test('the runtime only persists local personal records, never run progression', () => {
   const runtime = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  assert.ok(!runtime.includes('local' + 'Storage'));
+  assert.ok(runtime.includes("const RECORDS_KEY = 'blastline-records-v1'"));
+  assert.ok(!runtime.includes('indexed' + 'DB'));
+  assert.ok(!runtime.includes('blastline-save'));
   assert.ok(!runtime.includes('session' + 'Storage'));
   assert.ok(!html.includes('LIFETIME'));
   assert.ok(!html.includes('VICTORY'));
   assert.deepEqual(ACTIVE_STATES, [GAME_STATE.PLAYING, GAME_STATE.BOSS, GAME_STATE.RECOVERY]);
+});
+
+test('fresh run initializes combo chase values without leaking records into combat state', () => {
+  const run = createCleanRun(77, 'veteran');
+  assert.equal(run.combo, 0);
+  assert.equal(run.comboTimer, 0);
+  assert.equal(run.bestCombo, 0);
+  assert.equal('bestScore' in run, false);
 });

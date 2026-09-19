@@ -56,7 +56,7 @@ The interaction checks cover:
 - reserve-life protection and difficulty-scaled recovery;
 - Game Over, clean retry, and a fresh page reload;
 - 20 consecutive boss cycles without a Victory loop;
-- no BLASTLINE `localStorage` keys or source-master runtime requests.
+- only the allowlisted personal-record key (`blastline-records-v1`) may persist; combat state, currency, upgrades, and source-master assets must not persist or be requested at runtime.
 
 ## Hard performance gates
 

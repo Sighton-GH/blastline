@@ -366,7 +366,7 @@ async function runEndlessProgression() {
   await waitReady(page);
   const storage = await page.evaluate(() => ({ keys: Object.keys(window.localStorage), state: __blastlineTest.getState() }));
   record('reloadStartsFresh', storage.state.state === 'home' && storage.state.wave === 1 && storage.state.score === 0 && storage.state.skillPoints === 0 && storage.state.troops === 14, storage);
-  record('noBlastlinePersistence', !storage.keys.some(key => key.toLowerCase().includes('blastline')), storage.keys);
+  record('onlyPersonalRecordPersistence', storage.keys.filter(key => key.toLowerCase().includes('blastline')).every(key => key === 'blastline-records-v1'), storage.keys);
   await context.close();
 }
 

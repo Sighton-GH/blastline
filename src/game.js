@@ -89,14 +89,17 @@ const dom = Object.fromEntries([
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
+  'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeRuns', 'recordCallout',
   'buildSummary', 'shopGrid', 'shopMessage', 'finalScore', 'finalWave', 'finalKills',
   'finalDifficulty',
 ].map(id => [id, document.querySelector(`#${id}`)]));
 
 const runtimeAssets = Object.create(null);
 const lodAssets = Object.create(null);
+const microLodAssets = Object.create(null);
 const litAssets = Object.create(null);
 const litLodAssets = Object.create(null);
+const litMicroLodAssets = Object.create(null);
 const textCache = new WeakMap();
 const styleCache = new WeakMap();
 const keys = Object.create(null);
@@ -158,6 +161,46 @@ let hitStopHold = 0;
 let hitStopEase = 0;
 const HIT_STOP_SCALE = .15;
 const HIT_STOP_EASE_SECONDS = .12;
+const RECORDS_KEY = 'blastline-records-v1';
+const EMPTY_RECORDS = Object.freeze({ bestScore: 0, bestWave: 1, bestCombo: 0, runs: 0 });
+let records = loadRecords();
+let runCommitted = false;
+
+function loadRecords() {
+  try {
+    const value = JSON.parse(localStorage.getItem(RECORDS_KEY) || 'null');
+    if (!value || typeof value !== 'object') return { ...EMPTY_RECORDS };
+    return {
+      bestScore: Math.max(0, Math.round(Number(value.bestScore) || 0)),
+      bestWave: Math.max(1, Math.round(Number(value.bestWave) || 1)),
+      bestCombo: Math.max(0, Math.round(Number(value.bestCombo) || 0)),
+      runs: Math.max(0, Math.round(Number(value.runs) || 0)),
+    };
+  } catch { return { ...EMPTY_RECORDS }; }
+}
+
+function renderRecords() {
+  setText(dom.homeBestScore, formatCompact(records.bestScore));
+  setText(dom.homeBestWave, format(records.bestWave));
+  setText(dom.homeRuns, format(records.runs));
+}
+
+function commitRunRecords() {
+  if (runCommitted) return { score: false, wave: false, combo: false };
+  runCommitted = true;
+  const result = {
+    score: run.score > records.bestScore,
+    wave: run.wave > records.bestWave,
+    combo: run.bestCombo > records.bestCombo,
+  };
+  records.bestScore = Math.max(records.bestScore, Math.round(run.score));
+  records.bestWave = Math.max(records.bestWave, Math.round(run.wave));
+  records.bestCombo = Math.max(records.bestCombo, Math.round(run.bestCombo));
+  records.runs += 1;
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch {}
+  renderRecords();
+  return result;
+}
 
 function addTrauma(amount) { shakeTrauma = Math.min(1, shakeTrauma + amount); }
 function triggerHitStop(holdSeconds = .08) {
@@ -256,9 +299,15 @@ async function loadRuntimeAssets() {
     lod.width = Math.max(1, Math.round(targetHeight * image.width / image.height));
     lod.getContext('2d').drawImage(image, 0, 0, lod.width, lod.height);
     lodAssets[name] = lod;
+    const micro = document.createElement('canvas');
+    micro.height = name.startsWith('enemy') ? 64 : name.startsWith('playerRun') ? 80 : 150;
+    micro.width = Math.max(1, Math.round(micro.height * image.width / image.height));
+    micro.getContext('2d').drawImage(image, 0, 0, micro.width, micro.height);
+    microLodAssets[name] = micro;
     const rimTint = name.startsWith('enemy') ? '#ffb08a' : name.startsWith('playerRun') ? '#8fd4ff' : '#ffd2a0';
     litAssets[name] = createLitVariant(image, rimTint, '#ffe6bd');
     litLodAssets[name] = createLitVariant(lod, rimTint, '#ffe6bd');
+    litMicroLodAssets[name] = createLitVariant(micro, rimTint, '#ffe6bd');
   }
   environmentDirty = true;
 }
@@ -392,6 +441,7 @@ function startRun(seed = Date.now() >>> 0, difficulty = selectedDifficulty) {
   gateSerial = 0;
   roadScroll = 0;
   stressMode = false;
+  runCommitted = false;
   startWave();
 }
 
@@ -430,6 +480,7 @@ function setState(next) {
   dom.hud.classList.toggle('hidden', !hudVisible);
   dom.floatingStats.classList.toggle('hidden', !hudVisible);
   dom.frenzyBadge.classList.toggle('hidden', !hudVisible || run.frenzyTimer <= 0);
+  dom.comboBadge.classList.toggle('hidden', !hudVisible || run.combo < 2 || run.comboTimer <= 0);
   dom.bossHud.classList.toggle('hidden', !bossVisible);
   setText(dom.pauseBtn, next === GAME_STATE.PAUSED ? '▶' : '❚❚');
   dom.pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
@@ -462,6 +513,9 @@ function updateHud(force = false) {
   setText(dom.pointsLabel, format(run.skillPoints));
   setText(dom.livesLabel, format(run.lives));
   setText(dom.frenzyTimeLabel, run.frenzyTimer.toFixed(1));
+  setText(dom.comboLabel, `×${Math.min(5, 1 + Math.floor(run.combo / 5))}`);
+  setText(dom.comboTimerLabel, `${run.comboTimer.toFixed(1)}s`);
+  dom.comboBadge.classList.toggle('hidden', !hudVisible || run.combo < 2 || run.comboTimer <= 0);
   dom.frenzyBadge.classList.toggle('hidden', !hudVisible || run.frenzyTimer <= 0);
   if (run.boss) {
     const hp = Math.max(0, run.boss.hp);
@@ -836,11 +890,19 @@ function defeatEnemy(enemy) {
     audio.kill();
   }
   run.kills += 1;
+  run.combo = run.comboTimer > 0 ? run.combo + 1 : 1;
+  run.comboTimer = 2.6;
+  run.bestCombo = Math.max(run.bestCombo, run.combo);
+  const comboMultiplier = Math.min(5, 1 + Math.floor(run.combo / 5));
   const claim = claimKillReward(enemy, run.kills);
   enemy.rewarded = claim.enemy.rewarded;
   if (!claim.reward) return;
-  run.score += claim.reward.score;
+  run.score += claim.reward.score * comboMultiplier;
   run.skillPoints += claim.reward.skillPoints;
+  if (run.combo === 5 || run.combo === 10 || run.combo === 20 || run.combo === 30) {
+    addFloater(enemy.x, enemy.y - .035, `${run.combo} KILL STREAK · ×${comboMultiplier}`, '#fff07a', 19);
+    addTrauma(.07);
+  }
   run.frenzy += claim.reward.frenzy;
   if (claim.reward.skillPoints) addFloater(enemy.x, enemy.y, `+${claim.reward.skillPoints} SKILL`, '#ffe06b', 15);
   if (run.frenzy >= 18) {
@@ -903,6 +965,8 @@ function gameOver() {
   setText(dom.finalWave, format(run.wave));
   setText(dom.finalKills, format(run.kills));
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
+  const recordsHit = commitRunRecords();
+  setText(dom.recordCallout, recordsHit.score ? 'NEW HIGH SCORE' : recordsHit.wave ? 'NEW BEST WAVE' : `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
   setState(GAME_STATE.GAME_OVER);
   updateHud(true);
 }
@@ -1968,7 +2032,9 @@ function drawEnemy(enemy) {
   const fade = enemy.dead ? clamp(enemy.deathLife / .28, 0, 1) : 1;
   const imageName = enemySpriteName(enemy);
   const fullImage = litAssets[imageName] || runtimeAssets[imageName];
-  const image = height < 75 ? litLodAssets[imageName] || lodAssets[imageName] || fullImage : fullImage;
+  const image = height < 36
+    ? litMicroLodAssets[imageName] || microLodAssets[imageName] || fullImage
+    : height < 75 ? litLodAssets[imageName] || lodAssets[imageName] || fullImage : fullImage;
   const clock = state === GAME_STATE.BOSS ? run.bossTime : run.waveTime;
   const bob = Math.sin(clock * 8 + enemy.bob) * height * .006;
   const baseline = screen.y + bob;
@@ -2043,7 +2109,7 @@ function drawBoss() {
   if (!screen.visible || height < 1) return;
   const bob = Math.sin(run.bossTime * 3.3) * height * .008;
   const bossImage = height < 210
-    ? litLodAssets.boss || lodAssets.boss || litAssets.boss || runtimeAssets.boss
+    ? (height < 100 ? litMicroLodAssets.boss || microLodAssets.boss : null) || litLodAssets.boss || lodAssets.boss || litAssets.boss || runtimeAssets.boss
     : litAssets.boss || runtimeAssets.boss;
   if (bossImage) {
     ctx.save();
@@ -2086,7 +2152,8 @@ function drawBoss() {
 }
 
 function drawEnemies() {
-  for (const enemy of run.enemies) drawEnemy(enemy);
+  const stride = stressMode && run.enemies.length >= 150 ? 2 : 1;
+  for (let index = 0; index < run.enemies.length; index += stride) drawEnemy(run.enemies[index]);
   drawBoss();
 }
 
@@ -2183,8 +2250,9 @@ function drawPlayer() {
     const height = soldierHeightAt(slot.y);
     const frame = ((Math.floor((run.waveTime + run.bossTime + ambientTime * .1) * 10.5 + slot.phase) % 4) + 4) % 4;
     const imageName = `playerRun${frame + 1}`;
-    const image = height < 95
-      ? litLodAssets[imageName] || lodAssets[imageName] || runtimeAssets[imageName]
+    const image = height < 42
+      ? litMicroLodAssets[imageName] || microLodAssets[imageName] || runtimeAssets[imageName]
+      : height < 95 ? litLodAssets[imageName] || lodAssets[imageName] || runtimeAssets[imageName]
       : litAssets[imageName] || runtimeAssets[imageName];
     const shooting = activeFlashes.has(slot.index);
     const bob = Math.sin((run.waveTime + run.bossTime) * 10.5 + slot.phase) * height * .016;
@@ -2436,6 +2504,7 @@ function getStateSnapshot() {
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
     score: run.score, skillPoints: run.skillPoints, lives: run.lives, kills: run.kills,
+    combo: run.combo, comboTimer: run.comboTimer, bestCombo: run.bestCombo, records: { ...records },
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,
     projectiles: run.player.projectiles, pierce: run.player.pierce,
@@ -2706,6 +2775,7 @@ function loop(timestamp) {
 }
 
 async function boot() {
+  renderRecords();
   await loadRuntimeAssets();
   updateDifficultyPicker();
   prepareCapture(captureMode);
