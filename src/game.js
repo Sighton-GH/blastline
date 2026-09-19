@@ -91,7 +91,7 @@ const dom = Object.fromEntries([
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeRuns', 'recordCallout',
   'buildSummary', 'shopGrid', 'shopMessage', 'finalScore', 'finalWave', 'finalKills',
-  'finalDifficulty',
+  'finalDifficulty', 'finalBestCombo',
 ].map(id => [id, document.querySelector(`#${id}`)]));
 
 const runtimeAssets = Object.create(null);
@@ -903,6 +903,7 @@ function defeatEnemy(enemy) {
   if (run.combo === 5 || run.combo === 10 || run.combo === 20 || run.combo === 30) {
     addFloater(enemy.x, enemy.y - .035, `${run.combo} KILL STREAK · ×${comboMultiplier}`, '#fff07a', 19);
     addTrauma(.07);
+    audio.streak(comboMultiplier);
   }
   run.frenzy += claim.reward.frenzy;
   if (claim.reward.skillPoints) addFloater(enemy.x, enemy.y, `+${claim.reward.skillPoints} SKILL`, '#ffe06b', 15);
@@ -966,6 +967,7 @@ function gameOver() {
   setText(dom.finalWave, format(run.wave));
   setText(dom.finalKills, format(run.kills));
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
+  setText(dom.finalBestCombo, `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
   const recordsHit = commitRunRecords();
   setText(dom.recordCallout, recordsHit.score ? 'NEW HIGH SCORE' : recordsHit.wave ? 'NEW BEST WAVE' : `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
   setState(GAME_STATE.GAME_OVER);
@@ -2735,6 +2737,7 @@ function prepareCapture(mode) {
     run.wave = 11;
     run.score = 18420;
     run.kills = 734;
+    run.bestCombo = 42;
     run.player.troops = 0;
     gameOver();
   }

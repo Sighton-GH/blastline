@@ -153,6 +153,15 @@ export function purchase() {
   [660, 880].forEach((freq, index) => playTone({ type: 'triangle', freqStart: freq, duration: .1, gain: .035, delay: index * .05 }));
 }
 
+export function streak(level = 2) {
+  const tier = Math.max(2, Math.min(5, Math.round(level)));
+  const root = 392 * (1 + (tier - 2) * .08);
+  [1, 1.26, 1.5].forEach((ratio, index) => playTone({
+    type: 'triangle', freqStart: root * ratio, freqEnd: root * ratio * 1.04,
+    duration: .12 + index * .025, gain: .027 + tier * .004, delay: index * .035,
+  }));
+}
+
 function startAmbience() {
   if (DISABLED || !ctx || ambience) return;
   const source = ctx.createBufferSource();
