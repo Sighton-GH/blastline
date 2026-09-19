@@ -315,6 +315,30 @@ async function runInteractionValidation() {
   const ranged = await page.evaluate(() => __blastlineTest.getState());
   record('laneTelegraphedEnemyFire', ranged.telegraphs.every(warning => warning.lane === 2 && Math.abs(warning.x - .58) < 1e-9), ranged.telegraphs);
 
+  const comboResult = await page.evaluate(() => {
+    __blastlineTest.reset(207, 'veteran');
+    __blastlineTest.freeze(true);
+    __blastlineTest.setPower(16);
+    __blastlineTest.setTroops(24);
+    for (let index = 0; index < 12; index += 1) __blastlineTest.spawnEnemyAt('grunt', 1, .32 + index * .003);
+    __blastlineTest.fireNow(8);
+    __blastlineTest.advance(2);
+    return { state: __blastlineTest.getState(), badge: document.querySelector('#comboBadge')?.textContent?.replace(/\s+/g, ' ').trim() || '' };
+  });
+  record('comboScoringAndBadge', comboResult.state.bestCombo >= 10 && comboResult.state.score > comboResult.state.kills * 12 && comboResult.badge.includes('HOT STREAK'), comboResult);
+  const expiredCombo = await page.evaluate(() => {
+    __blastlineTest.freeze(true);
+    __blastlineTest.setWaveTime(__blastlineTest.getState().waveDuration - 1);
+    // Stop automatic targets from refreshing the timer while still exercising the
+    // production combo countdown through deterministic simulation steps.
+    __blastlineTest.setPlayerX(-.86);
+    __blastlineTest.advance(3);
+    const state = __blastlineTest.getState();
+    __blastlineTest.freeze(false);
+    return state;
+  });
+  record('comboExpiresCleanly', expiredCombo.combo === 0 && expiredCombo.comboTimer === 0 && expiredCombo.bestCombo >= 10, expiredCombo);
+
   await page.evaluate(() => { __blastlineTest.reset(204, 'veteran'); __blastlineTest.setWave(8); __blastlineTest.forceBoss(); });
   const bossStart = await page.evaluate(() => __blastlineTest.getState());
   await page.waitForFunction(maxHp => { const state = __blastlineTest.getState(); return state.boss && state.boss.hp < maxHp; }, bossStart.boss.maxHp, { timeout: 5000 });
@@ -367,6 +391,7 @@ async function runEndlessProgression() {
   const storage = await page.evaluate(() => ({ keys: Object.keys(window.localStorage), state: __blastlineTest.getState() }));
   record('reloadStartsFresh', storage.state.state === 'home' && storage.state.wave === 1 && storage.state.score === 0 && storage.state.skillPoints === 0 && storage.state.troops === 14, storage);
   record('onlyPersonalRecordPersistence', storage.keys.filter(key => key.toLowerCase().includes('blastline')).every(key => key === 'blastline-records-v1'), storage.keys);
+  record('recordsDoNotLeakIntoFreshRun', storage.state.records && storage.state.score === 0 && storage.state.wave === 1 && storage.state.purchaseCounts && Object.keys(storage.state.purchaseCounts).length === 0, storage.state);
   await context.close();
 }
 
