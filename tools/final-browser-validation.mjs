@@ -81,7 +81,7 @@ async function waitReady(page) {
 
 async function visualAudit(page) {
   return page.evaluate(() => {
-    const visibleBoxes = [...document.querySelectorAll('#hud:not(.hidden) .hud-primary, #hud:not(.hidden) .hud-run, #floatingStats:not(.hidden), #frenzyBadge:not(.hidden), #bossHud:not(.hidden)')]
+    const visibleBoxes = [...document.querySelectorAll('#hud:not(.hidden) .hud-primary, #hud:not(.hidden) .hud-run, #floatingStats:not(.hidden), #frenzyBadge:not(.hidden), #comboBadge:not(.hidden), #bossHud:not(.hidden)')]
       .map((element, index) => ({ id: element.id || element.className || `cluster-${index}`, rect: element.getBoundingClientRect().toJSON() }));
     const overlap = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     const overlaps = [];

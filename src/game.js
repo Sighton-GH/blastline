@@ -481,7 +481,7 @@ function setState(next) {
   dom.hud.classList.toggle('hidden', !hudVisible);
   dom.floatingStats.classList.toggle('hidden', !hudVisible);
   dom.frenzyBadge.classList.toggle('hidden', !hudVisible || run.frenzyTimer <= 0);
-  dom.comboBadge.classList.toggle('hidden', !hudVisible || run.combo < 2 || run.comboTimer <= 0);
+  dom.comboBadge.classList.toggle('hidden', state !== GAME_STATE.PLAYING || run.combo < 2 || run.comboTimer <= 0);
   dom.bossHud.classList.toggle('hidden', !bossVisible);
   setText(dom.pauseBtn, next === GAME_STATE.PAUSED ? '▶' : '❚❚');
   dom.pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
@@ -516,7 +516,7 @@ function updateHud(force = false) {
   setText(dom.frenzyTimeLabel, run.frenzyTimer.toFixed(1));
   setText(dom.comboLabel, `×${Math.min(5, 1 + Math.floor(run.combo / 5))}`);
   setText(dom.comboTimerLabel, `${run.comboTimer.toFixed(1)}s`);
-  dom.comboBadge.classList.toggle('hidden', !hudVisible || run.combo < 2 || run.comboTimer <= 0);
+  dom.comboBadge.classList.toggle('hidden', state !== GAME_STATE.PLAYING || run.combo < 2 || run.comboTimer <= 0);
   dom.frenzyBadge.classList.toggle('hidden', !hudVisible || run.frenzyTimer <= 0);
   if (run.boss) {
     const hp = Math.max(0, run.boss.hp);
