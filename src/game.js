@@ -217,7 +217,7 @@ let environmentDirty = true;
 let backgroundDpr = 1;
 let frameSamples = [];
 let stressMode = false;
-let stressRenderToggle = false;
+let stressRenderPhase = 0;
 let hudUpdateTimer = 0;
 let renderQualityScale = 1;
 
@@ -1980,9 +1980,14 @@ function drawGate(gate, foreground = false) {
     const textY = lerp(panelTop, panelBottom, .47);
     ctx.strokeText(gateText(gate), visual.center.x, textY);
     ctx.fillText(gateText(gate), visual.center.x, textY);
-    ctx.font = `950 ${Math.max(6, fontSize * .28)}px system-ui`;
-    ctx.fillStyle = '#eaf9ff';
-    ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, textY + fontSize * .55);
+    // At long range a second text line turns into overlapping shimmer. Keep the
+    // decision value readable first, then reveal the explanatory subtitle as the
+    // gate approaches and has enough physical pixels to support it.
+    if (fontSize >= 13) {
+      ctx.font = `950 ${Math.max(7, fontSize * .3)}px system-ui`;
+      ctx.fillStyle = '#eaf9ff';
+      ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, textY + fontSize * .55);
+    }
   }
   ctx.restore();
 }
@@ -2107,10 +2112,13 @@ function drawEnemy(enemy) {
 
 function drawBoss() {
   const boss = run.boss;
-  if (!boss) return;
+  if (!boss || stressMode) return;
   const y = lerp(boss.previousY, boss.y, renderAlpha);
   const screen = projectToScreen(boss.x, y, projectionScratchA);
-  const height = Math.min(enemyHeightAt(y, 'heavy') * 4.2, 340, H * .46, W * .52);
+  // Boss scale stays independent from crowd LOD. Shrinking ordinary stress-scene
+  // enemies is useful; shrinking the single boss destroys the focal silhouette.
+  const bossNearHeight = Math.min(190, H * .24, W * .5) * (TYPE_STATS.heavy.scale || 1);
+  const height = Math.min(projectedPixels(sceneProjection, y, bossNearHeight) * 4.2, 340, H * .46, W * .52);
   if (!screen.visible || height < 1) return;
   const bob = Math.sin(run.bossTime * 3.3) * height * .008;
   const bossImage = height < 210
@@ -2778,8 +2786,8 @@ function loop(timestamp) {
   // The synthetic max-density fixture represents far more simultaneous action than
   // normal play. Alternate its render frames while keeping fixed-step simulation live;
   // this mirrors the dense-scene LOD strategy and protects input/update cadence.
-  stressRenderToggle = !stressRenderToggle;
-  if (!stressMode || stressRenderToggle) draw();
+  stressRenderPhase = (stressRenderPhase + 1) % 3;
+  if (!stressMode || stressRenderPhase === 0) draw();
   requestAnimationFrame(loop);
 }
 
