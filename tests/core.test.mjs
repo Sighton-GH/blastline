@@ -250,6 +250,8 @@ test('the runtime only persists local personal records, never run progression', 
   assert.ok(!runtime.includes('session' + 'Storage'));
   assert.ok(!html.includes('LIFETIME'));
   assert.ok(!html.includes('VICTORY'));
+  assert.ok(html.includes('<small>BEST COMBO</small><b id="homeBestCombo">×0</b>'));
+  assert.ok(!html.includes('id="homeRuns"'));
   assert.deepEqual(ACTIVE_STATES, [GAME_STATE.PLAYING, GAME_STATE.BOSS, GAME_STATE.RECOVERY]);
 });
 

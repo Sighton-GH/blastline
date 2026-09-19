@@ -89,7 +89,7 @@ const dom = Object.fromEntries([
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
-  'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeRuns', 'recordCallout',
+  'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
   'buildSummary', 'shopGrid', 'shopMessage', 'finalScore', 'finalWave', 'finalKills',
   'finalDifficulty', 'finalBestCombo',
 ].map(id => [id, document.querySelector(`#${id}`)]));
@@ -182,7 +182,7 @@ function loadRecords() {
 function renderRecords() {
   setText(dom.homeBestScore, formatCompact(records.bestScore));
   setText(dom.homeBestWave, format(records.bestWave));
-  setText(dom.homeRuns, format(records.runs));
+  setText(dom.homeBestCombo, `×${format(records.bestCombo)}`);
 }
 
 function commitRunRecords() {

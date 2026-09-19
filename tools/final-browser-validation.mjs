@@ -238,6 +238,7 @@ async function runInteractionValidation() {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
   const page = await newPage(context, 'natural-interaction', true);
 
+  record('homeRecordLabels', (await page.locator('#homeBestCombo').textContent()).trim() === '×0' && !(await page.locator('#careerStrip').textContent()).includes('RUNS'));
   await page.click('[data-difficulty="elite"]');
   record('difficultySelectionVisual', await page.locator('[data-difficulty="elite"]').getAttribute('aria-checked') === 'true');
   await page.click('#playBtn');
