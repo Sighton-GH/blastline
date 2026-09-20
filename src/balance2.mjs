@@ -14,6 +14,9 @@ export const ENEMY_BASE = Object.freeze({
   sprinter: { hp: 1, contact: 1, reward: 15 },
   reflector: { hp: 3, contact: 2, reward: 30 },
   swarmer: { hp: 2, contact: 1, reward: 16 },
+  warden: { hp: 2, contact: 1, reward: 34 },
+  bulwark: { hp: 6, contact: 3, reward: 44 },
+  sapper: { hp: 1, contact: 4, reward: 22 },
 });
 
 export const MECHANICS_V1 = Object.freeze({

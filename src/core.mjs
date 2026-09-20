@@ -100,6 +100,11 @@ export const ENEMY_BASE_STATS = Object.freeze({
   sprinter: Object.freeze({ hp: 1, contact: 1 }),
   reflector: Object.freeze({ hp: 3, contact: 2 }),
   swarmer: Object.freeze({ hp: 2, contact: 1 }),
+  // Encounter lane (enemy diversity): support aura, per-hit damage cap,
+  // and a fast bomb carrier. Behavior lives in src/encounters.mjs.
+  warden: Object.freeze({ hp: 2, contact: 1 }),
+  bulwark: Object.freeze({ hp: 6, contact: 3 }),
+  sapper: Object.freeze({ hp: 1, contact: 4 }),
 });
 
 // v2: exponential enemy scaling (owner directive 2026-09-19) - enemies always
@@ -151,6 +156,9 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
     sprinter: Math.min(0.16, Math.max(0, (wave - 1) * 0.016)),
     reflector: Math.min(0.1, Math.max(0, (wave - 5) * 0.008)),
     swarmer: Math.min(0.12, Math.max(0, (wave - 7) * 0.01)),
+    warden: Math.min(0.08, Math.max(0, (wave - 5) * 0.008)),
+    bulwark: Math.min(0.09, Math.max(0, (wave - 4) * 0.009)),
+    sapper: Math.min(0.1, Math.max(0, (wave - 3) * 0.012)),
   };
   const total = Object.values(composition).reduce((sum, value) => sum + value, 0);
   for (const key of Object.keys(composition)) composition[key] /= total;
@@ -503,6 +511,9 @@ export function enemyReward(type, killCount = 0, density = 1) {
     sprinter: { points: 15, frenzy: 1 },
     reflector: { points: 30, frenzy: 2 },
     swarmer: { points: 16, frenzy: 1 },
+    warden: { points: 34, frenzy: 2 },
+    bulwark: { points: 44, frenzy: 2 },
+    sapper: { points: 22, frenzy: 1 },
   };
   const reward = { ...(table[type] || table.grunt) };
   reward.points = Math.max(1, Math.round(reward.points / Math.max(0.25, density)));
