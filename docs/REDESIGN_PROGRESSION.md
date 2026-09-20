@@ -140,3 +140,35 @@ F. SYNERGIES (explicit, surfaced in armory copy):
 6. plating + formation-density rework
 7. meta-progression store + offline cache + home UI
 8. playtests, perf, validation, ship
+
+## 6. Phase A sim results (2026-09-19, src/balance2.mjs)
+
+v1-live reproduction (30 seeds x 3 difficulties): every sensible policy bot is
+IMMORTAL (40/40 waves) on recruit and veteran; even the negligent weak bot
+survives veteran. Bosses die in 3-8s for every build (no invuln gate needed to
+see it - linear capped HP vs multiplicative DPS). This is the quantitative proof
+of Bryan's diagnosis: the threat model saturates, the build caps, nothing ends runs.
+
+v2 first-pass: attrition now ends low-offense builds (squadGrinder w19-21,
+plated w24-31, weak w5) but pure-offense builds stay immortal. Root cause found:
+the DPS formula multiplies FOUR independently-growing axes (troops x power x rate
+x projectiles) so player damage grows ~w^2.5+ while income saturates at the 220
+enemy cap - no moderate enemy exponent crosses it inside the 5-10 min window.
+
+Tuning levers for Phase B (next):
+1. Damp the multiplicative axes instead of capping them: multishot +1 projectile
+   at -12% per-bullet damage (spread/coverage choice, not x6 damage); power cost
+   (n+1)^2; rate +0.4/tier additive cost (n+1)^1.8; troops cost (n+1)^1.7.
+   Player dps -> ~w^1.6-2.0 (polynomial, per the directive).
+2. Enemy hp exponent ~1.42-1.5 (tune to crossover: veteran good-build death
+   w12-18, weak w5-7, elite 2-3 waves earlier, recruit 2-3 later).
+3. Contact damage 1.15^(w-1): even DPS-competitive builds get ground down once
+   leaks begin - the collapse is fast once it starts (matches "enemies win").
+4. Boss archetype gates must actually gate: bryansMeta ignored the Juggernaut
+   gate (.4 multiplier on a huge DPS). Gates need teeth - e.g. Juggernaut takes
+   15% from non-pierce/crit hits, plus boss contact pressure during long fights.
+
+Sim anchors from real play (v1): human-rate touch run died ~wave 11 (neutral
+build), superhuman probe reached 14 at the cap, Bryan's skilled play found the
+game solved by wave 9. v2 targets: median veteran 12-16 for focused builds with
+correct counters, 5-10 min wall-clock per run.
