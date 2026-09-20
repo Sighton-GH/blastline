@@ -1086,8 +1086,12 @@ function defeatEnemy(enemy) {
   const claim = claimKillReward(enemy, run.kills, config.density);
   enemy.rewarded = claim.enemy.rewarded;
   if (!claim.reward) return;
-  awardPoints(claim.reward.points * comboMultiplier);
+  // v2 economy fix: combo multiplies SCORE only. Spendable points pay the
+  // density-normalized base so armory prices stay meaningful (before this,
+  // kills paid base*(combo+1) to BOTH pools, inflating income ~2-6x past the
+  // calibrated model and making every armory card affordable from wave ~4).
   awardPoints(claim.reward.points);
+  if (comboMultiplier > 1) run.score += Math.round(claim.reward.points * (comboMultiplier - 1));
   if (run.combo === 5 || run.combo === 10 || run.combo === 20 || run.combo === 30) {
     addFloater(enemy.x, enemy.y - .035, `${run.combo} KILL STREAK · ×${comboMultiplier}`, '#fff07a', 19);
     addTrauma(.07);

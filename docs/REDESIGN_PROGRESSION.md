@@ -196,6 +196,13 @@ Locked constants for core v2 implementation:
 - crit +3%/tier, cap 50%, crit multiplier 1 + crit x 1.0
 - pierce damage multiplier bounded at x2.0
 - kill reward: 13/density points + streak bonus every 20 (density-normalized income)
+- ECONOMY FIX (2026-09-20): combo multiplies SCORE only, never spendable points.
+  Before the fix, each kill paid base*(combo+1) to BOTH score and points
+  (awardPoints was called twice), inflating real income ~2-6x past the sim's
+  13/density model: natural veteran probe banked 40k points by wave 3 and 99k
+  by wave 6 with all 10 armory cards affordable every visit. Now points pay the
+  density-normalized base (score still gets base x combo for the popcorn), so
+  armory prices stay meaningful and tier accumulation tracks the sim.
 - reserves: max 2 per run total (finite, meaningful mid-run)
 - plating: each plate absorbs one hit's contact damage, breaks, regens 1 per 20s,
   +2 plates/tier, cap 40
