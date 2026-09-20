@@ -51,6 +51,18 @@ import {
   upgradeTier,
   visibleSquadCount,
 } from './core.mjs';
+import {
+  BULWARK_HIT_CAP,
+  SAPPER_BLAST,
+  WARDEN_AURA,
+  breachDamageFor,
+  cappedHitDamage,
+  eliteForWave,
+  eliteRewardPoints,
+  planWaveEvents,
+  sapperBlastDamage,
+  wardenAuraFactor,
+} from './encounters.mjs';
 import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 import { drawEnemyCombatant } from './enemy-render.mjs';
 import { loadProfile, saveProfile, offlineAccrual, recordRunEnd, startingBonuses, purchaseMeta, metaCost, metaTier, META_TRACKS } from './meta.mjs';
@@ -139,6 +151,9 @@ const TYPE_STATS = Object.freeze({
   sprinter: { hp: 1, speed: 1.9, scale: .9, contact: 1 },
   reflector: { hp: 3, speed: .8, scale: 1.12, contact: 2 },
   swarmer: { hp: 2, speed: .82, scale: 1.02, contact: 1 },
+  warden: { hp: 2, speed: .74, scale: 1.16, contact: 1 },
+  bulwark: { hp: 6, speed: .5, scale: 1.45, contact: 3 },
+  sapper: { hp: 1, speed: 1.55, scale: .95, contact: 4 },
 });
 
 class Pool {
@@ -164,6 +179,9 @@ const pools = {
 };
 
 const enemyBuckets = Array.from({ length: 3 * Y_BUCKETS }, () => []);
+// Live wardens, rebuilt each collision pass - their aura reduces bullet
+// damage to nearby allies (see encounters.mjs).
+let activeWardens = [];
 let W = innerWidth;
 let H = innerHeight;
 let sceneProjection = createProjection(W, H);
@@ -529,6 +547,8 @@ function clearTransient({ keepBoss = false } = {}) {
   run.gates.length = 0;
   run.hazards.length = 0;
   run.muzzleFlashes.length = 0;
+  run.events = [];
+  run.delayedStrikes = [];
   if (!keepBoss) run.boss = null;
 }
 
@@ -582,6 +602,8 @@ function startWave() {
   run.spawnTimer = .35;
   run.gateTimer = run.wave === 1 ? 4.8 : 6.4;
   run.enemiesSpawned = 0;
+  run.events = planWaveEvents(rng, run.wave, config.duration);
+  run.delayedStrikes = [];
   run.player.x = 0;
   run.player.targetX = 0;
   run.player._shot = .08;
@@ -926,6 +948,75 @@ function clampToLaneLocal(x, lane) {
   return clamp(x, bounds.min, bounds.max);
 }
 
+// Elite miniboss: a named, wave-scaled heavy that marches mid-wave with its
+// own volley pattern and a real point bounty. HP keys off the (exponential)
+// grunt curve so it tracks the same difficulty slope as everything else,
+// landing at roughly 60-80% of the next boss's pool.
+function spawnElite(def) {
+  if (!def || run.boss) return null;
+  const lane = Math.floor(rng() * 3);
+  const enemy = spawnEnemy(def.baseType, {
+    lane, x: laneCenter(lane), y: -.05,
+    speedFactor: def.speedFactor,
+  });
+  if (!enemy) return null;
+  const hp = Math.max(60, Math.round((enemyHitPoints('grunt', run.wave) * def.hpFactor + run.wave * 10) * config.pressure));
+  enemy.hp = hp;
+  enemy.maxHp = hp;
+  enemy.elite = def.id;
+  enemy.eliteName = def.name;
+  enemy.scale = def.scale;
+  enemy.contact = def.contact + Math.floor(run.wave / 6);
+  enemy.showBar = true;
+  enemy.canShoot = true;
+  enemy.volleyCadence = def.volleyCadence;
+  enemy.shells = def.shells;
+  enemy.hitCap = def.hitCap || null;
+  enemy.shotTimer = 2.4;
+  enemy.eliteReward = eliteRewardPoints(def, run.wave);
+  if (def.auraRadiusX) {
+    enemy.auraRadiusX = def.auraRadiusX;
+    enemy.auraRadiusY = def.auraRadiusY;
+    enemy.auraFactor = def.auraFactor;
+  }
+  addFloater(0, .46, `ELITE - ${def.name}`, '#ff9d4a', 28, 2.2);
+  addTrauma(.4);
+  triggerHitStop(.06);
+  audio.bossPhase();
+  return enemy;
+}
+
+// Mid-wave events (planned per wave by encounters.planWaveEvents): enemy
+// surges, strafing runs across the lanes, and elite minibosses.
+function triggerWaveEvent(event) {
+  if (!event || state !== GAME_STATE.PLAYING) return;
+  if (event.kind === 'elite') {
+    spawnElite(eliteForWave(run.wave));
+    return;
+  }
+  if (event.kind === 'surge') {
+    addFloater(0, .5, 'ENEMY SURGE', '#ff8a5c', 26, 1.6);
+    addTrauma(.25);
+    audio.streak(2);
+    spawnFormation('staggered', Math.min(34, 12 + run.wave * 2));
+    return;
+  }
+  if (event.kind === 'strafe') {
+    addFloater(0, .5, 'STRAFING RUN', '#ffb25f', 24, 1.4);
+    audio.bossPhase();
+    const order = [0, 1, 2];
+    for (let i = order.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(rng() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    addTelegraph(order[0], .95, 'strafe', null, { speed: .5 * config.pressure, damage: 1 });
+    addTelegraph(order[1], 1.2, 'strafe', null, { speed: .5 * config.pressure, damage: 1 });
+    // The third lane fires late, after the first impacts, so the fair-play
+    // invariant (one genuinely open lane at any moment) always holds.
+    run.delayedStrikes.push({ lane: order[2], at: run.waveTime + 1.9, warn: .9, speed: .48 * config.pressure, fired: false });
+  }
+}
+
 function spawnGateEncounter(options = makeGatePair(rng, run.wave), forcedY = -.04, forcedNeutralLane = null) {
   const laneRng = forcedNeutralLane == null ? rng : () => (forcedNeutralLane + .01) / 3;
   const encounter = makeGateEncounter(++gateSerial, options, forcedY, laneRng);
@@ -978,6 +1069,8 @@ function spawnBoss() {
   releaseAll(run.telegraphs, pools.telegraphs);
   run.gates.length = 0;
   run.hazards.length = 0;
+  run.events = [];
+  run.delayedStrikes = [];
   run.bossTime = 0;
   run.boss = {
     id: ++enemySerial, type: 'boss', name: archetype.name, archetype: archetype.id,
@@ -1256,6 +1349,26 @@ function defeatEnemy(enemy) {
       if (child) child.noSplit = true;
     }
   }
+  // Sapper detonation: shot down, it explodes into the surrounding ranks
+  // (chains included). Breaching sappers never get here - they ram the line
+  // for full contact instead. The same horizon gate as bullets applies, so
+  // the blast never melts enemies that are not visibly on the field yet.
+  if (enemy.type === 'sapper') {
+    const blastDamage = sapperBlastDamage(enemy);
+    const chained = [];
+    for (const other of run.enemies) {
+      if (other.dead || other === enemy || other.y < engageWorldY) continue;
+      if (Math.abs(other.x - enemy.x) <= SAPPER_BLAST.radiusX && Math.abs(other.y - enemy.y) <= SAPPER_BLAST.radiusY) {
+        other.hp -= blastDamage;
+        other.hitFlash = .08;
+        if (other.hp <= 0) chained.push(other);
+      }
+    }
+    explosionBurst(enemy.x, enemy.y);
+    addTrauma(.18);
+    audio.explosion();
+    for (const victim of chained) defeatEnemy(victim);
+  }
   enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .24 : .36;
   if (!stressMode) burst(enemy.x, enemy.y, enemy.type === 'shield' ? '#8fd8ff' : enemy.type === 'heavy' || enemy.type === 'demolition' ? '#ffb02f' : enemy.type === 'sprinter' ? '#9fffc8' : enemy.type === 'reflector' || enemy.type === 'gunner' ? '#ffd56a' : enemy.type === 'swarmer' ? '#e59bff' : '#ff8a5c', enemy.type === 'heavy' || enemy.type === 'demolition' ? 12 : 7);
   if (!stressMode && (enemy.type === 'heavy' || enemy.type === 'demolition')) {
@@ -1265,6 +1378,20 @@ function defeatEnemy(enemy) {
     audio.kill();
   }
   run.kills += 1;
+  if (enemy.elite) {
+    const bonus = enemy.eliteReward || 250;
+    awardPoints(bonus);
+    run.score += Math.round(bonus * .5);
+    run.frenzy += 4;
+    addFloater(enemy.x, enemy.y - .05, `ELITE DOWN +${format(bonus)}`, '#ffd56a', 23, 1.7);
+    addTrauma(.5);
+    triggerHitStop(.1);
+    audio.bossPhase();
+    if (!stressMode) {
+      burst(enemy.x, enemy.y, '#ffc54a', 30);
+      burst(enemy.x + .06, enemy.y - .02, '#ff8a3c', 18);
+    }
+  }
   const killViz = run.killViz || (run.killViz = { kills: 0, onScreen: 0, visibleSum: 0, visibleMin: 99, visibleMax: 0, samples: [] });
   killViz.kills += 1;
   if (enemy.y >= -0.005) killViz.onScreen += 1;
@@ -1375,8 +1502,10 @@ function gameOver() {
 
 function rebuildBuckets() {
   for (const bucket of enemyBuckets) bucket.length = 0;
+  activeWardens = [];
   for (const enemy of run.enemies) {
     if (enemy.dead) continue;
+    if (enemy.type === 'warden') activeWardens.push(enemy);
     const cell = clamp(Math.floor(enemy.y * Y_BUCKETS), 0, Y_BUCKETS - 1);
     enemyBuckets[enemy.lane * Y_BUCKETS + cell].push(enemy);
   }
@@ -1406,6 +1535,8 @@ function collidePlayerBullets() {
           damage -= absorbed;
           if (!stressMode) burst(enemy.x, enemy.y, '#6fe6ff', 3);
         }
+        damage = cappedHitDamage(enemy, damage);
+        if (damage > 0) damage *= wardenAuraFactor(enemy, activeWardens);
         enemy.hp -= damage;
         enemy.hitFlash = .08;
         bullet.lastHitId = enemy.id;
@@ -1511,6 +1642,13 @@ function updateEnemyAttacks(enemy, dt) {
   if (!enemy.canShoot || enemy.y < .1 || enemy.y > .61 || run.enemyBullets.length >= MAX_ENEMY_BULLETS) return;
   enemy.shotTimer -= dt;
   if (enemy.shotTimer > 0) return;
+  if (enemy.elite) {
+    const targetLane = nearestLane(run.player.x);
+    if (enemy.shells) addTelegraph(targetLane, .82, 'demolition', enemy, { speed: .42 * config.pressure, damage: 2 });
+    else addTelegraph(targetLane, .66, 'elite-aimed', enemy, { speed: .54 * config.pressure, damage: 2 });
+    enemy.shotTimer = (enemy.volleyCadence || 3.4) / config.pressure + rng() * 1.1;
+    return;
+  }
   if (enemy.type === 'gunner') addTelegraph(enemy.lane, .46, 'gunner', enemy, { speed: .4 * config.pressure, damage: 1 });
   else addTelegraph(enemy.lane, .85, 'demolition', enemy, { speed: .31 * config.pressure, damage: run.wave >= 10 ? 2 : 1 });
   enemy.shotTimer = (enemy.type === 'gunner' ? 3.4 : 5.0) / config.pressure + rng() * 2.1;
@@ -1590,6 +1728,17 @@ function update(dt) {
       spawnGateEncounter();
       run.gateTimer = 7.4 + rng() * 1.4;
       run.spawnTimer = 2.8;
+    }
+    if (run.delayedStrikes?.length) {
+      for (const strike of run.delayedStrikes) {
+        if (strike.fired || run.waveTime < strike.at) continue;
+        if (run.waveTime > strike.at + 4) { strike.fired = true; continue; }
+        if (addTelegraph(strike.lane, strike.warn, 'strafe', null, { speed: strike.speed, damage: 1 })) strike.fired = true;
+      }
+      run.delayedStrikes = run.delayedStrikes.filter(strike => !strike.fired);
+    }
+    if (run.events?.length && run.waveTime < config.duration - 2) {
+      while (run.events.length && run.events[0].at <= run.waveTime) triggerWaveEvent(run.events.shift());
     }
     if (run.waveTime >= config.duration) {
       // A wave is cleared only when every enemy of that wave is actually down.
@@ -1723,7 +1872,14 @@ function update(dt) {
     enemy.dead = true;
     enemy.deathLife = .12;
     const radius = .16 + enemy.scale * .035;
-    if (Math.abs(enemy.x - run.player.x) < radius && damageSquad(enemy.contact, enemy.x)) return;
+    // Loss pressure: a breach is never free. Overlapping enemies still deal
+    // full contact; leaks past the line deal half (the squad scatters to
+    // cover); sappers and elites always ram for full contact.
+    const overlap = Math.abs(enemy.x - run.player.x) < radius;
+    const breachDamage = overlap ? enemy.contact : breachDamageFor(enemy);
+    if (breachDamage <= 0) continue;
+    if (!overlap && !stressMode) addFloater(enemy.x, .87, 'BREACH', '#ff6a5e', 17, .9);
+    if (damageSquad(breachDamage, enemy.x)) return;
   }
   for (const bullet of run.enemyBullets) {
     if (bullet.dead || bullet.y < .855) continue;
@@ -2771,8 +2927,8 @@ function enemyMarchFrame(enemy) {
 
 function enemySpriteName(enemy) {
   const frame = enemyMarchFrame(enemy) + 1;
-  if (enemy.type === 'heavy') return `enemyElite${frame}`;
-  if (enemy.type === 'shield' || enemy.type === 'demolition') return `enemySpecial${frame}`;
+  if (enemy.type === 'heavy' || enemy.type === 'bulwark') return `enemyElite${frame}`;
+  if (enemy.type === 'shield' || enemy.type === 'demolition' || enemy.type === 'warden') return `enemySpecial${frame}`;
   return `enemyGrunt${frame}`;
 }
 
@@ -2815,6 +2971,32 @@ function drawEnemy(enemy) {
       ctx.beginPath();
       ctx.arc(screen.x, baseline - height * .42, height * .1, 0, Math.PI * 2);
       ctx.stroke();
+    } else if (!stressMode && enemy.type === 'sapper') {
+      // Pulsing fuse charge on the back - reads as "shoot me first".
+      const pulse = .5 + .5 * Math.sin(clock * 9 + enemy.bob);
+      ctx.fillStyle = `rgba(255,${Math.round(140 + 60 * pulse)},54,${.75 + .25 * pulse})`;
+      ctx.beginPath();
+      ctx.arc(screen.x + height * .16, baseline - height * .5, height * (.055 + .02 * pulse), 0, Math.PI * 2);
+      ctx.fill();
+    } else if (!stressMode && enemy.type === 'bulwark') {
+      // Steel brow plate - reads as "small hits barely count".
+      ctx.fillStyle = '#aebfcc';
+      ctx.beginPath();
+      ctx.roundRect(screen.x - height * .13, baseline - height * .66, height * .26, height * .07, height * .02);
+      ctx.fill();
+      ctx.fillStyle = '#5d6c76';
+      ctx.fillRect(screen.x - height * .13, baseline - height * .61, height * .26, height * .018);
+    }
+    if (!stressMode && enemy.type === 'warden' && height > 14) {
+      // Support aura shimmer: the cyan ring marks the damage-reduction field
+      // allies inside it enjoy until the warden drops.
+      const pulse = .5 + .5 * Math.sin(clock * 3.2 + enemy.bob);
+      const rx = height * (enemy.auraRadiusX ? .62 : .48);
+      ctx.strokeStyle = `rgba(125,232,255,${.22 + .18 * pulse})`;
+      ctx.lineWidth = Math.max(1, height * .016);
+      ctx.beginPath();
+      ctx.ellipse(screen.x, baseline - height * .4, rx, height * .46, 0, 0, Math.PI * 2);
+      ctx.stroke();
     }
     if (enemy.hitFlash > 0) {
       ctx.save();
@@ -2835,14 +3017,23 @@ function drawEnemy(enemy) {
     else drawEnemyCombatant(ctx, enemy, { x: 0, y: 0 }, height, clock);
     ctx.restore();
   }
-  if (!enemy.dead && (enemy.hp < enemy.maxHp || enemy.shield > 0)) {
-    const width = height * .52;
+  if (!enemy.dead && (enemy.showBar || enemy.hp < enemy.maxHp || enemy.shield > 0)) {
+    const width = height * (enemy.elite ? .78 : .52);
     const barY = screen.y - height * 1.02;
     ctx.fillStyle = 'rgba(17,18,22,.7)';
     ctx.fillRect(screen.x - width / 2, barY, width, height * .045);
-    ctx.fillStyle = enemy.shield > 0 ? '#5de4ff' : '#ff6758';
+    ctx.fillStyle = enemy.elite ? '#ffc54a' : enemy.shield > 0 ? '#5de4ff' : '#ff6758';
     const total = enemy.maxHp + enemy.maxShield;
     ctx.fillRect(screen.x - width / 2, barY, width * clamp((enemy.hp + enemy.shield) / total, 0, 1), height * .045);
+    if (!stressMode && enemy.elite && height > 22) {
+      ctx.font = `950 ${Math.max(8, height * .075)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(20,16,14,.75)';
+      ctx.fillText(enemy.eliteName, screen.x + 1, barY - height * .05 + 1);
+      ctx.fillStyle = '#ffd9a0';
+      ctx.fillText(enemy.eliteName, screen.x, barY - height * .05);
+      ctx.textAlign = 'left';
+    }
   }
   if (enemy.shotFlash > 0) {
     ctx.fillStyle = '#fff0a1';
@@ -3594,6 +3785,12 @@ if (qaMode) {
     },
     shoveEnemiesToEdge(type = null) { let n = 0; for (const e of run.enemies) { if (e.dead || (type && e.type !== type)) continue; if (e.lane === 0) { e.x = e.lineX = -.835; n += 1; } else if (e.lane === 2) { e.x = e.lineX = .835; n += 1; } } return n; },
     typeAudit(type) { return run.enemies.filter(e => !e.dead && e.type === type).map(e => ({ x: +e.x.toFixed(3), y: +e.y.toFixed(3), hp: e.hp })); },
+    spawnEliteNow(wave = run.wave, y = .42, lane = 1) { const enemy = spawnElite(eliteForWave(wave)); if (enemy) { enemy.y = y; enemy.previousY = y; enemy.lane = lane; enemy.x = enemy.lineX = laneCenter(lane); updateHud(true); } return enemy ? { id: enemy.elite, name: enemy.eliteName, hp: enemy.hp, maxHp: enemy.maxHp, type: enemy.type, contact: enemy.contact } : null; },
+    eventPlan(wave = run.wave, seed = run.seed) { return planWaveEvents(mulberry32((seed >>> 0) + wave), wave, getWaveConfig(wave, run.difficulty).duration); },
+    forceEvent(kind = 'surge') { triggerWaveEvent({ kind, at: run.waveTime }); return kind; },
+    setEnemyHp(x, y, hp) { let best = null; let bestD = .1; for (const e of run.enemies) { if (e.dead) continue; const d = Math.abs(e.x - x) + Math.abs(e.y - y); if (d < bestD) { bestD = d; best = e; } } if (best) { best.hp = hp; } return best ? { type: best.type, hp: best.hp, elite: best.elite || null } : null; },
+    eventAudit() { return { pending: (run.events || []).map(event => `${event.kind}@${event.at}`), strikes: (run.delayedStrikes || []).length, elites: run.enemies.filter(e => !e.dead && e.elite).map(e => ({ id: e.elite, hp: e.hp, y: +e.y.toFixed(3) })) }; },
+    pointsAudit() { return { points: run.points, score: run.score, troops: run.player.troops, kills: run.kills }; },
     getWaveConfig(wave = run.wave, difficulty = run.difficulty) { return getWaveConfig(wave, difficulty); },
     getState() { return getStateSnapshot(); },
   };
