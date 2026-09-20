@@ -22,10 +22,10 @@ const t0 = Date.now();
 let lastState = '';
 let events = 0;
 while ((Date.now()-t0)/1000 < 420) {
-  const s = await page.evaluate(() => { const st = __blastlineTest.getState(); return { state: st.state, wave: st.wave, troops: st.troops, lives: st.lives, gates: (st.gates||[]).filter(g=>g.y>.3&&g.y<.9).map(g=>({x:g.x,tone:g.tone})) }; });
+  const s = await page.evaluate(() => { const st = __blastlineTest.getState(); return { state: st.state, wave: st.wave, troops: st.troops, lives: st.lives, killViz: st.killViz, gates: (st.gates||[]).filter(g=>g.y>.3&&g.y<.9).map(g=>({x:g.x,tone:g.tone})) }; });
   const key = s.state + '-' + s.wave;
   if (key !== lastState) { console.log('NAT', JSON.stringify(s)); lastState = key; events++; }
-  if (s.state === 'game-over') { await page.screenshot({ path: `/home/sandbox/c6-evidence/natural-${DIFF}-gameover-v2.png` }); break; }
+  if (s.state === 'game-over') { console.log('KILLVIZ', JSON.stringify(s.killViz)); await page.screenshot({ path: `/home/sandbox/c6-evidence/natural-${DIFF}-gameover-v2.png` }); break; }
   if (s.state === 'armory') {
     const first = await page.$('#rewardCards .reward-card:not([disabled])');
     if (first) { await first.tap(); await page.waitForTimeout(250); }

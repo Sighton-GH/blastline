@@ -5,6 +5,7 @@ import {
   LANE_CENTERS,
   LANE_HALF_WIDTH,
   LANE_LIMIT,
+  ENGAGEMENT_Y,
   MAX_ACTIVE_ENEMIES,
   MAX_TROOPS,
   SHOP_CATALOG,
@@ -732,7 +733,7 @@ function spawnEnemy(type = 'grunt', options = {}) {
   const scaledHp = enemyHitPoints(type, run.wave);
   const enemy = pools.enemies.take({
     id: ++enemySerial, type, lane, x: lineX, lineX,
-    y: options.y ?? (-.04 - rng() * .04), previousY: options.y ?? -.04,
+    y: options.y ?? (-.04 - rng() * .04), previousY: options.y ?? -.04, engagedAt: null,
     hp: scaledHp, maxHp: scaledHp,
     shield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
     maxShield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
@@ -1040,7 +1041,8 @@ function defeatEnemy(enemy) {
       if (child) child.noSplit = true;
     }
   }
-  enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .18 : .28;
+  enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .24 : .36;
+  if (!stressMode) burst(enemy.x, enemy.y, enemy.type === 'shield' ? '#8fd8ff' : enemy.type === 'heavy' || enemy.type === 'demolition' ? '#ffb02f' : enemy.type === 'sprinter' ? '#9fffc8' : enemy.type === 'reflector' || enemy.type === 'gunner' ? '#ffd56a' : enemy.type === 'swarmer' ? '#e59bff' : '#ff8a5c', enemy.type === 'heavy' || enemy.type === 'demolition' ? 12 : 7);
   if (!stressMode && (enemy.type === 'heavy' || enemy.type === 'demolition')) {
     addTrauma(.12);
     audio.explosion();
@@ -1048,6 +1050,16 @@ function defeatEnemy(enemy) {
     audio.kill();
   }
   run.kills += 1;
+  const killViz = run.killViz || (run.killViz = { kills: 0, onScreen: 0, visibleSum: 0, visibleMin: 99, visibleMax: 0, samples: [] });
+  killViz.kills += 1;
+  if (enemy.y >= -0.005) killViz.onScreen += 1;
+  if (enemy.engagedAt !== null) {
+    const visibleLife = Math.max(0, ambientTime - enemy.engagedAt);
+    killViz.visibleSum += visibleLife;
+    killViz.visibleMin = Math.min(killViz.visibleMin, visibleLife);
+    killViz.visibleMax = Math.max(killViz.visibleMax, visibleLife);
+    if (killViz.samples.length < 240) killViz.samples.push(+visibleLife.toFixed(3));
+  }
   run.combo = run.comboTimer > 0 ? run.combo + 1 : 1;
   run.comboTimer = 2.6;
   run.bestCombo = Math.max(run.bestCombo, run.combo);
@@ -1163,6 +1175,7 @@ function collidePlayerBullets() {
       const bucket = enemyBuckets[lane * Y_BUCKETS + bucketIndex];
       for (const enemy of bucket) {
         if (enemy.dead || enemy.id === bullet.lastHitId) continue;
+        if (enemy.y < ENGAGEMENT_Y) continue; // horizon gate: no off-screen melts
         const hitRadius = .029 * enemy.scale;
         const crossed = bullet.previousY >= enemy.y && bullet.y <= enemy.y;
         if (!crossed && (bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2 >= hitRadius ** 2) continue;
@@ -1188,7 +1201,7 @@ function collidePlayerBullets() {
         if (bullet.hitsLeft <= 0 && bullet.bouncesLeft > 0) {
           let target = null; let best = .35;
           for (const other of run.enemies) {
-            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId) continue;
+            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId || other.y < ENGAGEMENT_Y) continue;
             const d = Math.abs(other.x - bullet.x) + Math.abs(other.y - bullet.y) * .6;
             if (d < best) { best = d; target = other; }
           }
@@ -1212,7 +1225,7 @@ function collidePlayerBullets() {
     if (!bullet.dead && run.boss) {
       const boss = run.boss;
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
-      if (crossed && Math.abs(bullet.x - boss.x) < .13) {
+      if (boss.y >= ENGAGEMENT_Y && crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
         const gate = boss.dmgGate ?? 1;
         boss.hp -= bullet.power * gate; // v2: no invuln window; archetype gate resists uncountered builds
@@ -1363,6 +1376,7 @@ function update(dt) {
       enemy.y += dt * enemy.speed;
       enemy.x = enemy.lineX;
     }
+    if (enemy.engagedAt === null && enemy.y >= ENGAGEMENT_Y) enemy.engagedAt = ambientTime;
     updateEnemyAttacks(enemy, dt);
   }
 
@@ -2645,7 +2659,7 @@ function getStateSnapshot() {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
-    score: run.score, skillPoints: run.points, lives: run.lives, kills: run.kills,
+    score: run.score, skillPoints: run.points, lives: run.lives, kills: run.kills, killViz: run.killViz || null,
     combo: run.combo, comboTimer: run.comboTimer, bestCombo: run.bestCombo, records: { ...records },
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,

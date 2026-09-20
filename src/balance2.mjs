@@ -112,14 +112,18 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
       ? player.projectiles * Math.pow(.88, player.projectiles - 1)
       : player.projectiles;
     const dps = player.troops * player.power * player.fireRate * projMult * hitEff * pierceMult * critMult;
+    // v2 horizon gate (ENGAGEMENT_Y): enemies are unhittable until ~0.08 world-units past spawn.
+    // Model as a small per-wave DPS uptime loss (pipeline delay, not sponge hp).
+    const engagementShadow = mechanics.id === 'v2-redesign' ? Math.min(2.4, .08 / Math.max(.04, config.enemySpeed || .05)) : 0;
+    const dpsEff = dps * Math.max(.9, 1 - engagementShadow / config.duration);
     const waveEhp = config.activeTarget * avgHp * mode.pressure;
-    const clearRatio = dps * config.duration / Math.max(1, waveEhp);
+    const clearRatio = dpsEff * config.duration / Math.max(1, waveEhp);
     const killsThis = Math.min(config.activeTarget, Math.round(config.activeTarget * Math.min(1.15, clearRatio)));
     kills += killsThis;
     points += Math.round(killsThis * (mechanics.id === 'v2-redesign' ? 13 / mode.density : 20) + (killsThis / 20) * 40);
     score += killsThis * 12;
     // --- attrition: march-leak (kill throughput vs spawn rate) + ranged chip ---
-    const killRate = dps / Math.max(1, avgHp); // enemies/s
+    const killRate = dpsEff / Math.max(1, avgHp); // enemies/s
     const spawnRate = config.activeTarget / config.duration;
     const marchWindow = Math.max(6, 16 - wave * .3); // s an enemy survives on the road
     const leaked = Math.max(0, (spawnRate - killRate) * marchWindow) + Math.max(0, config.activeTarget - killsThis) * .1;
@@ -143,7 +147,7 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
       bossIndex += 1;
       const bossEhp = mechanics.bossHp ? mechanics.bossHp(bossIndex, wave, mode.pressure) : config.bossHp;
       const gate = mechanics.bossGate(bossIndex, player);
-      const bossDps = dps * gate;
+      const bossDps = dpsEff * gate;
       const killTime = bossEhp / Math.max(1, bossDps);
       const window = 30; // enrage window seconds
       if (killTime <= window) {

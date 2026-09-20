@@ -83,6 +83,7 @@ export const MAX_TROOPS = 9_999; // safety rail, not a design cap (v2: polynomia
 export const MAX_VISIBLE_SQUAD = 24;
 export const MAX_PROJECTILES = 6;
 export const MAX_FIRE_RATE = 40; // safety rail, not a design cap (v2: +0.4/tier additive)
+export const ENGAGEMENT_Y = 0.04; // horizon gate: enemies/bosses take no bullet damage until this far onto the visible field - kills must be seen (Bryan 2026-09-19)
 export const MAX_PIERCE = 4;
 export const MAX_LIVES = 2;
 export const MAX_ACTIVE_ENEMIES = 220;
