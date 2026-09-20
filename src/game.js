@@ -84,7 +84,7 @@ const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
-  'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'gameOverPanel', 'playBtn', 'playDifficulty',
+  'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
@@ -1036,6 +1036,8 @@ function triggerRevival() {
   compactEntities(run.enemies, pools.enemies, enemy => !enemy.dead || enemy.deathLife > 0);
   setState(GAME_STATE.RECOVERY);
   setText(dom.recoveryCount, '3');
+  setText(dom.recoveryReserves, run.lives > 0 ? `${run.lives} RESERVE${run.lives === 1 ? '' : 'S'} LEFT` : 'LAST RESERVE');
+  dom.recoveryReserves.classList.toggle('last', run.lives <= 0);
   updateHud(true);
 }
 
