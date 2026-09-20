@@ -12,6 +12,16 @@ export const CAMERA_PROFILES = Object.freeze({
     towerWorldHeight: 1.00,
     railWorldHeight: .075,
   }),
+  landscapeCompact: Object.freeze({
+    name: 'landscapeCompact',
+    horizon: -.04,
+    nearRoadHalf: .300,
+    shoulderRatio: 1.18,
+    depthRatio: 3.6,
+    towerDepths: Object.freeze([.26, 1.00]),
+    towerWorldHeight: 1.00,
+    railWorldHeight: .075,
+  }),
   portrait: Object.freeze({
     name: 'portrait',
     horizon: -.02,
@@ -25,7 +35,12 @@ export const CAMERA_PROFILES = Object.freeze({
 });
 
 export function profileForViewport(width, height) {
-  return width < height ? CAMERA_PROFILES.portrait : CAMERA_PROFILES.landscape;
+  if (width < height) return CAMERA_PROFILES.portrait;
+  // Short landscape (a rotated phone): the full landscape camera compresses the
+  // whole far field into the strip hidden behind the HUD, so enemies spawn and
+  // die invisibly. Use the tilted compact camera - same fix as portrait.
+  if (height < 560) return CAMERA_PROFILES.landscapeCompact;
+  return CAMERA_PROFILES.landscape;
 }
 
 /**

@@ -16,6 +16,7 @@ import {
 const VIEWPORTS = [
   { width: 1365, height: 768, profile: 'landscape', horizon: -.16 },
   { width: 390, height: 844, profile: 'portrait', horizon: -.02 },
+  { width: 844, height: 390, profile: 'landscapeCompact', horizon: -.04 },
 ];
 
 test('camera profiles place a finite-width far gameplay plane below the horizon', () => {
