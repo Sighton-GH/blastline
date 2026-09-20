@@ -257,6 +257,44 @@ let stressMode = false;
 let stressRenderPhase = 0;
 let hudUpdateTimer = 0;
 let renderQualityScale = 1;
+let sceneQualityActive = false;
+let frameQualityActive = false;
+let frameQualityWindow = [];
+let frameQualityCooldown = 0;
+
+// Two independent degrade sources feed one render scale: the synthetic extreme-scene
+// trigger (updateHud) and real measured frame health (loop). A device that struggles in
+// ordinary boss fights never reaches the extreme-scene counts, so frame timing is the
+// only signal that actually catches it there.
+function currentQualityTarget() {
+  return Math.min(sceneQualityActive ? .72 : 1, frameQualityActive ? .78 : 1);
+}
+
+function applyRenderQuality() {
+  setRenderQuality(currentQualityTarget());
+}
+
+function adaptRenderQuality(elapsedMs) {
+  if (frameQualityCooldown > 0) {
+    frameQualityCooldown -= elapsedMs;
+    return;
+  }
+  frameQualityWindow.push(elapsedMs);
+  if (frameQualityWindow.length > 48) frameQualityWindow.shift();
+  if (frameQualityWindow.length < 48) return;
+  const slowFraction = frameQualityWindow.filter(ms => ms > 25).length / frameQualityWindow.length;
+  if (!frameQualityActive && slowFraction > .4) {
+    frameQualityActive = true;
+    frameQualityWindow = [];
+    frameQualityCooldown = 2500;
+    applyRenderQuality();
+  } else if (frameQualityActive && slowFraction < .08) {
+    frameQualityActive = false;
+    frameQualityWindow = [];
+    frameQualityCooldown = 4000;
+    applyRenderQuality();
+  }
+}
 
 function setText(element, value) {
   if (!element) return;
@@ -600,8 +638,8 @@ function updateHud(force = false) {
   const activeEnemies = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
   const hudVisible = ACTIVE_STATES.includes(state) || state === GAME_STATE.PAUSED;
   const visibleSquad = visibleSquadCount(Math.max(1, run.player.troops), run.player.formationDensity);
-  if (renderQualityScale === 1 && activeEnemies >= 155 && visibleSquad >= 55) setRenderQuality(.72);
-  else if (renderQualityScale < 1 && (activeEnemies < 115 || visibleSquad < 44)) setRenderQuality(1);
+  if (!sceneQualityActive && activeEnemies >= 155 && visibleSquad >= 55) { sceneQualityActive = true; applyRenderQuality(); }
+  else if (sceneQualityActive && (activeEnemies < 115 || visibleSquad < 44)) { sceneQualityActive = false; applyRenderQuality(); }
   setText(dom.waveLabel, `WAVE ${format(run.wave)}`);
   setText(dom.difficultyLabel, DIFFICULTIES[run.difficulty].label.toUpperCase());
   setText(dom.phaseLabel, state === GAME_STATE.BOSS ? 'BOSS' : state === GAME_STATE.RECOVERY ? 'RECOVERY' : 'HORDE');
@@ -2880,6 +2918,8 @@ if (qaMode) {
     waterMaskAudit() { return waterMaskPixelAudit(); },
     frenzyAudit() { return frenzyPixelAudit(); },
     setFrenzy(seconds = 6) { run.frenzyTimer = Math.max(0, Number(seconds) || 0); updateHud(true); return run.frenzyTimer; },
+    qualityAudit() { return { renderQualityScale, sceneQualityActive, frameQualityActive, windowSize: frameQualityWindow.length, slowFraction: frameQualityWindow.length ? frameQualityWindow.filter(ms => ms > 25).length / frameQualityWindow.length : 0 }; },
+    simulateFrameTimes(ms, count = 48) { const n = clamp(Math.round(count), 1, 1200); for (let index = 0; index < n; index += 1) adaptRenderQuality(Number(ms) || 0); return this.qualityAudit(); },
     frameMetrics(reset = false) { const sorted = [...frameSamples].sort((a, b) => a - b); const result = { samples: sorted.length, p50: percentile(sorted, .5), p95: percentile(sorted, .95), over50: sorted.length ? sorted.filter(value => value > 50).length / sorted.length : 0, max: sorted.at(-1) || 0 }; if (reset) frameSamples = []; return result; },
     benchmarkDraw(iterations = 120) { const count = clamp(Math.round(iterations), 1, 1000); const start = performance.now(); for (let index = 0; index < count; index += 1) draw(); return (performance.now() - start) / count; },
     benchmarkUpdate(iterations = 120) { const count = clamp(Math.round(iterations), 1, 1000); const start = performance.now(); for (let index = 0; index < count; index += 1) update(SIM_STEP); return (performance.now() - start) / count; },
@@ -3012,6 +3052,7 @@ function loop(timestamp) {
   if (ACTIVE_STATES.includes(state) && !qaFrozen && elapsedMs > 0) {
     frameSamples.push(elapsedMs);
     if (frameSamples.length > 3600) frameSamples.shift();
+    adaptRenderQuality(elapsedMs);
     accumulator = Math.min(.1, accumulator + (elapsedMs * timeScale) / 1000);
     let steps = 0;
     while (accumulator >= SIM_STEP && steps < 2) {
