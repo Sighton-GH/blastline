@@ -69,12 +69,14 @@
           </div>
           <button id="playBtn" class="primary play-button" type="button"><span>DEPLOY</span><small id="playDifficulty">VETERAN RUN</small></button>
           <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P PAUSE</span></div>
+          <div id="cacheBanner" class="cache-banner" hidden></div>
+          <div id="metaPanel" class="meta-panel" aria-label="Field upgrades"></div>
           <div id="careerStrip" class="career-strip" aria-label="Personal records">
             <span><small>BEST SCORE</small><b id="homeBestScore">0</b></span>
             <span><small>BEST WAVE</small><b id="homeBestWave">1</b></span>
             <span><small>BEST COMBO</small><b id="homeBestCombo">×0</b></span>
           </div>
-          <p class="fresh-run-note">Every run starts fresh. Personal records stay on this device.</p>
+          <p class="fresh-run-note">Field upgrades and salvage stay on this device. Every run ends - how deep can you get?</p>
         </div>
       </div>
     </section>
@@ -117,6 +119,7 @@
           <div><span>Kills</span><b id="finalKills">0</b></div>
           <div><span>Mode</span><b id="finalDifficulty">Veteran</b></div>
         </div>
+        <p id="finalSalvage" class="final-salvage" hidden>+0 SALVAGE</p>
         <p id="recordCallout" class="record-callout">PERSONAL BEST</p>
         <p id="finalBestCombo" class="final-best-combo">BEST COMBO ×1</p>
         <div class="button-row"><button id="retryBtn" class="primary danger-button" type="button">REDEPLOY</button><button id="gameOverHomeBtn" class="secondary" type="button">CHANGE MODE</button></div>

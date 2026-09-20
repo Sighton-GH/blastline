@@ -44,6 +44,7 @@ import {
 } from './core.mjs';
 import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 import { drawEnemyCombatant } from './enemy-render.mjs';
+import { loadProfile, saveProfile, offlineAccrual, recordRunEnd, startingBonuses, purchaseMeta, metaCost, metaTier, META_TRACKS } from './meta.mjs';
 import * as audio from './audio.mjs';
 import {
   bridgeHalfWidth as projectedBridgeHalfWidth,
@@ -90,7 +91,7 @@ const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
-  'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
+  'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
@@ -156,6 +157,11 @@ let recoveryReturnState = GAME_STATE.PLAYING;
 let selectedDifficulty = 'veteran';
 let run = createCleanRun(0, selectedDifficulty);
 let config = getWaveConfig(1, selectedDifficulty);
+let profile = loadProfile();
+const returningCache = offlineAccrual(profile);
+if (returningCache.salvage > 0) profile = { ...profile, salvage: profile.salvage + returningCache.salvage };
+profile = { ...profile, lastSeen: Date.now() };
+saveProfile(profile);
 let rng = mulberry32(1);
 let renderAlpha = 1;
 let accumulator = 0;
@@ -453,10 +459,37 @@ function clearTransient({ keepBoss = false } = {}) {
   if (!keepBoss) run.boss = null;
 }
 
+function renderMetaPanel() {
+  if (!dom.metaPanel) return;
+  dom.metaPanel.replaceChildren();
+  const head = document.createElement('div');
+  head.className = 'meta-head';
+  head.innerHTML = `<span>FIELD UPGRADES</span><span>SALVAGE <b>${format(profile.salvage)}</b></span>`;
+  dom.metaPanel.append(head);
+  for (const track of META_TRACKS) {
+    const tier = metaTier(profile, track.id);
+    const capped = tier >= track.maxTier;
+    const cost = capped ? null : metaCost(track.id, tier);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'meta-card';
+    button.disabled = capped || profile.salvage < cost;
+    button.innerHTML = `<b>${track.title} <span class="meta-tier">T${tier}</span></b><small>${track.short}</small><span class="meta-cost${capped ? ' owned' : ''}">${capped ? 'MAX' : `⬡ ${format(cost)}`}</span>`;
+    if (!capped) button.addEventListener('click', () => {
+      const result = purchaseMeta(profile, track.id);
+      if (result.ok) { profile = result.profile; saveProfile(profile); renderMetaPanel(); audio.bossHit?.(); }
+    });
+    dom.metaPanel.append(button);
+  }
+}
+
 function startRun(seed = Date.now() >>> 0, difficulty = selectedDifficulty) {
   clearTransient();
   selectedDifficulty = normalizeDifficulty(difficulty);
   run = createCleanRun(seed, selectedDifficulty);
+  const bonuses = startingBonuses(profile);
+  run.player.power += bonuses.power;
+  run.player.troops = Math.min(MAX_TROOPS, run.player.troops + bonuses.troops);
   rng = mulberry32(run.seed);
   enemySerial = 0;
   hordeSerial = 0;
@@ -495,6 +528,16 @@ function setState(next) {
     (next === GAME_STATE.PAUSED && resumeState === GAME_STATE.BOSS)
   );
   dom.menu.classList.toggle('visible', next === GAME_STATE.HOME);
+  if (next === GAME_STATE.HOME) {
+    renderMetaPanel();
+    if (dom.cacheBanner) {
+      if (returningCache.salvage > 0) {
+        dom.cacheBanner.textContent = `SUPPLY CACHE${returningCache.capped ? ' (FULL)' : ''}: +${format(returningCache.salvage)} salvage collected while you were away`;
+        dom.cacheBanner.hidden = false;
+      } else dom.cacheBanner.hidden = true;
+    }
+    returningCache.salvage = 0;
+  }
   dom.pausePanel.classList.toggle('visible', next === GAME_STATE.PAUSED);
   dom.rewardPanel.classList.toggle('visible', next === GAME_STATE.BOSS_REWARD);
   dom.gameOverPanel.classList.toggle('visible', next === GAME_STATE.GAME_OVER);
@@ -1082,6 +1125,13 @@ function gameOver() {
   setText(dom.finalKills, format(run.kills));
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
   setText(dom.finalBestCombo, `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
+  const runEnd = recordRunEnd(profile, { score: run.score, wave: run.wave, bossesDefeated: run.bossesDefeated }, Date.now());
+  profile = runEnd.profile;
+  saveProfile(profile);
+  setText(dom.finalScore, format(run.score));
+  const salvageLine = document.querySelector('#finalSalvage');
+  if (salvageLine) { salvageLine.textContent = `+${format(runEnd.earned)} SALVAGE`; salvageLine.hidden = false; }
+  renderMetaPanel();
   const recordsHit = commitRunRecords();
   const callout = recordsHit.score ? 'NEW HIGH SCORE' : recordsHit.wave ? 'NEW BEST WAVE' : recordsHit.combo ? 'NEW BEST COMBO' : '';
   setText(dom.recordCallout, callout);
