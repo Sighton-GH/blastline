@@ -154,6 +154,18 @@ const enemyBuckets = Array.from({ length: 3 * Y_BUCKETS }, () => []);
 let W = innerWidth;
 let H = innerHeight;
 let sceneProjection = createProjection(W, H);
+let engageWorldY = ENGAGEMENT_Y;
+function refreshEngagementY() {
+  engageWorldY = ENGAGEMENT_Y;
+  if (sceneProjection.profile.name !== 'landscape') return; // portrait field reads fine at the floor (verified)
+  const hud = document.getElementById('hud');
+  const hudBottom = hud && !hud.classList.contains('hidden') ? hud.getBoundingClientRect().bottom : 64;
+  const safeScreenY = hudBottom + 18;
+  const span = sceneProjection.deckBottom - sceneProjection.horizon;
+  const scale = clamp((safeScreenY - sceneProjection.horizon) / Math.max(1, span), .02, 1);
+  const r = sceneProjection.profile.depthRatio;
+  engageWorldY = clamp((r - 1 / scale) / (r - 1), ENGAGEMENT_Y, .28);
+}
 let DPR = 1;
 let state = GAME_STATE.HOME;
 let resumeState = null;
@@ -366,6 +378,7 @@ function resize() {
   W = innerWidth;
   H = innerHeight;
   sceneProjection = createProjection(W, H);
+  refreshEngagementY();
   configureRenderSurface();
 }
 
@@ -583,6 +596,7 @@ function formatCompact(value) {
 }
 
 function updateHud(force = false) {
+  if (force) refreshEngagementY();
   const activeEnemies = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
   const hudVisible = ACTIVE_STATES.includes(state) || state === GAME_STATE.PAUSED;
   const visibleSquad = visibleSquadCount(Math.max(1, run.player.troops), run.player.formationDensity);
@@ -1180,7 +1194,7 @@ function collidePlayerBullets() {
       const bucket = enemyBuckets[lane * Y_BUCKETS + bucketIndex];
       for (const enemy of bucket) {
         if (enemy.dead || enemy.id === bullet.lastHitId) continue;
-        if (enemy.y < ENGAGEMENT_Y) continue; // horizon gate: no off-screen melts
+        if (enemy.y < engageWorldY) continue; // horizon gate: no off-screen melts
         const hitRadius = .029 * enemy.scale;
         const crossed = bullet.previousY >= enemy.y && bullet.y <= enemy.y;
         if (!crossed && (bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2 >= hitRadius ** 2) continue;
@@ -1206,7 +1220,7 @@ function collidePlayerBullets() {
         if (bullet.hitsLeft <= 0 && bullet.bouncesLeft > 0) {
           let target = null; let best = .35;
           for (const other of run.enemies) {
-            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId || other.y < ENGAGEMENT_Y) continue;
+            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId || other.y < engageWorldY) continue;
             const d = Math.abs(other.x - bullet.x) + Math.abs(other.y - bullet.y) * .6;
             if (d < best) { best = d; target = other; }
           }
@@ -1381,7 +1395,7 @@ function update(dt) {
       enemy.y += dt * enemy.speed;
       enemy.x = enemy.lineX;
     }
-    if (enemy.engagedAt === null && enemy.y >= ENGAGEMENT_Y) enemy.engagedAt = ambientTime;
+    if (enemy.engagedAt === null && enemy.y >= engageWorldY) enemy.engagedAt = ambientTime;
     updateEnemyAttacks(enemy, dt);
   }
 
