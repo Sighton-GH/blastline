@@ -202,8 +202,10 @@ function commitRunRecords() {
   return result;
 }
 
-function addTrauma(amount) { shakeTrauma = Math.min(1, shakeTrauma + amount); }
+const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function addTrauma(amount) { if (REDUCED_MOTION) return; shakeTrauma = Math.min(1, shakeTrauma + amount); }
 function triggerHitStop(holdSeconds = .08) {
+  if (REDUCED_MOTION) return;
   hitStopHold = Math.max(hitStopHold, holdSeconds);
   hitStopEase = Math.max(hitStopEase, HIT_STOP_EASE_SECONDS);
 }
@@ -485,6 +487,19 @@ function setState(next) {
   dom.bossHud.classList.toggle('hidden', !bossVisible);
   setText(dom.pauseBtn, next === GAME_STATE.PAUSED ? '▶' : '❚❚');
   dom.pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
+  focusPanelForState(next);
+}
+
+function focusPanelForState(next) {
+  requestAnimationFrame(() => {
+    if (state !== next) return;
+    const target =
+      next === GAME_STATE.PAUSED ? dom.resumeBtn :
+      next === GAME_STATE.GAME_OVER ? dom.retryBtn :
+      next === GAME_STATE.BOSS_REWARD ? (dom.rewardCards.querySelector('.reward-card:not([disabled])') || dom.rewardPanel.querySelector('.armory-continue')) :
+      next === GAME_STATE.HOME ? dom.playBtn : null;
+    if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
+  });
 }
 
 function awardPoints(amount) {

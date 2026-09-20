@@ -80,7 +80,7 @@
       </div>
     </section>
 
-    <section id="pausePanel" class="overlay pause-overlay" aria-label="Game paused">
+    <section id="pausePanel" class="overlay pause-overlay" role="dialog" aria-modal="true" aria-label="Game paused">
       <div class="card dashboard-card">
         <div class="dashboard-head">
           <div><p class="eyebrow">RUN PAUSED</p><h2>TAKE A BREATH</h2></div><b id="pausePoints" class="sr-only">0</b>
@@ -93,7 +93,7 @@
       </div>
     </section>
 
-    <section id="rewardPanel" class="overlay reward-overlay" aria-label="Between-wave armory">
+    <section id="rewardPanel" class="overlay reward-overlay" role="dialog" aria-modal="true" aria-label="Between-wave armory">
       <div class="card reward-shell">
         <p class="eyebrow"><span id="rewardKind">WAVE CLEARED</span> · <span id="rewardWave">1</span></p>
         <h2>ARMORY</h2>
@@ -107,7 +107,7 @@
       <div class="recovery-core"><small>RESERVE DEPLOYED</small><b id="recoveryCount">3</b><span>PROTECTED</span></div>
     </section>
 
-    <section id="gameOverPanel" class="overlay game-over-overlay" aria-label="Game over">
+    <section id="gameOverPanel" class="overlay game-over-overlay" role="dialog" aria-modal="true" aria-label="Game over">
       <div class="card end-card game-over-card">
         <p class="eyebrow">THE LINE BROKE</p>
         <h2>RUN OVER</h2>

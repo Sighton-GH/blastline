@@ -478,3 +478,11 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   #bossHud { top: 91px; width: 92vw; }
   .reward-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
