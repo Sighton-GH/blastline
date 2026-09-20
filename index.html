@@ -18,7 +18,8 @@
     <header id="hud" class="panel hidden" aria-label="Run status">
       <div class="hud-cluster hud-primary">
         <img id="portrait" src="assets/portrait.webp" alt="Blue squad commander" />
-        <div class="metric points-metric"><small>POINTS</small><b id="scoreLabel">0</b><b id="pointsLabel" class="sr-only">0</b></div>
+        <div class="metric score-metric"><small>SCORE</small><b id="scoreLabel">0</b></div>
+        <div class="metric points-metric"><small>POINTS</small><b id="pointsLabel">0</b></div>
       </div>
       <div class="hud-cluster hud-run">
         <div class="wave-pill">
@@ -70,7 +71,7 @@
           <button id="playBtn" class="primary play-button" type="button"><span>DEPLOY</span><small id="playDifficulty">VETERAN RUN</small></button>
           <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P PAUSE</span></div>
           <div id="careerStrip" class="career-strip" aria-label="Personal records">
-            <span><small>BEST POINTS</small><b id="homeBestScore">0</b></span>
+            <span><small>BEST SCORE</small><b id="homeBestScore">0</b></span>
             <span><small>BEST WAVE</small><b id="homeBestWave">1</b></span>
             <span><small>BEST COMBO</small><b id="homeBestCombo">×0</b></span>
           </div>
@@ -94,7 +95,7 @@
 
     <section id="rewardPanel" class="overlay reward-overlay" aria-label="Between-wave armory">
       <div class="card reward-shell">
-        <p class="eyebrow">WAVE CLEARED · <span id="rewardWave">1</span></p>
+        <p class="eyebrow"><span id="rewardKind">WAVE CLEARED</span> · <span id="rewardWave">1</span></p>
         <h2>ARMORY</h2>
         <p class="reward-sub">Spend Points or continue. Your build carries through the run.</p>
         <div id="rewardCards" class="reward-grid"></div>
@@ -112,7 +113,7 @@
         <h2>RUN OVER</h2>
         <p class="end-message">The bridge keeps going. This squad doesn’t.</p>
         <div class="results">
-          <div><span>Points</span><b id="finalScore">0</b></div>
+          <div><span>Score</span><b id="finalScore">0</b></div>
           <div><span>Wave</span><b id="finalWave">1</b></div>
           <div><span>Kills</span><b id="finalKills">0</b></div>
           <div><span>Mode</span><b id="finalDifficulty">Veteran</b></div>

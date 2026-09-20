@@ -84,7 +84,7 @@ const stageElement = document.querySelector('#stage');
 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
-  'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardCards',
+  'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
@@ -189,11 +189,11 @@ function commitRunRecords() {
   if (runCommitted) return { score: false, wave: false, combo: false };
   runCommitted = true;
   const result = {
-    score: run.points > records.bestScore,
+    score: run.score > records.bestScore,
     wave: run.wave > records.bestWave,
     combo: run.bestCombo > records.bestCombo,
   };
-  records.bestScore = Math.max(records.bestScore, Math.round(run.points));
+  records.bestScore = Math.max(records.bestScore, Math.round(run.score));
   records.bestWave = Math.max(records.bestWave, Math.round(run.wave));
   records.bestCombo = Math.max(records.bestCombo, Math.round(run.bestCombo));
   records.runs += 1;
@@ -487,6 +487,12 @@ function setState(next) {
   dom.pauseBtn.setAttribute('aria-label', next === GAME_STATE.PAUSED ? 'Resume game' : 'Pause game');
 }
 
+function awardPoints(amount) {
+  const value = Math.max(0, Math.round(amount));
+  run.points += value;
+  run.score += value;
+}
+
 function formatCompact(value) {
   const n = Math.max(0, Math.round(value));
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
@@ -510,7 +516,7 @@ function updateHud(force = false) {
   setText(dom.powerLabel, format(run.player.power));
   setText(dom.rateLabel, run.player.fireRate.toFixed(1));
   setText(dom.armorLabel, format(run.player.armor));
-  setText(dom.scoreLabel, format(run.points));
+  setText(dom.scoreLabel, format(run.score));
   setText(dom.pointsLabel, format(run.points));
   setText(dom.livesLabel, format(run.lives));
   setText(dom.frenzyTimeLabel, run.frenzyTimer.toFixed(1));
@@ -819,7 +825,7 @@ function finishBoss() {
   const boss = run.boss;
   if (!boss || boss.rewarded) return;
   boss.rewarded = true;
-  run.points += config.bossReward;
+  awardPoints(config.bossReward);
   run.bossesDefeated += 1;
   burst(boss.x, boss.y, '#ffc54a', 48);
   addTrauma(.85);
@@ -831,19 +837,51 @@ function finishBoss() {
   run.gates.length = 0;
   run.hazards.length = 0;
   run.boss = null;
+  armoryMode = 'reward';
+  armoryRewardPicked = false;
+  run.rewardChoices = pickBossRewards(rng, run);
   setState(stateAfterBossDefeat());
   showBossRewards();
   updateHud(true);
 }
 
+let armoryMode = 'shop';
+let armoryRewardPicked = false;
+
 function openArmory() {
+  armoryMode = 'shop';
+  armoryRewardPicked = false;
+  run.rewardChoices = null;
   setState(GAME_STATE.BOSS_REWARD);
   showBossRewards();
 }
 
 function showBossRewards() {
   setText(dom.rewardWave, run.wave);
+  setText(dom.rewardKind, armoryMode === 'reward' ? 'BOSS DOWN' : 'WAVE CLEARED');
   dom.rewardCards.replaceChildren();
+  if (armoryMode === 'reward' && Array.isArray(run.rewardChoices) && run.rewardChoices.length) {
+    for (const item of run.rewardChoices) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `reward-card tone-${item.tone}`;
+      button.dataset.upgrade = item.id;
+      const image = document.createElement('img'); image.src = item.asset; image.alt = '';
+      const title = document.createElement('b'); title.textContent = item.title;
+      const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = `TIER ${item.tier}/${item.maxTier}`;
+      const description = document.createElement('span'); description.className = 'description'; description.textContent = item.short;
+      const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = 'FREE UPGRADE';
+      button.append(image, title, rank, description, synergy);
+      button.onclick = () => chooseFreeReward(item.id);
+      dom.rewardCards.append(button);
+    }
+    const continueButton = document.createElement('button');
+    continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
+    continueButton.textContent = 'CHOOSE A FREE UPGRADE';
+    continueButton.disabled = true;
+    dom.rewardFooter.replaceChildren(continueButton);
+    return;
+  }
   for (const item of SHOP_CATALOG) {
     const tier = upgradeTier(run, item.id);
     const cost = shopPrice(item.id, run.purchaseCounts[item.id] || 0);
@@ -878,8 +916,20 @@ function chooseBossReward(id) {
   return true;
 }
 
+function chooseFreeReward(id) {
+  if (state !== GAME_STATE.BOSS_REWARD || armoryMode !== 'reward' || armoryRewardPicked) return false;
+  const choice = (run.rewardChoices || []).find(item => item.id === id);
+  if (!choice) return false;
+  armoryRewardPicked = true;
+  run = applyBossReward(run, id);
+  run.rewardChoices = null;
+  armoryMode = 'shop';
+  audio.purchase(); updateHud(true); showBossRewards();
+  return true;
+}
+
 function continueFromArmory() {
-  if (state !== GAME_STATE.BOSS_REWARD) return false;
+  if (state !== GAME_STATE.BOSS_REWARD || armoryMode === 'reward') return false;
   run.wave += 1; startWave(); return true;
 }
 
@@ -901,8 +951,8 @@ function defeatEnemy(enemy) {
   const claim = claimKillReward(enemy, run.kills);
   enemy.rewarded = claim.enemy.rewarded;
   if (!claim.reward) return;
-  run.points += claim.reward.points * comboMultiplier;
-  run.points += claim.reward.points;
+  awardPoints(claim.reward.points * comboMultiplier);
+  awardPoints(claim.reward.points);
   if (run.combo === 5 || run.combo === 10 || run.combo === 20 || run.combo === 30) {
     addFloater(enemy.x, enemy.y - .035, `${run.combo} KILL STREAK · ×${comboMultiplier}`, '#fff07a', 19);
     addTrauma(.07);
@@ -966,7 +1016,7 @@ function gameOver() {
   run.player.troops = 0;
   releaseAll(run.enemyBullets, pools.enemyBullets);
   releaseAll(run.telegraphs, pools.telegraphs);
-  setText(dom.finalScore, format(run.points));
+  setText(dom.finalScore, format(run.score));
   setText(dom.finalWave, format(run.wave));
   setText(dom.finalKills, format(run.kills));
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
@@ -1026,7 +1076,7 @@ function collidePlayerBullets() {
         bullet.dead = true;
         boss.hp -= bullet.power;
         boss.hitFlash = .085;
-        run.points += bullet.critical ? 4 : 2;
+        awardPoints(bullet.critical ? 4 : 2);
         if (!stressMode) { burst(bullet.x, boss.y, bullet.critical ? '#fff076' : '#ffad4a', bullet.critical ? 5 : 2); audio.bossHit(); }
         updateBossPhase();
         if (boss.hp <= 0) {
@@ -2431,7 +2481,7 @@ function getStateSnapshot() {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
-    score: run.points, skillPoints: run.points, lives: run.lives, kills: run.kills,
+    score: run.score, skillPoints: run.points, lives: run.lives, kills: run.kills,
     combo: run.combo, comboTimer: run.comboTimer, bestCombo: run.bestCombo, records: { ...records },
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,
@@ -2544,8 +2594,8 @@ if (qaMode) {
     setBossPhase(value) { if (!run.boss) this.forceBoss(); const phase = clamp(Math.round(value), 1, 3); run.boss.hp = run.boss.maxHp * (phase === 1 ? .9 : phase === 2 ? .55 : .2); updateBossPhase(); updateHud(true); return run.boss.phase; },
     setBossHp(value) { if (run.boss) { run.boss.hp = clamp(Number(value) || 0, 0, run.boss.maxHp); updateBossPhase(); updateHud(true); } return run.boss?.hp ?? null; },
     defeatBoss() { if (!run.boss) this.forceBoss(); run.boss.hp = 0; finishBoss(); return state; },
-    chooseReward(id) { return chooseBossReward(id || dom.rewardCards.firstElementChild?.dataset.upgrade); },
-    forceReward() { setState(GAME_STATE.BOSS_REWARD); showBossRewards(); return state; },
+    chooseReward(id) { const pick = id || dom.rewardCards.firstElementChild?.dataset.upgrade; return armoryMode === 'reward' ? chooseFreeReward(pick) : chooseBossReward(pick); },
+    forceReward() { armoryMode = 'shop'; armoryRewardPicked = false; run.rewardChoices = null; setState(GAME_STATE.BOSS_REWARD); showBossRewards(); return state; },
     purchase(id) { if (state !== GAME_STATE.BOSS_REWARD) openArmory(); return buyFromShop(id); },
     damageTroops(value) { damageSquad(value, run.player.x); return run.player.troops; },
     forceRevival() { run.lives = Math.max(1, run.lives); run.player.troops = 1; damageSquad(99, run.player.x); return this.getState(); },

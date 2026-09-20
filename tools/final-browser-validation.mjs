@@ -274,12 +274,30 @@ async function runInteractionValidation() {
   record('resumeFromDashboard', (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
   await page.evaluate(() => { __blastlineTest.setPoints(2000); __blastlineTest.forceReward(); });
   await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
-  const powerBefore = (await page.evaluate(() => __blastlineTest.getState())).power;
+  const purchaseBefore = await page.evaluate(() => __blastlineTest.getState());
   await page.locator('.reward-card[data-upgrade="damage"]').click();
   const afterPurchase = await page.evaluate(() => __blastlineTest.getState());
-  record('armoryPurchaseSpendsPoints', afterPurchase.power === powerBefore + 1 && afterPurchase.score < 2000, afterPurchase);
+  record('armoryPurchaseSpendsPoints', afterPurchase.power === purchaseBefore.power + 1 && afterPurchase.skillPoints < 2000 && afterPurchase.score === purchaseBefore.score, afterPurchase);
   await page.locator('.armory-continue').click();
   record('armoryContinuesRun', (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
+
+  await page.evaluate(() => { __blastlineTest.reset(207, 'veteran'); __blastlineTest.setWave(3); __blastlineTest.forceBoss(); });
+  await page.evaluate(() => __blastlineTest.defeatBoss());
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
+  const freeCards = await page.locator('#rewardCards .reward-card').all();
+  const freeTexts = [];
+  for (const card of freeCards) freeTexts.push((await card.innerText()).replace(/\s+/g, ' '));
+  const continueDisabled = await page.locator('.armory-continue').isDisabled();
+  record('bossRewardOffersThreeFreeUniqueCards', freeCards.length === 3 && freeTexts.every(text => text.includes('FREE UPGRADE')) && new Set(freeTexts).size === 3 && continueDisabled, { freeTexts, continueDisabled });
+  await freeCards[0].click();
+  await page.waitForTimeout(250);
+  const shopCount = await page.locator('#rewardCards .reward-card').count();
+  const continueEnabled = await page.locator('.armory-continue').isEnabled();
+  record('bossRewardPickUnlocksArmoryShop', shopCount === 6 && continueEnabled, { shopCount, continueEnabled });
+  const waveBeforeRewardContinue = (await page.evaluate(() => __blastlineTest.getState())).wave;
+  await page.locator('.armory-continue').click();
+  const afterRewardContinue = await page.evaluate(() => __blastlineTest.getState());
+  record('bossRewardContinueAdvancesWave', afterRewardContinue.state === 'playing' && afterRewardContinue.wave === waveBeforeRewardContinue + 1, afterRewardContinue);
 
   const gateSetup = await page.evaluate(() => {
     __blastlineTest.reset(201, 'veteran');
@@ -352,6 +370,10 @@ async function runInteractionValidation() {
   record('bossPhasesAndDamage', bossPhase.boss.phase === 3 && bossPhase.boss.hp < bossPhase.boss.maxHp, bossPhase.boss);
   await page.evaluate(() => { __blastlineTest.setPoints(2000); __blastlineTest.defeatBoss(); });
   await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
+  const freeRewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
+  record('threeFreeBossRewards', freeRewards.length === 3 && new Set(freeRewards).size === 3, freeRewards);
+  await page.locator('.reward-card:not(:disabled)').first().click();
+  await page.waitForTimeout(200);
   const rewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
   record('sixArmoryChoices', rewards.length === 6 && new Set(rewards).size === 6, rewards);
   await page.locator('.reward-card:not(:disabled)').first().click();
@@ -385,6 +407,8 @@ async function runEndlessProgression() {
     await page.evaluate(() => __blastlineTest.defeatBoss());
     await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
     await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
+    await page.locator('#rewardCards .reward-card').first().click();
+    await page.waitForFunction(() => { const button = document.querySelector('.armory-continue'); return button && !button.disabled; });
     await page.locator('.armory-continue').click();
     await page.waitForFunction(wave => __blastlineTest.getState().wave === wave && __blastlineTest.getState().state === 'playing', expected + 1);
   }
