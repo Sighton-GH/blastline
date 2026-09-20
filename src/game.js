@@ -1230,6 +1230,7 @@ function awardEcoInterest() {
   const interest = Math.floor(run.points * ECO_INTEREST_PER_TIER * tier);
   if (interest <= 0) return;
   awardPoints(interest);
+  run.ecoUnspent = (run.ecoUnspent || 0) + interest;
   run.debugEco = (run.debugEco || 0) + interest;
   if (!stressMode) addFloater(0, .52, `+${interest} SUPPLY`, '#8be28b', 17, 1.1);
 }
@@ -1326,12 +1327,13 @@ function showBossRewards() {
     const capped = isUpgradeCapped(run, item.id);
     const lineLocked = isLineLocked(run, item.id);
     const itemCapped = isItemCapped(run, item.id);
+    const supplyBreak = itemCapped && (run.ecoUnspent || 0) >= cost;
     const visitCapped = (run.armoryPicks || 0) >= MAX_PICKS_PER_VISIT;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-card tone-${item.tone}`;
     button.dataset.upgrade = item.id;
-    button.disabled = capped || lineLocked || itemCapped || visitCapped || run.points < cost;
+    button.disabled = capped || lineLocked || (itemCapped && !supplyBreak) || visitCapped || run.points < cost;
     const image = document.createElement('img'); image.src = item.asset; image.alt = '';
     const title = document.createElement('b'); title.textContent = item.title;
     const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
@@ -1341,6 +1343,7 @@ function showBossRewards() {
     if (capped) synergy.textContent = item.id === 'veteranTraining' ? 'NEEDS 6+ SQUAD' : 'Fully upgraded';
     else if (lineLocked && exclusiveLockFor(run, item.id)) { synergy.textContent = `PICK ONE - ${SHOP_BY_ID[exclusiveLockFor(run, item.id)].title.toUpperCase()} OWNED`; synergy.classList.add('short'); }
     else if (lineLocked) { synergy.textContent = `BUILD FULL - ${MAX_BUILD_LINES}/${MAX_BUILD_LINES} LINES`; synergy.classList.add('short'); }
+    else if (itemCapped && supplyBreak) { synergy.textContent = `SUPPLY BREAKS CAP - ${format(cost)} POINTS`; synergy.classList.add('short'); }
     else if (itemCapped) { synergy.textContent = `ITEM CAP ${buildItemCount(run)}/${itemCapFor(run)} - BOSS +${ITEM_CAP_PER_BOSS}`; synergy.classList.add('short'); }
     else if (visitCapped) { synergy.textContent = 'PICKS USED - NEXT WAVE'; synergy.classList.add('short'); }
     else if (run.points < cost) { synergy.textContent = `${format(cost)} POINTS · NEED ${format(cost - run.points)} MORE`; synergy.classList.add('short'); }
@@ -3981,7 +3984,7 @@ function getStateSnapshot() {
     bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
-    score: run.score, skillPoints: run.points, lives: run.lives, kills: run.kills, killViz: run.killViz || null,
+    score: run.score, skillPoints: run.points, ecoUnspent: run.ecoUnspent || 0, lives: run.lives, kills: run.kills, killViz: run.killViz || null,
     combo: run.combo, comboTimer: run.comboTimer, bestCombo: run.bestCombo, records: { ...records },
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,
@@ -4093,6 +4096,7 @@ if (qaMode) {
     arcFlashCount() { return (run.arcFlashes || []).length; },
     spillCount() { return run.debugSpills || 0; },
     ecoTotal() { return run.debugEco || 0; },
+    ecoUnspent() { return run.ecoUnspent || 0; },
     charmedCount() { return run.enemies.filter(e => !e.dead && e.charmed).length; },
     ambient() { return ambientTime; },
     enemyBulletList() { return run.enemyBullets.filter(b => !b.dead).map(b => ({ x: +b.x.toFixed(3), y: +b.y.toFixed(3), lane: b.lane, kind: b.kind, damage: b.damage })); },

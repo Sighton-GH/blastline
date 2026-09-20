@@ -300,6 +300,36 @@ test('heavy ordnance sidegrade: burst form of the damage line, mutually exclusiv
   assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { heavyOrdnance: 8 } }, 'heavyOrdnance'), true);
 });
 
+test('supply break: banked interest buys past the item cap at full price', () => {
+  // Fill the item cap: 6 non-utility tiers at 0 bosses.
+  // 6 tiers concentrated in 2 lines: item-capped but not line-locked.
+  let session = { ...createCleanRun(5), points: 1e9, armoryPicks: 0, upgradeTiers: { damage: 3, fireRate: 3 }, purchaseCounts: { damage: 3, fireRate: 3 } };
+  assert.equal(isItemCapped(session, 'shock'), true);
+  // No supply: capped.
+  assert.equal(purchaseUpgrade(session, 'shock').ok, false);
+  // Supply covering the full cost breaks the cap and drains the ledger.
+  const cost = shopPrice('shock', 0);
+  let rich = { ...session, ecoUnspent: cost + 50 };
+  const broke = purchaseUpgrade(rich, 'shock');
+  assert.equal(broke.ok, true);
+  assert.equal(broke.session.ecoUnspent, 50);
+  assert.equal(upgradeTier(broke.session, 'shock'), 1);
+  // Supply short of the cost does not break.
+  assert.equal(purchaseUpgrade({ ...session, ecoUnspent: cost - 1 }, 'shock').ok, false);
+  // Tier/line/visit caps still bind under a supply break.
+  let lineFull = { ...rich, upgradeTiers: { damage: 2, fireRate: 2, multishot: 1, piercing: 1, shock: 2 }, purchaseCounts: { damage: 2, fireRate: 2, multishot: 1, piercing: 1, shock: 2 } };
+  assert.equal(purchaseUpgrade({ ...lineFull, armoryPicks: 2 }, 'ricochet').ok, false); // visit cap
+  assert.equal(purchaseUpgrade(lineFull, 'criticalChance').ok, false); // line cap (5 lines owned? damage/fireRate/multishot/piercing/shock = 5 > 4)
+});
+
+test('boss rewards bypass the four-line build cap', () => {
+  const session = { ...createCleanRun(5), upgradeTiers: { damage: 1, fireRate: 1, multishot: 1, piercing: 1 }, purchaseCounts: { damage: 1, fireRate: 1, multishot: 1, piercing: 1 } };
+  assert.equal(buildLines(session).length, 4);
+  const rewarded = applyBossReward(session, 'shock');
+  assert.equal(upgradeTier(rewarded, 'shock'), 1);
+  assert.equal(buildLines(rewarded).length, 5);
+});
+
 test('taming line: tiers to 3, softer rounds, build-line identity', () => {
   let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
   const buy = purchaseUpgrade(session, 'taming');

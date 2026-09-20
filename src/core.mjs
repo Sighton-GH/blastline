@@ -209,7 +209,7 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'criticalChance', title: 'Critical', short: '+3% crit', baseCost: 380, maxTier: 17, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder', info: "+3% chance for any hit to crit. Critical hits deal double damage. Scales: +3% per tier, up to 17 tiers - crit chance is capped at 50% overall." },
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner', info: "+15% bullet velocity. Rounds cross the bridge sooner, so less fire is wasted on enemies that are already dead and hits land earlier. Scales: +15% per tier, up to 7 tiers." },
   { id: 'taming', title: 'Taming Rounds', short: '6% tame chance, softer hits', baseCost: 640, maxTier: 3, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'First hit on an enemy can turn it - it fights for you on the spot', info: "+6% chance per tier that the first hit on an enemy TAMES it: it holds its ground, turns, and fires on the horde for 8 seconds before burning out - the conversion plays out right on the field, never off-screen. Bosses and elites resist. At most 1 + tier charmed allies at once. Tradeoff: pheromone rounds hit 6% softer per tier. Scales: +6% chance and +1 ally cap per tier, up to 3 tiers." },
-  { id: 'logistics', title: 'Logistics', short: '+4% supply on banked points', baseCost: 300, maxTier: 5, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Eco build - bank to earn', info: "Eco line: at every wave clear, gain bonus supply worth 4% of your banked points per tier (20% at max). The camp crew stockpiles while you hold the bridge. No combat stats at all - it buys future flexibility instead of current power, and it still takes one of your 4 build lines: an economy identity costs a combat line. Scales: +4% interest per tier, up to 5 tiers." },
+  { id: 'logistics', title: 'Logistics', short: '+4% supply on banked points', baseCost: 300, maxTier: 5, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Eco build - bank to earn', info: "Eco line: at every wave clear, gain bonus supply worth 4% of your banked points per tier (20% at max). The camp crew stockpiles while you hold the bridge. No combat stats at all - it buys future flexibility instead of current power, and it still takes one of your 4 build lines: an economy identity costs a combat line. Banked supply also buys PAST the item cap at full price, so the stockpile converts when a wall arrives. Scales: +4% interest per tier, up to 5 tiers." },
   { id: 'veteranTraining', title: 'Veteranize', short: '2 squad -> 1 veteran', baseCost: 340, maxTier: 99, tone: 'gold', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Veterans fire double and hold the line', info: "Two soldiers combine into one veteran: a bigger unit that fires two rounds per volley at slightly higher power and is always the last to fall. Concentrates your fire into fewer bodies - you cover fewer lanes per body, so positioning matters more. Requires at least 6 squad. Scales: one conversion per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own', info: "+1 bounce. After a hit, the round jumps to a nearby enemy at 60% damage - and every Multishot round bounces on its own. Scales: +1 bounce per tier, up to 3 tiers." },
   { id: 'shock', title: 'Shock Rounds', short: '12% arc chance, lighter rounds', baseCost: 520, maxTier: 3, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Rounds arc to a second enemy and halt it - but every round is 7% lighter per tier', info: "+12% chance per tier that a round arcs on impact: lightning jumps to the nearest visible enemy for 60% of the hit and halts its march for a beat. Tradeoff: charged coils make every round 7% lighter per tier. Scales: +12% arc chance per tier, up to 3 tiers." },
@@ -232,7 +232,9 @@ export const UTILITY_UPGRADES = Object.freeze(['reinforcements', 'extraLife']);
 // non-utility items, and every boss defeated raises the cap by
 // ITEM_CAP_PER_BOSS. Utility buys (squad, reserves) are exempt, and the free
 // boss-reward tier is exempt - bosses are the cap-release valve, so build
-// depth is earned at the bridge, not just bought in the shop.
+// depth is earned at the bridge, not just bought in the shop. Second valve
+// (Bryan's eco call, Sep 20): unspent Logistics interest (session.ecoUnspent)
+// buys past the cap at full price - hoarded supply converts when it matters.
 export const MAX_BUILD_ITEMS_BASE = 6;
 export const ITEM_CAP_PER_BOSS = 2;
 
@@ -410,11 +412,18 @@ export function purchaseUpgrade(session, id) {
   if (!item) return { session, ok: false, reason: 'unknown' };
   if (isUpgradeCapped(session, id)) return { session, ok: false, reason: 'capped' };
   if (isLineLocked(session, id)) return { session, ok: false, reason: 'line-capped' };
-  if (isItemCapped(session, id)) return { session, ok: false, reason: 'item-capped' };
   if ((session.armoryPicks || 0) >= MAX_PICKS_PER_VISIT) return { session, ok: false, reason: 'visit-capped' };
   const count = Math.max(0, session.purchaseCounts?.[id] || 0);
   const availablePoints = Number.isFinite(session.points) ? session.points : (session.skillPoints || 0);
   const cost = shopPrice(id, count);
+  // Supply break (Bryan's eco call, Sep 20): interest banked through Logistics
+  // is the eco build's stockpile - it buys PAST the item cap, so a hoarded
+  // bank converts into survival when a wall arrives. Only the item cap yields:
+  // tier, line and visit caps and the full point cost still apply, and the
+  // break drains the supply ledger by the purchase's cost.
+  const itemCapped = isItemCapped(session, id);
+  const supplyBreak = itemCapped && (session.ecoUnspent || 0) >= cost;
+  if (itemCapped && !supplyBreak) return { session, ok: false, reason: 'item-capped' };
   if (availablePoints < cost) return { session, ok: false, reason: 'insufficient', cost };
   const purchaseCounts = { ...(session.purchaseCounts || {}), [id]: count + 1 };
   const upgradeTiers = { ...(session.upgradeTiers || {}), [id]: upgradeTier(session, id) + 1 };
@@ -423,6 +432,7 @@ export function purchaseUpgrade(session, id) {
     points: availablePoints - cost,
     purchaseCounts,
     upgradeTiers,
+    ecoUnspent: Math.max(0, (session.ecoUnspent || 0) - (supplyBreak ? cost : 0)),
     armoryPicks: (session.armoryPicks || 0) + 1,
   };
   if (id === 'extraLife') next.lives = Math.min(MAX_LIVES, (session.lives || 0) + 1);
@@ -527,7 +537,7 @@ export const pickUpgradeSet = (rng, session = createCleanRun(0)) => pickBossRewa
 
 export function applyBossReward(session, id) {
   const item = SHOP_BY_ID[id];
-  if (!item || isUpgradeCapped(session, id) || isLineLocked(session, id)) return session;
+  if (!item || isUpgradeCapped(session, id)) return session; // free rewards bypass the 4-line cap (Bryan's call, Sep 20)
   const next = {
     ...session,
     upgradeTiers: { ...(session.upgradeTiers || {}), [id]: upgradeTier(session, id) + 1 },
@@ -649,6 +659,7 @@ export function createCleanRun(seed = 0, difficulty = 'veteran') {
     bestCombo: 0,
     purchaseCounts: {},
     upgradeTiers: {},
+    ecoUnspent: 0,
     recoveryTime: 0,
     frenzy: 0,
     frenzyTimer: 0,
