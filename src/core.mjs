@@ -81,7 +81,7 @@ export function clampToLane(x, lane, padding = 0.02) {
 }
 
 export const MAX_TROOPS = 9_999; // safety rail, not a design cap (v2: polynomial growth)
-export const MAX_VISIBLE_SQUAD = 24;
+export const MAX_VISIBLE_SQUAD = 60;
 export const MAX_PROJECTILES = 6;
 export const MAX_FIRE_RATE = 40; // safety rail, not a design cap (v2: +0.4/tier additive)
 export const ENGAGEMENT_Y = 0.04; // horizon gate: enemies take no bullet damage until this far onto the visible field - kills must be seen (Bryan 2026-09-19)
@@ -387,8 +387,12 @@ export function applyBossReward(session, id) {
 
 export function visibleSquadCount(troops, formationDensity = 0) {
   const count = Math.max(1, Math.round(Number.isFinite(troops) ? troops : 1));
-  const cap = Math.min(MAX_VISIBLE_SQUAD, 60 + Math.max(0, formationDensity) * 2);
-  return Math.min(count, cap);
+  // Faithful 1:1 up to 36, then half-rate growth to the cap: big armies read as
+  // big armies (roughly double the old 24-soldier ceiling at late-run counts)
+  // while the formation stays legible. Formation density raises the cap.
+  const base = count <= 36 ? count : 36 + Math.floor((count - 36) / 2);
+  const cap = Math.min(MAX_VISIBLE_SQUAD, 52 + Math.max(0, formationDensity) * 2);
+  return Math.min(base, cap);
 }
 
 export function squadColumnCount(visibleCount, formationDensity = 0) {

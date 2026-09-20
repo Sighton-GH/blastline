@@ -254,8 +254,8 @@ test('clean retry resets every session value and transient collection', () => {
 });
 
 test('visible squad sprites remain individual through stress scale', () => {
-  assert.deepEqual([1, 14, 32, 60, 1000].map(value => visibleSquadCount(value)), [1, 14, 24, 24, 24]);
-  assert.equal(visibleSquadCount(240, 6), 24);
+  assert.deepEqual([1, 14, 32, 60, 1000].map(value => visibleSquadCount(value)), [1, 14, 32, 48, 52]);
+  assert.equal(visibleSquadCount(240, 6), 60);
 });
 
 test('the runtime only persists local personal records, never run progression', () => {
