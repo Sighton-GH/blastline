@@ -25,6 +25,7 @@ import {
   MAX_PICKS_PER_VISIT,
   UNCAPPED_UPGRADES,
   enemyHitPoints,
+  GENERIC_HP_GROWTH,
   enemyContactDamage,
   projectileDamageFactor,
   PLATE_REGEN_SECONDS,
@@ -989,7 +990,7 @@ function spawnElite(def) {
     speedFactor: def.speedFactor,
   });
   if (!enemy) return null;
-  const hp = Math.max(60, Math.round((enemyHitPoints('grunt', run.wave) * def.hpFactor + run.wave * 10) * config.pressure));
+  const hp = Math.max(60, Math.round((enemyHitPoints('grunt', run.wave, GENERIC_HP_GROWTH) * def.hpFactor + run.wave * 10) * config.pressure));
   enemy.hp = hp;
   enemy.maxHp = hp;
   enemy.elite = def.id;

@@ -39,6 +39,7 @@ import {
   isUpgradeCapped,
   upgradeTier,
   enemyHitPoints,
+  GENERIC_HP_GROWTH,
   enemyContactDamage,
   UTILITY_UPGRADES,
   resolveGateEncounter,
@@ -268,6 +269,24 @@ test('vehicles join the wave table on schedule and scale like enemies', () => {
   assert.ok(enemyHitPoints('transport', 1) > enemyHitPoints('heavy', 1));
   assert.ok(enemyContactDamage('transport', 1) > enemyContactDamage('heavy', 1));
   assert.ok(enemyHitPoints('transport', 10) > enemyHitPoints('transport', 1));
+});
+
+test('grunt curve: early waves stay readable, late grunts outgrow the generic slope (Bryan 2026-09-20)', () => {
+  // Early game untouched: wave 1 one-hit, wave 2 two-hit, wave 3 light.
+  assert.equal(enemyHitPoints('grunt', 1), 1);
+  assert.equal(enemyHitPoints('grunt', 2), 2);
+  assert.ok(enemyHitPoints('grunt', 3) <= 3, 'wave-3 grunt stays one-to-two hits');
+  // Late game: the grunt curve runs steeper than the generic enemy slope.
+  for (const wave of [6, 8, 10, 12]) {
+    assert.ok(
+      enemyHitPoints('grunt', wave) > enemyHitPoints('grunt', wave, GENERIC_HP_GROWTH),
+      `wave ${wave} grunt tougher than generic slope`,
+    );
+  }
+  // The generic slope is still available for callers pinned to it (elite HP).
+  assert.equal(enemyHitPoints('heavy', 8), Math.round(4 * Math.pow(GENERIC_HP_GROWTH, 7)));
+  // Grunts stay below heavies in absolute terms - tougher, not the new boss.
+  assert.ok(enemyHitPoints('grunt', 12) < enemyHitPoints('heavy', 12));
 });
 
 test('elemental lines: shock and frost tier to three with real tradeoffs', () => {

@@ -38,7 +38,9 @@ export const MECHANICS_V1 = Object.freeze({
 
 export const MECHANICS_V2 = Object.freeze({
   id: 'v2-redesign',
-  enemyHp: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].hp * Math.pow(1.5, wave - 1))),
+  // Mirrors core.mjs enemyHitPoints: grunts climb the steeper Bryan-steered
+  // curve; everything else uses the generic growth.
+  enemyHp: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].hp * Math.pow(type === 'grunt' ? 1.62 : 1.5, wave - 1))),
   contact: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].contact * Math.pow(1.16, wave - 1))),
   bossHp: (bossIndex, wave, pressure) => Math.round((bossIndex === 1 ? 320 : 420) * Math.pow(1.55, bossIndex - 1) * (0.92 + pressure * 0.08)),
   bossGate: (bossIndex, player) => {

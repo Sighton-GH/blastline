@@ -115,10 +115,19 @@ export const ENEMY_BASE_STATS = Object.freeze({
 
 // v2: exponential enemy scaling (owner directive 2026-09-19) - enemies always
 // outgrow polynomial player scaling; a well-played veteran run ends ~waves 11-14.
-export function enemyHitPoints(type, wave = 1) {
+export const GENERIC_HP_GROWTH = 1.5;
+// Grunt-specific growth (Bryan steering 2026-09-20): the rank-and-file must
+// keep pace as the run progresses - with the shared 1.5 curve, late builds
+// erase grunts faster than they erase specials and the field reads as
+// "only heavies matter". Grunts climb a steeper curve so they stay a real
+// threat deep into the run, while waves 1-3 stay one-to-two-hit readable.
+// Transport-spilled grunts inherit this automatically through spawnEnemy.
+export const GRUNT_HP_GROWTH = 1.62;
+export function enemyHitPoints(type, wave = 1, growth) {
   const base = (ENEMY_BASE_STATS[type] || ENEMY_BASE_STATS.grunt).hp;
   const w = clamp(Math.floor(Number.isFinite(wave) ? wave : 1), 1, 1_000_000);
-  return Math.max(1, Math.round(base * Math.pow(1.5, w - 1)));
+  const g = Number.isFinite(growth) ? growth : (type === 'grunt' ? GRUNT_HP_GROWTH : GENERIC_HP_GROWTH);
+  return Math.max(1, Math.round(base * Math.pow(g, w - 1)));
 }
 
 export function enemyContactDamage(type, wave = 1) {

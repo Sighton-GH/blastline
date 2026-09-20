@@ -376,7 +376,7 @@ async function runInteractionValidation() {
   await page.locator('.reward-card:not(:disabled)').first().click();
   await page.waitForTimeout(200);
   const rewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
-  record('elevenArmoryChoices', rewards.length === 11 && new Set(rewards).size === 11, rewards);
+  record('thirteenArmoryChoices', rewards.length === 13 && new Set(rewards).size === 13, rewards);
   await page.locator('.reward-card:not(:disabled)').first().click();
   await page.locator('.armory-continue').click();
   record('bossArmoryTransition', (await page.evaluate(() => __blastlineTest.getState())).wave === 9 && (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
