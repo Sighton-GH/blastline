@@ -2490,12 +2490,37 @@ function deliverBoatReinforcements(boat) {
   updateHud(true);
 }
 
-// Boats live in the water channels: clip to the same regions the glints use so
-// hulls never overdraw the deck, rails, or furniture.
+// Boats live in the water channels: clip to the water so hulls never overdraw
+// the deck, rails, or furniture. The glint trace (96 segments per side) is
+// overkill for clipping two small hulls and cost ~1ms/frame (4ms+ under the
+// validator's 4x CPU throttle); 14 segments per side is visually identical
+// for containing boats.
+function traceBoatClip(target) {
+  const segments = 14;
+  const horizon = sceneHorizon();
+  target.beginPath();
+  target.moveTo(0, horizon);
+  target.lineTo(W / 2, horizon);
+  for (let index = 1; index <= segments; index += 1) {
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
+    target.lineTo(W / 2 - bridgeHalfWidth(y) * 1.025, perspectiveY(y));
+  }
+  target.lineTo(0, H * 1.08);
+  target.closePath();
+  target.moveTo(W, horizon);
+  target.lineTo(W / 2, horizon);
+  for (let index = 1; index <= segments; index += 1) {
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
+    target.lineTo(W / 2 + bridgeHalfWidth(y) * 1.025, perspectiveY(y));
+  }
+  target.lineTo(W, H * 1.08);
+  target.closePath();
+}
+
 function drawBoats() {
   if (!boatFleet.boats.length) return;
   ctx.save();
-  traceWaterRegions(ctx);
+  traceBoatClip(ctx);
   ctx.clip();
   drawBoatFleet(ctx, boatFleet, {
     perspectiveY,
