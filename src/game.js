@@ -114,7 +114,7 @@ const textCache = new WeakMap();
 const styleCache = new WeakMap();
 const keys = Object.create(null);
 const SIM_STEP = 1 / 60;
-const MAX_PLAYER_BULLETS = 720;
+const MAX_PLAYER_BULLETS = 1000;
 const MAX_ENEMY_BULLETS = 150;
 const Y_BUCKETS = 32;
 const FORMATIONS = Object.freeze(['wall', 'wedge', 'column', 'staggered', 'protected-core', 'split-lane']);
@@ -746,19 +746,29 @@ function fireBurst() {
       y: slot.y - .05,
     };
   });
+  const frenzy = run.frenzyTimer > 0;
   const spreadCount = run.player.projectiles;
   const spread = spreadCount === 1 ? [0] : Array.from({ length: spreadCount }, (_, index) => lerp(-.062, .062, index / (spreadCount - 1)));
   const middle = Math.floor(spread.length / 2);
   const offsets = [spread[middle] ?? 0, ...spread.filter((_, index) => index !== middle)];
+  // Frenzy fires two extra rounds per soldier outside the normal fan. They are
+  // softer hits (55%) so the storm melts crowds without deciding the wave, and
+  // every Frenzy round hits 25% harder so the burst feels like a damage spike.
+  const fanEdge = spreadCount === 1 ? 0 : .062;
+  const volley = offsets.map(offset => ({ offset, bonus: false }));
+  if (frenzy) {
+    volley.push({ offset: -(fanEdge + .075), bonus: true }, { offset: fanEdge + .075, bonus: true });
+  }
+  const frenzyPower = run.player.power * projectileDamageFactor(spreadCount) * (frenzy ? 1.25 : 1);
   let emitted = 0;
-  for (const offset of offsets) {
+  for (const { offset, bonus } of volley) {
     for (const origin of origins) {
       if (run.bullets.length >= MAX_PLAYER_BULLETS) break;
       const critical = rng() < run.player.criticalChance;
       run.bullets.push(pools.bullets.take({
         x: origin.x, y: origin.y, previousX: origin.x, previousY: origin.y, originX: origin.x, originY: origin.y,
-        vx: offset * .72, vy: -1.02 * run.player.bulletSpeed * (run.frenzyTimer > 0 ? 1.18 : 1),
-        power: run.player.power * projectileDamageFactor(run.player.projectiles) * (critical ? 2 : 1), critical,
+        vx: offset * .72, vy: -1.02 * run.player.bulletSpeed * (frenzy ? 1.18 : 1),
+        power: frenzyPower * (bonus ? .55 : 1) * (critical ? 2 : 1), critical,
         hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
       }));
       emitted += 1;
@@ -2824,11 +2834,12 @@ function drawEnemyBullets() {
 function drawPlayerBullets() {
   ctx.save();
   ctx.lineCap = 'round';
-  ctx.strokeStyle = run.frenzyTimer > 0 ? '#fff2a4' : '#ffc33f';
+  const frenzy = run.frenzyTimer > 0;
+  ctx.strokeStyle = frenzy ? '#fff2a4' : '#ffc33f';
   const stride = stressMode && run.bullets.length > 540 ? 2 : 1;
   const BANDS = 8;
   for (let band = 0; band < BANDS; band += 1) {
-    ctx.lineWidth = Math.max(.45, projectedPixels(sceneProjection, (band + .5) / BANDS, 2.4));
+    ctx.lineWidth = Math.max(.45, projectedPixels(sceneProjection, (band + .5) / BANDS, 2.4) * (frenzy ? 1.7 : 1));
     ctx.beginPath();
     for (let index = 0; index < run.bullets.length; index += stride) {
       const bullet = run.bullets[index];
@@ -2839,8 +2850,19 @@ function drawPlayerBullets() {
       const tail = projectToScreen(lerp(bullet.previousX, x, .1), lerp(bullet.previousY, y, .1), projectionScratchB);
       ctx.moveTo(tail.x, tail.y);
       ctx.lineTo(head.x, head.y);
+      if (frenzy) {
+        ctx.moveTo(head.x + 2.2, head.y);
+        ctx.arc(head.x, head.y, Math.max(.8, ctx.lineWidth * .5), 0, Math.PI * 2);
+      }
     }
     ctx.stroke();
+    if (frenzy) {
+      ctx.save();
+      ctx.globalAlpha = .85;
+      ctx.fillStyle = '#fffbe0';
+      ctx.fill();
+      ctx.restore();
+    }
   }
   ctx.restore();
 }
@@ -2875,7 +2897,7 @@ function drawPlayer() {
         if (shooting) {
           ctx.fillStyle = '#fff3a8';
           ctx.beginPath();
-          ctx.arc(screen.x - height * .25, baseline - height * .55, height * .045, 0, Math.PI * 2);
+          ctx.arc(screen.x - height * .25, baseline - height * .55, height * (run.frenzyTimer > 0 ? .075 : .045), 0, Math.PI * 2);
           ctx.fill();
         }
       } else {
