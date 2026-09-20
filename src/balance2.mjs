@@ -17,7 +17,12 @@ export const MECHANICS_V1 = Object.freeze({
   id: 'v1-live',
   enemyHp: (type, wave) => ENEMY_BASE[type].hp + (type === 'heavy' ? Math.min(1, Math.floor(Math.log2(wave + 1) / 3)) : 0),
   contact: (type) => ENEMY_BASE[type].contact,
-  bossHp: null, // null = use getWaveConfig().bossHp
+  bossHp: (bossIndex, wave, pressure) => {
+    // pinned v1-live formula (pre-redesign core): linear in wave, capped 14k
+    const logScale = Math.log2(wave + 1);
+    const escalation = wave >= 3 ? 1 + (wave - 3) * 0.08 : 1;
+    return Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + pressure * 0.08) * escalation));
+  },
   bossGate: () => 1, // no archetype gates
   price: (item, count) => Math.max(1, Math.round(item.baseCost * Math.pow(1.75, count))),
   caps: { power: 16, fireRate: 16, projectiles: 4, troops: 240, crit: .35, pierce: 4, armor: 60 },
@@ -161,7 +166,12 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
       purchases.push(id);
     }
     // reserves purchase heuristic: buy one when rich and threatened
-    if (points > 1400 && lives < 2 && reservesBought < 2 && wave >= 6) { points -= 950; lives += 1; reservesBought += 1; }
+    if (lives < 2 && wave >= 6) {
+      const reserveCost = mechanics.id === 'v2-redesign'
+        ? Math.round(950 * Math.pow(reservesBought + 1, 1.7))
+        : Math.round(950 * Math.pow(1.75, reservesBought));
+      if (points > reserveCost * 1.4) { points -= reserveCost; lives += 1; reservesBought += 1; }
+    }
   }
   return { seed, difficulty, bot, mechanics: mechanics.id, wavesCompleted: completed, kills, score, finalDps: Math.round(Math.max(0, player.troops) * player.power * player.fireRate * player.projectiles * Math.pow(.88, Math.max(0, player.projectiles - 1))), troopsLeft: Math.max(0, Math.round(player.troops)), purchaseCount: purchases.length, firstPurchases: purchases.slice(0, 8) };
 }

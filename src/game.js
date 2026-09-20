@@ -11,6 +11,11 @@ import {
   applyBossReward,
   applyGate,
   applyTroopDamage,
+  enemyHitPoints,
+  enemyContactDamage,
+  projectileDamageFactor,
+  PLATE_REGEN_SECONDS,
+  MAX_PLATES,
   clamp,
   claimKillReward,
   createCleanRun,
@@ -649,7 +654,7 @@ function fireBurst() {
       run.bullets.push(pools.bullets.take({
         x: origin.x, y: origin.y, previousX: origin.x, previousY: origin.y, originX: origin.x, originY: origin.y,
         vx: offset * .72, vy: -1.02 * run.player.bulletSpeed * (run.frenzyTimer > 0 ? 1.18 : 1),
-        power: run.player.power * (critical ? 2 : 1), critical,
+        power: run.player.power * projectileDamageFactor(run.player.projectiles) * (critical ? 2 : 1), critical,
         hitsLeft: 1 + run.player.pierce, lastHitId: -1, shooter: origin.slot, dead: false,
       }));
       emitted += 1;
@@ -676,15 +681,15 @@ function spawnEnemy(type = 'grunt', options = {}) {
   const stats = TYPE_STATS[type] || TYPE_STATS.grunt;
   const lane = clamp(Math.round(options.lane ?? Math.floor(rng() * 3)), 0, 2);
   const lineX = clamp(options.x ?? laneCenter(lane), laneBounds(lane, .018).min, laneBounds(lane, .018).max);
-  const highWaveHp = type === 'heavy' ? Math.min(5, stats.hp + Math.floor(Math.log2(run.wave + 1) / 3)) : stats.hp;
+  const scaledHp = enemyHitPoints(type, run.wave);
   const enemy = pools.enemies.take({
     id: ++enemySerial, type, lane, x: lineX, lineX,
     y: options.y ?? (-.04 - rng() * .04), previousY: options.y ?? -.04,
-    hp: highWaveHp, maxHp: highWaveHp,
+    hp: scaledHp, maxHp: scaledHp,
     shield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
     maxShield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
     speed: options.speed ?? config.enemySpeed * stats.speed * (.97 + rng() * .06),
-    scale: stats.scale, contact: stats.contact,
+    scale: stats.scale, contact: enemyContactDamage(type, run.wave),
     bob: options.marchPhase ?? rng() * 1000,
     hordeId: options.hordeId ?? null, hordeRow: options.hordeRow ?? 0,
     formation: options.formation ?? 'wall', shotTimer: options.shotTimer ?? (.9 + rng() * 1.5),
@@ -816,7 +821,6 @@ function updateBossPhase() {
   if (phase > run.boss.phase) {
     run.boss.phase = phase;
     run.boss.attackTimer = .85;
-    run.boss.invulnTimer = 1.1;
     addFloater(run.boss.x, run.boss.y + .1, `PHASE ${phase}`, '#ffb25f', 25);
     burst(run.boss.x, run.boss.y, '#ff704e', 24);
     addTrauma(.7);
@@ -975,7 +979,7 @@ function defeatEnemy(enemy) {
   run.comboTimer = 2.6;
   run.bestCombo = Math.max(run.bestCombo, run.combo);
   const comboMultiplier = Math.min(5, 1 + Math.floor(run.combo / 5));
-  const claim = claimKillReward(enemy, run.kills);
+  const claim = claimKillReward(enemy, run.kills, config.density);
   enemy.rewarded = claim.enemy.rewarded;
   if (!claim.reward) return;
   awardPoints(claim.reward.points * comboMultiplier);
@@ -1105,11 +1109,8 @@ function collidePlayerBullets() {
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
       if (crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
-        if (boss.invulnTimer > 0) {
-          if (!stressMode) burst(bullet.x, boss.y, '#9fb7c9', 2);
-          continue;
-        }
-        boss.hp -= bullet.power;
+        boss.hp -= bullet.power; // v2: no invuln window - sustained fire always lands
+
         boss.hitFlash = .085;
         awardPoints(bullet.critical ? 4 : 2);
         if (!stressMode) { burst(bullet.x, boss.y, bullet.critical ? '#fff076' : '#ffad4a', bullet.critical ? 5 : 2); audio.bossHit(); }
@@ -1178,6 +1179,16 @@ function update(dt) {
   else run.bossTime += dt;
   if (run.frenzyTimer > 0) run.frenzyTimer = Math.max(0, run.frenzyTimer - dt);
   if (run.player.protectedFor > 0) run.player.protectedFor = Math.max(0, run.player.protectedFor - dt);
+  // v2 plating: broken plates regenerate one per PLATE_REGEN_SECONDS up to the purchased max
+  run.player.platesMax = Math.max(run.player.platesMax ?? 2, run.player.plates ?? 0);
+  run.plateRegenTimer = (run.plateRegenTimer || 0) + dt;
+  if (run.plateRegenTimer >= PLATE_REGEN_SECONDS) {
+    run.plateRegenTimer %= PLATE_REGEN_SECONDS;
+    if ((run.player.plates ?? 0) < run.player.platesMax) {
+      run.player.plates += 1;
+      run.player.armor = run.player.plates;
+    }
+  }
 
   const direction = (keys.ArrowLeft || keys.a || keys.A ? -1 : 0) + (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
   if (direction) run.player.targetX = clamp(run.player.targetX + direction * dt * run.player.speed, -LANE_LIMIT, LANE_LIMIT);

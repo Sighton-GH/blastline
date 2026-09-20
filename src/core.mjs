@@ -424,9 +424,9 @@ export function enemyReward(type, killCount = 0, density = 1) {
   return reward;
 }
 
-export function claimKillReward(enemy, killCount = 0) {
+export function claimKillReward(enemy, killCount = 0, density = 1) {
   if (enemy.rewarded) return { enemy, reward: null };
-  return { enemy: { ...enemy, rewarded: true }, reward: enemyReward(enemy.type, killCount) };
+  return { enemy: { ...enemy, rewarded: true }, reward: enemyReward(enemy.type, killCount, density) };
 }
 
 export function reviveSession(session) {
