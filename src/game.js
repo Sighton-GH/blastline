@@ -930,7 +930,10 @@ function addTelegraph(lane, time, kind, source = null, options = {}) {
   // is refused so there is always a genuinely open escape lane.
   const covered = new Set();
   for (const active of run.telegraphs) if (!active.fired && !active.dead) covered.add(active.lane);
-  if (!covered.has(lane) && covered.size >= 2) return null;
+  // Never two alerts in one lane, even while both are still in the warning
+  // stage -- a second warning in a threatened lane reads as stacking noise.
+  if (covered.has(lane)) return null;
+  if (covered.size >= 2) return null;
   const warning = pools.telegraphs.take({
     lane, x: laneCenter(lane), time, maxTime: time, kind, source,
     damage: options.damage ?? 1, speed: options.speed ?? .48,
@@ -1443,7 +1446,7 @@ function updateTelegraphs(dt) {
     spawnEnemyProjectile(source, {
       kind: warning.kind === 'demolition' ? 'hazard' : 'lane', lane: warning.lane,
       x: muzzleX, y: Math.max(.14, source.y + .03), vx: converge,
-      vy: warning.speed, radius: warning.kind === 'demolition' ? .13 : .105,
+      vy: warning.speed, radius: warning.kind === 'demolition' ? .17 : .13,
       damage: warning.damage, color: '#ff543f',
     });
   }
@@ -1455,7 +1458,7 @@ function updateEnemyAttacks(enemy, dt) {
   if (enemy.shotTimer > 0) return;
   if (enemy.type === 'gunner') addTelegraph(enemy.lane, .46, 'gunner', enemy, { speed: .4 * config.pressure, damage: 1 });
   else addTelegraph(enemy.lane, .85, 'demolition', enemy, { speed: .31 * config.pressure, damage: run.wave >= 10 ? 2 : 1 });
-  enemy.shotTimer = (enemy.type === 'gunner' ? 3.6 : 5.1) / config.pressure + rng() * 1.2;
+  enemy.shotTimer = (enemy.type === 'gunner' ? 3.4 : 5.0) / config.pressure + rng() * 2.1;
 }
 
 function updateRecovery(dt) {
@@ -2833,7 +2836,7 @@ function drawTelegraphs() {
     const flash = imminent
       ? (Math.sin(ambientTime * 34) > 0 ? 1 : .18)
       : .55 + .45 * Math.sin(ambientTime * 7);
-    ctx.globalAlpha = (.14 + urgency * .3) * flash + (imminent ? .12 : 0);
+    ctx.globalAlpha = (.24 + urgency * .34) * flash + (imminent ? .14 : 0);
     ctx.fillStyle = '#ff3f38';
     ctx.beginPath();
     ctx.moveTo(farLeft.x, farLeft.y);
@@ -2843,14 +2846,45 @@ function drawTelegraphs() {
     ctx.closePath();
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = .82;
-    ctx.strokeStyle = '#ffe16a';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 7]);
+    // Lane edge rails: the warning owns the whole lane silhouette, not just a
+    // centre stripe, so it reads at a glance even in a crowded fight.
+    ctx.globalAlpha = (.55 + urgency * .35) * flash;
+    ctx.strokeStyle = '#ff5347';
+    ctx.lineWidth = Math.max(1.2, projectedPixels(sceneProjection, .55, 3.4));
     ctx.beginPath();
-    ctx.moveTo((farLeft.x + farRight.x) / 2, farLeft.y);
-    ctx.lineTo((nearLeft.x + nearRight.x) / 2, nearLeft.y);
+    ctx.moveTo(farLeft.x, farLeft.y);
+    ctx.lineTo(nearLeft.x, nearLeft.y);
+    ctx.moveTo(farRight.x, farRight.y);
+    ctx.lineTo(nearRight.x, nearRight.y);
     ctx.stroke();
+    // Chevron volley marching down the lane toward the squad: direction and
+    // imminence in one read, replacing the faint dashed centre line.
+    const farCx = (farLeft.x + farRight.x) / 2;
+    const nearCx = (nearLeft.x + nearRight.x) / 2;
+    const laneLen = Math.hypot(nearCx - farCx, nearLeft.y - farLeft.y);
+    const ux = (nearCx - farCx) / Math.max(1, laneLen);
+    const uy = (nearLeft.y - farLeft.y) / Math.max(1, laneLen);
+    const px = -uy;
+    const py = ux;
+    const chevrons = 5;
+    const march = (ambientTime * (imminent ? 2.6 : 1.15)) % 1;
+    ctx.strokeStyle = '#ffe16a';
+    ctx.lineCap = 'round';
+    for (let c = 0; c < chevrons; c += 1) {
+      const t = ((c + march) / chevrons) * .92 + .05;
+      const cx = lerp(farCx, nearCx, t);
+      const cy = lerp(farLeft.y, nearLeft.y, t);
+      const depth = lerp(.17, .99, t);
+      const arm = Math.max(4, projectedPixels(sceneProjection, depth, 20));
+      const alpha = (.6 + .4 * t) * (.6 + .4 * flash);
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = Math.max(1.6, projectedPixels(sceneProjection, depth, 4.6));
+      ctx.beginPath();
+      ctx.moveTo(cx - px * arm - ux * arm * .72, cy - py * arm - uy * arm * .72);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx + px * arm - ux * arm * .72, cy + py * arm - uy * arm * .72);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 }
@@ -2864,7 +2898,55 @@ function drawEnemyBullets() {
     const screen = projectToScreen(x, y, projectionScratchA);
     const previous = projectToScreen(bullet.previousX, bullet.previousY, projectionScratchB);
     if (!screen.visible) continue;
-    const size = projectedPixels(sceneProjection, y, 5.5) * (bullet.kind === 'hazard' ? 1.5 : 1);
+    if (bullet.kind === 'lane' || bullet.kind === 'hazard') {
+      // Telegraph missile: a layered capsule with a flame tail and a pulsing
+      // halo, sized well past its collision radius so the threat is readable
+      // from the moment it leaves the launcher (Bryan: 'big and dramatic').
+      const scale = bullet.kind === 'hazard' ? 1.45 : 1;
+      const size = projectedPixels(sceneProjection, y, 11) * scale;
+      let dx = screen.x - previous.x;
+      let dy = screen.y - previous.y;
+      const len = Math.hypot(dx, dy);
+      if (len < .01) { dx = 0; dy = 1; } else { dx /= len; dy /= len; }
+      const tailX = screen.x - dx * size * 3.1;
+      const tailY = screen.y - dy * size * 3.1;
+      const pulse = .8 + .2 * Math.sin(ambientTime * 16 + bullet.y * 40);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = .32;
+      ctx.strokeStyle = '#ff2e1f';
+      ctx.lineWidth = Math.max(1, size * 1.9 * pulse);
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(screen.x, screen.y);
+      ctx.stroke();
+      ctx.globalAlpha = .9;
+      ctx.strokeStyle = '#ff8a3d';
+      ctx.lineWidth = Math.max(.8, size * 1.02);
+      ctx.beginPath();
+      ctx.moveTo(lerp(tailX, screen.x, .28), lerp(tailY, screen.y, .28));
+      ctx.lineTo(screen.x, screen.y);
+      ctx.stroke();
+      ctx.strokeStyle = '#fff6dc';
+      ctx.lineWidth = Math.max(.6, size * .44);
+      ctx.beginPath();
+      ctx.moveTo(lerp(tailX, screen.x, .62), lerp(tailY, screen.y, .62));
+      ctx.lineTo(screen.x, screen.y);
+      ctx.stroke();
+      ctx.fillStyle = '#fff6dc';
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, size * .5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = .5 * pulse;
+      ctx.strokeStyle = '#ffd23f';
+      ctx.lineWidth = Math.max(.6, size * .16);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, size * 1.05, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      continue;
+    }
+    const size = projectedPixels(sceneProjection, y, 5.5);
     ctx.strokeStyle = bullet.color;
     ctx.lineWidth = Math.max(.45, size * .7);
     ctx.beginPath();
@@ -3283,7 +3365,9 @@ function setupStressScene() {
   };
   setState(GAME_STATE.BOSS);
   for (let index = 0; index < 5; index += 1) fireBurst();
-  for (const [lane, offset] of [[0, 0], [1, .12], [0, .24]]) addTelegraph(lane, .7 + offset, 'suppression', run.boss, { damage: 2, speed: .56 });
+  // Two concurrent warnings in distinct lanes: the maximum the per-lane
+  // uniqueness rule now allows, so the stress scene still peaks telegraph load.
+  for (const [lane, offset] of [[0, 0], [1, .12]]) addTelegraph(lane, .7 + offset, 'suppression', run.boss, { damage: 2, speed: .56 });
   for (let index = 0; index < 80; index += 1) burst((index % 10 - 5) * .12, .2 + Math.floor(index / 10) * .05, index % 2 ? '#ff604f' : '#ffd04c', 1);
   stressMode = true;
   updateHud(true);

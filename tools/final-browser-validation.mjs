@@ -443,7 +443,7 @@ async function runPerformanceValidation() {
   const page = await newPage(context, 'performance-stress');
   const cdp = await context.newCDPSession(page);
   const stressStart = await page.evaluate(() => __blastlineTest.stressScene());
-  record('stressSceneEntityMinimums', stressStart.visibleSquad === 24 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 3, stressStart);
+  record('stressSceneEntityMinimums', stressStart.visibleSquad === 24 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 2, stressStart);
   await page.waitForTimeout(2000);
   performance.stressBenchmarks1x = await page.evaluate(() => ({ drawMs: __blastlineTest.benchmarkDraw(20), updateMs: __blastlineTest.benchmarkUpdate(60) }));
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
