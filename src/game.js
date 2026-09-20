@@ -975,9 +975,10 @@ function spawnBoss() {
   run.boss = {
     id: ++enemySerial, type: 'boss', name: archetype.name, archetype: archetype.id,
     dmgGate: archetype.gate(run.player),
-    lane: 1, x: 0, y: -.12, previousY: -.12,
+    lane: 1, x: 0, y: -.12, previousX: 0, previousY: -.12,
     hp: config.bossHp, maxHp: config.bossHp,
     phase: 1, attackTimer: 1.05, attackSerial: 0, hitFlash: 0, shotFlash: 0, invulnTimer: 0,
+    vx: 0, stridePhase: 0, lastPlant: 0,
     rewarded: false,
   };
   setState(GAME_STATE.BOSS);
@@ -1625,9 +1626,25 @@ function update(dt) {
     if (run.pendingBossReward <= 0) openBossRewards();
   }
   if (run.boss) {
-    run.boss.previousY = run.boss.y;
-    run.boss.y = Math.min(.75, run.boss.y + dt * .19);
-    if (run.boss.archetype === 'reaper') run.boss.x = Math.sin(run.bossTime * 1.1) * .42;
+    const boss = run.boss;
+    boss.previousX = boss.x;
+    boss.previousY = boss.y;
+    boss.y = Math.min(.75, boss.y + dt * .19);
+    if (boss.archetype === 'reaper') boss.x = Math.sin(run.bossTime * 1.1) * .42;
+    boss.vx = dt > 0 ? (boss.x - boss.previousX) / dt : 0;
+    // March rig: stride phase drives the stomp bob, alternating boot lift and
+    // footfall dust. Heavy but quick paces while marching in; a slow weight-shift
+    // once in position so the boss never freezes; faster scramble while strafing.
+    const marching = boss.y < .749;
+    const strideRate = marching ? 6.6 : clamp(Math.abs(boss.vx) * 9, 1.5, 8);
+    boss.stridePhase = (boss.stridePhase || 0) + dt * strideRate;
+    const plant = Math.floor(boss.stridePhase / Math.PI);
+    if (plant !== (boss.lastPlant ?? 0)) {
+      boss.lastPlant = plant;
+      if (!stressMode && boss.y > .02 && (marching || Math.abs(boss.vx) > .1)) {
+        burst(boss.x + (plant % 2 === 0 ? -.085 : .085), boss.y, '#8b979e', 4);
+      }
+    }
     if (run.boss.invulnTimer > 0) run.boss.invulnTimer = Math.max(0, run.boss.invulnTimer - dt);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
@@ -2783,19 +2800,39 @@ function drawBoss() {
   const bossNearHeight = Math.min(190, H * .24, W * .5) * (TYPE_STATS.heavy.scale || 1);
   const height = Math.min(projectedPixels(sceneProjection, y, bossNearHeight) * 2.35, H * .28, W * .34);
   if (!screen.visible || height < 1) return;
-  const bob = Math.sin(run.bossTime * 3.3) * height * .008;
+  const stride = boss.stridePhase || 0;
+  const marching = boss.y < .749;
+  // Full stomp amplitude while marching; a subdued weight-shift in position.
+  const strideAmp = marching ? 1 : .32;
+  const liftL = Math.max(0, Math.sin(stride));
+  const liftR = Math.max(0, Math.sin(stride + Math.PI));
+  const bob = Math.sin(stride * 2) * height * .011 * strideAmp - (liftL + liftR) * height * .004 * strideAmp;
+  const sway = Math.sin(stride) * height * .008 * strideAmp;
+  const lean = clamp(-(boss.vx || 0) * .045, -.05, .05);
   const bossImage = height < 210
     ? (height < 100 ? litMicroLodAssets.boss || microLodAssets.boss : null) || litLodAssets.boss || lodAssets.boss || litAssets.boss || runtimeAssets.boss
     : litAssets.boss || runtimeAssets.boss;
   if (bossImage) {
     ctx.save();
     ctx.globalAlpha *= horizonFade(sceneProjection, y);
-    ctx.translate(screen.x, screen.y + bob);
+    ctx.translate(screen.x + sway, screen.y + bob);
+    if (Math.abs(lean) > .001) ctx.rotate(lean);
     ctx.fillStyle = 'rgba(20,22,25,.3)';
     ctx.beginPath();
     ctx.ellipse(0, 4, height * .31, height * .065, 0, 0, Math.PI * 2);
     ctx.fill();
-    drawSprite(bossImage, 0, 0, height);
+    // March rig: body (top 80%) and boots (bottom 22%, 2% overlap so lifts never
+    // open a seam) move on the stride cycle - each boot lifts and splays as it
+    // swings, plants flat at the bottom of the stomp.
+    const bw = bossImage.width, bh = bossImage.height;
+    const width = height * bw / bh;
+    ctx.drawImage(bossImage, 0, 0, bw, bh * .8, -width / 2, -height, width, height * .8);
+    const bootLift = height * .016 * strideAmp;
+    const bootSpread = height * .007 * strideAmp;
+    ctx.drawImage(bossImage, 0, bh * .78, bw * .5, bh * .22,
+      -width / 2 - liftL * bootSpread, -height * .22 - liftL * bootLift, width * .5, height * .22);
+    ctx.drawImage(bossImage, bw * .5, bh * .78, bw * .5, bh * .22,
+      liftR * bootSpread, -height * .22 - liftR * bootLift, width * .5, height * .22);
     if (boss.phase >= 2) {
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = boss.phase === 3 ? .2 + .08 * Math.sin(run.bossTime * 9) : .11;
@@ -2819,7 +2856,9 @@ function drawBoss() {
     drawBossCombatant(ctx, screen, height, boss.hitFlash, run.bossTime);
     ctx.restore();
   }
-  const blasterYs = screen.y - height * .46;
+  // Blaster effects ride the march rig's sway/bob so the glow stays glued to the sprite.
+  const blasterYs = screen.y + bob - height * .46;
+  const blasterCx = screen.x + sway;
   const armed = run.telegraphs.some(warning => !warning.fired && !warning.dead && warning.source === boss);
   if (armed) {
     // Charge-up: both blasters breathe with a gathering glow while shots arm.
@@ -2827,7 +2866,7 @@ function drawBoss() {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     for (const sideX of [-1, 1]) {
-      const bx = screen.x + sideX * height * .29;
+      const bx = blasterCx + sideX * height * .29;
       const grad = ctx.createRadialGradient(bx, blasterYs, 0, bx, blasterYs, height * .1);
       grad.addColorStop(0, `rgba(255,196,90,${.55 + pulse * .4})`);
       grad.addColorStop(1, 'rgba(255,120,40,0)');
@@ -2843,7 +2882,7 @@ function drawBoss() {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     for (const sideX of [-1, 1]) {
-      const bx = screen.x + sideX * height * .29;
+      const bx = blasterCx + sideX * height * .29;
       const grad = ctx.createRadialGradient(bx, blasterYs, 0, bx, blasterYs, height * .13);
       grad.addColorStop(0, 'rgba(255,246,196,.95)');
       grad.addColorStop(.45, 'rgba(255,196,90,.7)');
