@@ -247,7 +247,8 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .secondary { border: 1px solid rgba(188,229,250,.38); color: #d9edf7; background: linear-gradient(180deg, #244b64, #102e43); box-shadow: 0 4px 0 #071c2b, inset 0 1px rgba(255,255,255,.12); }
 .button-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
-.home-overlay { place-items: center end; padding-right: clamp(24px, 7vw, 118px); background: linear-gradient(90deg, rgba(0,18,31,0) 0 40%, rgba(1,17,30,.2) 64%, rgba(1,12,22,.62)); }
+.home-overlay { place-items: safe center end; overflow-y: auto; scrollbar-width: none; padding-right: clamp(24px, 7vw, 118px); background: linear-gradient(90deg, rgba(0,18,31,0) 0 40%, rgba(1,17,30,.2) 64%, rgba(1,12,22,.62)); }
+.home-overlay::-webkit-scrollbar { display: none; }
 .home-shell { width: min(610px, 48vw); text-align: center; pointer-events: auto; }
 .home-title, .home-actions { padding: 18px 22px; border: 1px solid rgba(123,218,255,.28); border-radius: 22px; background: linear-gradient(180deg, rgba(5,40,63,.72), rgba(2,20,35,.86)); box-shadow: 0 18px 40px rgba(0,13,23,.27), inset 0 1px rgba(255,255,255,.11); backdrop-filter: blur(5px); }
 .home-actions { width: min(510px, 100%); margin: 11px auto 0; padding: 15px 19px 12px; }
@@ -434,12 +435,23 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .results b { font-size: 15px; }
 }
 
-@media (max-height: 700px) and (orientation: landscape) {
-  .home-title, .home-actions { padding-top: 11px; padding-bottom: 10px; }
-  .menu-logo { width: min(430px, 92%); }
-  .home-title .sub { font-size: 12px; }
-  .play-button { min-height: 57px; }
-  .play-button span { font-size: 24px; }
+@media (max-height: 760px) and (orientation: landscape) {
+  .home-title, .home-actions { padding-top: 8px; padding-bottom: 7px; }
+  .home-actions { margin-top: 8px; }
+  .menu-logo { width: min(320px, 84%); margin-bottom: 0; }
+  .home-title .sub { font-size: 11px; }
+  .difficulty-heading { margin-bottom: 5px; }
+  .difficulty-picker { gap: 6px; margin-bottom: 8px; }
+  .difficulty-option { min-height: 44px; padding: 6px 5px; }
+  .play-button { min-height: 48px; }
+  .play-button span { font-size: 21px; }
+  .controls { margin-top: 6px; }
+  .cache-banner { margin-top: 6px; padding: 5px 12px; }
+  .meta-panel { margin-top: 6px; gap: 5px; }
+  .meta-card { padding: 5px 5px 4px; }
+  .career-strip { margin-top: 6px; gap: 5px; }
+  .career-strip span { padding: 4px; }
+  .fresh-run-note { margin-top: 4px; }
   .dashboard-card { max-height: 96vh; padding: 13px; }
   .build-summary { margin-bottom: 8px; }
   .shop-item { min-height: 56px; }
