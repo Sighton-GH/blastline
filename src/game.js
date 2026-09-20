@@ -9,6 +9,7 @@ import {
   ENGAGEMENT_Y,
   MAX_ACTIVE_ENEMIES,
   MAX_TROOPS,
+  SHOP_BY_ID,
   SHOP_CATALOG,
   applyBossReward,
   applyGate,
@@ -93,7 +94,7 @@ const stageElement = document.querySelector('#stage');
 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
-  'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
+  'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards', 'upgradeInfo', 'upgradeInfoTitle', 'upgradeInfoTier', 'upgradeInfoBody', 'upgradeInfoClose',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
@@ -594,7 +595,9 @@ function setState(next) {
     returningCache.salvage = 0;
   }
   dom.pausePanel.classList.toggle('visible', next === GAME_STATE.PAUSED);
-  dom.rewardPanel.classList.toggle('visible', next === GAME_STATE.BOSS_REWARD || next === GAME_STATE.PAUSED_SHOP);
+  const rewardVisible = next === GAME_STATE.BOSS_REWARD || next === GAME_STATE.PAUSED_SHOP;
+  dom.rewardPanel.classList.toggle('visible', rewardVisible);
+  if (!rewardVisible) closeUpgradeInfo();
   dom.gameOverPanel.classList.toggle('visible', next === GAME_STATE.GAME_OVER);
   dom.recoveryPanel.classList.toggle('hidden', next !== GAME_STATE.RECOVERY);
   dom.hud.classList.toggle('hidden', !hudVisible);
@@ -1022,6 +1025,42 @@ function openArmory() {
   showBossRewards();
 }
 
+let upgradeInfoReturnFocus = null;
+function closeUpgradeInfo() {
+  if (!dom.upgradeInfo || dom.upgradeInfo.classList.contains('hidden')) return;
+  dom.upgradeInfo.classList.add('hidden');
+  if (upgradeInfoReturnFocus && document.contains(upgradeInfoReturnFocus)) upgradeInfoReturnFocus.focus({ preventScroll: true });
+  upgradeInfoReturnFocus = null;
+}
+function openUpgradeInfo(upgradeId, tierText, anchor) {
+  const item = SHOP_BY_ID[upgradeId];
+  if (!item) return;
+  upgradeInfoReturnFocus = anchor || null;
+  setText(dom.upgradeInfoTitle, item.title);
+  setText(dom.upgradeInfoTier, tierText || '');
+  setText(dom.upgradeInfoBody, item.info || item.synergy || item.short);
+  dom.upgradeInfo.classList.remove('hidden');
+  dom.upgradeInfoClose.focus({ preventScroll: true });
+  audio.click?.();
+}
+function attachInfoControl(cell, upgradeId, tierText) {
+  const info = document.createElement('button');
+  info.type = 'button';
+  info.className = 'info-btn';
+  info.textContent = '?';
+  info.setAttribute('aria-label', `About ${SHOP_BY_ID[upgradeId]?.title || 'this upgrade'}`);
+  info.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (dom.upgradeInfo.classList.contains('hidden') || upgradeInfoReturnFocus !== info) openUpgradeInfo(upgradeId, tierText, info);
+    else closeUpgradeInfo();
+  });
+  cell.append(info);
+}
+
+dom.upgradeInfoClose.addEventListener('click', () => closeUpgradeInfo());
+dom.upgradeInfo.addEventListener('pointerdown', event => { if (event.target === dom.upgradeInfo) closeUpgradeInfo(); });
+
 function showBossRewards() {
   setText(dom.rewardWave, run.wave);
   setText(dom.rewardKind, state === GAME_STATE.PAUSED_SHOP ? 'PAUSED' : armoryMode === 'reward' ? 'BOSS DOWN' : 'WAVE CLEARED');
@@ -1044,7 +1083,11 @@ function showBossRewards() {
       const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = 'FREE UPGRADE';
       button.append(image, title, rank, description, synergy);
       button.onclick = () => chooseFreeReward(item.id);
-      dom.rewardCards.append(button);
+      const cell = document.createElement('div');
+      cell.className = 'reward-cell';
+      cell.append(button);
+      attachInfoControl(cell, item.id, rank.textContent);
+      dom.rewardCards.append(cell);
     }
     const continueButton = document.createElement('button');
     continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
@@ -1069,7 +1112,11 @@ function showBossRewards() {
     const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = capped ? 'Fully upgraded' : `${cost} POINTS`;
     button.append(image, title, rank, description, synergy);
     button.onclick = () => chooseBossReward(item.id);
-    dom.rewardCards.append(button);
+    const cell = document.createElement('div');
+    cell.className = 'reward-cell';
+    cell.append(button);
+    attachInfoControl(cell, item.id, rank.textContent);
+    dom.rewardCards.append(cell);
   }
   const continueButton = document.createElement('button');
   continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
@@ -1910,38 +1957,135 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
 function drawBridgeStructure(target, geometry) {
-  // Taller safety fence than the original thin handrail, and lamp posts with real
-  // presence -- both taper with the shared depth curve so they shrink into the fog.
+  // Physical bridge furniture: a two-rail safety fence on tapered posts with base
+  // plates and contact shadows, plus lamp posts with arms, housings and pooled
+  // light. Everything scales through the shared depth curve so it converges with
+  // the deck, and it is all pre-rendered once per resize.
   const railHeight = y => H * .052 * depthCurve(y);
   const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
   const railSegments = 120;
   for (const side of [-1, 1]) {
+    // Fence posts first, so the rails lay over their tops.
+    for (let y = .05; y < 1; y += .024) {
+      const p = edgePoint(side, y);
+      const rh = railHeight(y);
+      const pw = Math.max(.9, projectedPixels(sceneProjection, y, 4.4));
+      // Contact shadow anchoring the post to the deck.
+      target.fillStyle = 'rgba(16,26,33,.3)';
+      target.beginPath();
+      target.ellipse(p.x + pw * .3, p.y + pw * .28, pw * 1.6, Math.max(.5, pw * .42), 0, 0, Math.PI * 2);
+      target.fill();
+      // Base plate.
+      target.fillStyle = '#767f85';
+      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(1.4, rh * .13));
+      target.fillStyle = 'rgba(255,255,255,.25)';
+      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(.6, rh * .03));
+      // Tapered post, lit from the sky side.
+      const topW = pw * .58;
+      const grad = target.createLinearGradient(p.x - pw / 2, 0, p.x + pw / 2, 0);
+      grad.addColorStop(0, '#8c3a32');
+      grad.addColorStop(.45, '#c14a3e');
+      grad.addColorStop(1, '#4c1f1c');
+      target.fillStyle = grad;
+      target.beginPath();
+      target.moveTo(p.x - pw / 2, p.y);
+      target.lineTo(p.x - topW / 2, p.y - rh);
+      target.lineTo(p.x + topW / 2, p.y - rh);
+      target.lineTo(p.x + pw / 2, p.y);
+      target.closePath();
+      target.fill();
+    }
+    // Vertical pickets between the posts, matching the bridge-kit railing.
     target.lineCap = 'round';
-    for (const [level, nearWidth, color] of [[1, 7, '#d94b3f'], [.45, 3.4, '#6b2a2a']]) {
-      let previous = null;
-      for (let i = 0; i <= railSegments; i += 1) {
-        const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * i / railSegments;
-        const p = edgePoint(side, y);
-        const point = { x: p.x, y: p.y - railHeight(y) * level, w: Math.max(.5, projectedPixels(sceneProjection, y, nearWidth)) };
-        if (previous) {
-          target.strokeStyle = color;
-          target.lineWidth = point.w;
-          target.beginPath(); target.moveTo(previous.x, previous.y); target.lineTo(point.x, point.y); target.stroke();
+    for (let y = .055; y < .99; y += .011) {
+      const p = edgePoint(side, y);
+      const rh = railHeight(y);
+      const w = Math.max(.4, projectedPixels(sceneProjection, y, 1.1));
+      target.strokeStyle = 'rgba(52,60,66,.85)';
+      target.lineWidth = w;
+      target.beginPath(); target.moveTo(p.x, p.y - rh * .1); target.lineTo(p.x, p.y - rh * .92); target.stroke();
+    }
+    // Rails: stacked strokes read as a beveled steel beam -- dark underside,
+    // body, sky highlight.
+    target.lineCap = 'round';
+    for (const [level, nearWidth] of [[1, 7], [.45, 4]]) {
+      const passes = [
+        ['#5f211d', 1, .22],
+        ['#d94b3f', .82, 0],
+        ['rgba(255,158,126,.8)', .3, -.34],
+      ];
+      for (const [color, widthFactor, lift] of passes) {
+        let previous = null;
+        for (let i = 0; i <= railSegments; i += 1) {
+          const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * i / railSegments;
+          const p = edgePoint(side, y);
+          const w = Math.max(.5, projectedPixels(sceneProjection, y, nearWidth)) * widthFactor;
+          const point = { x: p.x, y: p.y - railHeight(y) * level + w * lift };
+          if (previous) {
+            target.strokeStyle = color;
+            target.lineWidth = w;
+            target.beginPath(); target.moveTo(previous.x, previous.y); target.lineTo(point.x, point.y); target.stroke();
+          }
+          previous = point;
         }
-        previous = point;
       }
     }
-    for (let y = .05; y < 1; y += .04) {
-      const p = edgePoint(side, y);
-      target.strokeStyle = 'rgba(67,40,39,.78)';
-      target.lineWidth = Math.max(.8, projectedPixels(sceneProjection, y, 3.4));
-      target.beginPath(); target.moveTo(p.x, p.y); target.lineTo(p.x, p.y - railHeight(y)); target.stroke();
-    }
-    for (const y of [.2,.44,.68,.9]) {
-      const p=edgePoint(side,y,1.055), h=projectedPixels(sceneProjection,y,96);
-      target.strokeStyle='#34434a'; target.lineWidth=Math.max(1.4,projectedPixels(sceneProjection,y,5.5));
-      target.beginPath(); target.moveTo(p.x,p.y); target.lineTo(p.x,p.y-h); target.stroke();
-      target.fillStyle='#ffd772'; target.beginPath(); target.arc(p.x,p.y-h,Math.max(2,projectedPixels(sceneProjection,y,6.5)),0,Math.PI*2); target.fill();
+    // Lamp posts: flanged base, tapered pole, arm reaching over the walkway,
+    // housed head with a warm glow and a pool of light on the deck.
+    for (const y of [.2, .44, .68, .9]) {
+      const p = edgePoint(side, y, 1.055);
+      const h = projectedPixels(sceneProjection, y, 96);
+      const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 7));
+      const inward = -side;
+      // Contact shadow.
+      target.fillStyle = 'rgba(16,26,33,.32)';
+      target.beginPath();
+      target.ellipse(p.x + pw * .3, p.y + pw * .3, pw * 2, Math.max(.6, pw * .5), 0, 0, Math.PI * 2);
+      target.fill();
+      // Base flange.
+      target.fillStyle = '#141d21';
+      target.fillRect(p.x - pw * .85, p.y - Math.max(1.2, h * .02), pw * 1.7, Math.max(1.6, h * .05));
+      // Tapered pole.
+      const pole = target.createLinearGradient(p.x - pw / 2, 0, p.x + pw / 2, 0);
+      pole.addColorStop(0, '#24333a');
+      pole.addColorStop(.45, '#4f626b');
+      pole.addColorStop(1, '#19242a');
+      target.fillStyle = pole;
+      target.beginPath();
+      target.moveTo(p.x - pw / 2, p.y);
+      target.lineTo(p.x - pw * .28, p.y - h);
+      target.lineTo(p.x + pw * .28, p.y - h);
+      target.lineTo(p.x + pw / 2, p.y);
+      target.closePath();
+      target.fill();
+      // Arm + head.
+      const armLen = pw * 2.7;
+      const lx = p.x + inward * armLen;
+      const ly = p.y - h;
+      target.strokeStyle = '#24333a';
+      target.lineWidth = Math.max(1, pw * .4);
+      target.lineCap = 'round';
+      target.beginPath(); target.moveTo(p.x, ly + h * .03); target.lineTo(lx, ly); target.stroke();
+      target.fillStyle = '#1a272d';
+      target.beginPath();
+      if (target.roundRect) target.roundRect(lx - pw * .85, ly - pw * .55, pw * 1.7, pw * .95, pw * .3);
+      else target.rect(lx - pw * .85, ly - pw * .55, pw * 1.7, pw * .95);
+      target.fill();
+      // Warm glow and lit core.
+      const glowR = Math.max(3, projectedPixels(sceneProjection, y, 24));
+      const glow = target.createRadialGradient(lx, ly + pw * .4, 0, lx, ly + pw * .4, glowR);
+      glow.addColorStop(0, 'rgba(255,216,120,.8)');
+      glow.addColorStop(.4, 'rgba(255,196,92,.26)');
+      glow.addColorStop(1, 'rgba(255,196,92,0)');
+      target.fillStyle = glow;
+      target.beginPath(); target.arc(lx, ly + pw * .4, glowR, 0, Math.PI * 2); target.fill();
+      target.fillStyle = '#ffe9ad';
+      target.beginPath(); target.arc(lx, ly + pw * .4, Math.max(1.4, pw * .48), 0, Math.PI * 2); target.fill();
+      // Pooled light on the deck below the head.
+      target.fillStyle = 'rgba(255,205,110,.1)';
+      target.beginPath();
+      target.ellipse(lx, p.y, glowR * 1.15, Math.max(1.5, glowR * .3), 0, 0, Math.PI * 2);
+      target.fill();
     }
   }
 }
@@ -2738,6 +2882,7 @@ function pointerMove(clientX) {
 }
 
 addEventListener('keydown', event => {
+  if (event.key === 'Escape' && dom.upgradeInfo && !dom.upgradeInfo.classList.contains('hidden')) { closeUpgradeInfo(); event.stopPropagation(); return; }
   keys[event.key] = true;
   const isSpace = event.code === 'Space' || event.key === ' ';
   if (['ArrowLeft', 'ArrowRight', ' ', 'p', 'P'].includes(event.key) || isSpace) event.preventDefault();
