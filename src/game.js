@@ -1975,7 +1975,7 @@ function drawBridgeStructure(target, geometry) {
   // plates and contact shadows, plus lamp posts with arms, housings and pooled
   // light. Everything scales through the shared depth curve so it converges with
   // the deck, and it is all pre-rendered once per resize.
-  const railHeight = y => H * .052 * depthCurve(y);
+  const railHeight = y => projectedPixels(sceneProjection, y, 60);
   const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
   const railSegments = 120;
   for (const side of [-1, 1]) {
@@ -1983,7 +1983,7 @@ function drawBridgeStructure(target, geometry) {
     for (let y = .05; y < 1; y += .024) {
       const p = edgePoint(side, y);
       const rh = railHeight(y);
-      const pw = Math.max(.9, projectedPixels(sceneProjection, y, 4.4));
+      const pw = Math.max(.9, projectedPixels(sceneProjection, y, 5.4));
       // Contact shadow anchoring the post to the deck.
       target.fillStyle = 'rgba(16,26,33,.3)';
       target.beginPath();
@@ -2048,8 +2048,8 @@ function drawBridgeStructure(target, geometry) {
     // housed head with a warm glow and a pool of light on the deck.
     for (const y of [.2, .44, .68, .9]) {
       const p = edgePoint(side, y, .985);
-      const h = projectedPixels(sceneProjection, y, 96);
-      const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 7));
+      const h = projectedPixels(sceneProjection, y, 168);
+      const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 8.5));
       const inward = -side;
       // Contact shadow.
       target.fillStyle = 'rgba(16,26,33,.32)';

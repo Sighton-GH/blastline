@@ -227,7 +227,7 @@ export function isUpgradeCapped(session, id) {
 }
 
 export const SHOP_PRICE_EXPONENTS = Object.freeze({
-  damage: 2, fireRate: 1.8, reinforcements: 1.7, piercing: 1.9,
+  damage: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9,
 });
 
 export function shopPrice(id, purchaseCount = 0) {
