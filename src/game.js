@@ -1869,7 +1869,11 @@ function update(dt) {
       // The spawn schedule stops at duration-5; survivors must be shot down or
       // break through the line (which removes them via the breach path) before
       // the armory or boss may start. No off-screen cleanup, no early banner.
-      const remaining = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
+      // Charmed allies do not hold the wave open: they already turned, they
+      // are visible on the field, and their burnout plays out on its own.
+      // Counting them here parked the armory behind up to 8s of dead air
+      // whenever a tame landed near the end of a wave.
+      const remaining = run.enemies.reduce((total, enemy) => total + (!enemy.dead && !enemy.charmed ? 1 : 0), 0);
       if (remaining === 0) {
         awardEcoInterest();
         if (run.wave % 3 === 0) spawnBoss();
@@ -1996,14 +2000,13 @@ function update(dt) {
         if (dy <= 0 || Math.abs(dx) > .10) continue;
         if (dy < bestDy) { bestDy = dy; target = enemy; }
       }
-      // Boss fallback: with no field enemy ahead, curve toward the boss in a
-      // wider corridor. The boss is the wave's objective the moment it walks
+      // Boss fallback: with no field enemy ahead, curve toward the boss from
+      // anywhere on the field. The boss is the wave's objective the moment it walks
       // on; a player parked at a lane edge should still watch it melt instead
       // of soft-locking the fight with shots that stream past the hull.
       if (!target && run.boss) {
-        const bdx = run.boss.x - bullet.x;
         const bdy = bullet.y - run.boss.y;
-        if (bdy > 0 && Math.abs(bdx) <= .34) target = { x: run.boss.x };
+        if (bdy > 0) target = { x: run.boss.x };
       }
       if (target) {
         const speed = Math.hypot(bullet.vx, bullet.vy) || 1;
