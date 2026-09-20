@@ -70,7 +70,6 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
   oceanSurface: 'assets/blastline/environment/ocean-surface-v2.webp',
   oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
   asphalt: 'assets/blastline/environment/asphalt.webp',
-  bridgeTowerFar: 'assets/blastline/environment/bridge-tower-far.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
   playerRun3: 'assets/blastline/characters/player-run-3.webp',
@@ -2024,52 +2023,6 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
-// Suspension superstructure from the bridge kit: the far tower sprite anchored
-// on the geometry's pillar stations, plus the main cables and hangers swept
-// through the shared projection, so the span reads as a real suspension bridge
-// converging on the vanishing point instead of a flat deck. Pre-rendered with
-// the static environment - zero per-frame cost. The haze pass after this draws
-// over the far tower, giving it genuine atmospheric depth.
-function drawSuspensionStructure(target, geometry) {
-  if (!geometry || !geometry.towers?.length) return;
-  const farTower = geometry.towers[0];
-  const sprite = runtimeAssets.bridgeTowerFar;
-  if (sprite) {
-    // Leg centers in the sprite sit at 19.7% and 83.8% of its width; size the
-    // draw so they land exactly on the geometry's pillar stations.
-    const legSpanFrac = .838 - .197;
-    const drawWidth = (farTower.xs[1] - farTower.xs[0]) / legSpanFrac;
-    const drawHeight = drawWidth * (sprite.height / sprite.width);
-    const centerX = (farTower.xs[0] + farTower.xs[1]) / 2;
-    target.drawImage(sprite, centerX - drawWidth * .5175, farTower.baseY - drawHeight * .997, drawWidth, drawHeight);
-  } else {
-    drawTower(target, farTower, towerColors);
-  }
-
-  target.save();
-  target.lineCap = 'round';
-  for (const cable of geometry.cables) {
-    const midWorldY = (cable.from.worldY + cable.to.worldY) / 2;
-    target.strokeStyle = 'rgba(179,64,47,.82)';
-    target.lineWidth = Math.min(2.6, Math.max(.7, projectedPixels(sceneProjection, midWorldY, 6.5)));
-    target.beginPath();
-    cable.points.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
-    target.stroke();
-  }
-  // Hangers only over the far half of the span: near the camera they project as
-  // long streaks that clutter the water instead of reading as suspension wires.
-  for (const hanger of geometry.hangers) {
-    if (hanger.worldY > .55) continue;
-    target.strokeStyle = 'rgba(154,54,40,.6)';
-    target.lineWidth = Math.min(1.4, Math.max(.5, projectedPixels(sceneProjection, hanger.worldY, 2.2)));
-    target.beginPath();
-    target.moveTo(hanger.cable.x, hanger.cable.y);
-    target.lineTo(hanger.rail.x, hanger.rail.y);
-    target.stroke();
-  }
-  target.restore();
-}
-
 function drawBridgeStructure(target, geometry) {
   // Physical bridge furniture: a two-rail safety fence on tapered posts with base
   // plates and contact shadows, plus lamp posts with arms, housings and pooled
@@ -2298,7 +2251,6 @@ function drawStaticEnvironment(target) {
 
   cachedGeometry = buildBridgeGeometry(sceneProjection);
   drawBridgeStructure(target, cachedGeometry);
-  drawSuspensionStructure(target, cachedGeometry);
 
   // Atmospheric depth fog: reaches from the horizon down past the far tower and the
   // worldY=0 gameplay plane (~horizon + .22H at the landscape depthRatio), so distant
