@@ -70,6 +70,7 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
   oceanSurface: 'assets/blastline/environment/ocean-surface-v2.webp',
   oceanWhitecaps: 'assets/blastline/environment/ocean-whitecaps.webp',
   asphalt: 'assets/blastline/environment/asphalt.webp',
+  bridgeTowerFar: 'assets/blastline/environment/bridge-tower-far.webp',
   playerRun1: 'assets/blastline/characters/player-run-1.webp',
   playerRun2: 'assets/blastline/characters/player-run-2.webp',
   playerRun3: 'assets/blastline/characters/player-run-3.webp',
@@ -2023,6 +2024,78 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
+// Suspension superstructure, rebuilt for accuracy: tapered two-tone main
+// cables with real catenary sag from the shared projection geometry, subtle
+// vertical suspenders, and the far tower drawn over the haze with its own
+// depth fade so it stands as the landmark ahead. Pre-rendered with the static
+// environment - zero per-frame cost.
+function drawSuspensionStructure(target, geometry) {
+  if (!geometry || !geometry.towers?.length) return;
+  const farTower = geometry.towers[0];
+
+  target.save();
+  target.lineCap = 'round';
+  // Main cables, stroked per segment so width and alpha taper with depth.
+  // Dark body + narrow offset highlight reads as round steel, not a flat line.
+  for (const cable of geometry.cables) {
+    const pts = cable.points;
+    for (let index = 1; index < pts.length; index++) {
+      const from = pts[index - 1];
+      const to = pts[index];
+      const depth = (from.worldY + to.worldY) / 2;
+      // Fade the cables out before the near field: past this depth the camera
+      // angle turns them into vertical bars at the screen edges, which reads
+      // as guide lines instead of structure passing out of frame.
+      const fade = clamp((.62 - depth) / .18, 0, 1);
+      if (fade <= 0) continue;
+      const width = clamp(projectedPixels(sceneProjection, depth, 8.5), .8, 6.5);
+      const alpha = lerp(.5, .95, depth) * fade;
+      target.strokeStyle = `rgba(146,44,29,${alpha})`;
+      target.lineWidth = width;
+      target.beginPath();
+      target.moveTo(from.x, from.y);
+      target.lineTo(to.x, to.y);
+      target.stroke();
+      target.strokeStyle = `rgba(255,178,145,${alpha * .55})`;
+      target.lineWidth = Math.max(.5, width * .36);
+      target.beginPath();
+      target.moveTo(from.x, from.y - width * .27);
+      target.lineTo(to.x, to.y - width * .27);
+      target.stroke();
+    }
+  }
+  // Vertical suspenders from cable down to the rail. Kept subtle and out of
+  // the near field, where they project as long streaks instead of wires.
+  for (const hanger of geometry.hangers) {
+    if (hanger.worldY > .58) continue;
+    const alpha = lerp(.18, .42, hanger.worldY);
+    target.strokeStyle = `rgba(116,40,28,${alpha})`;
+    target.lineWidth = clamp(projectedPixels(sceneProjection, hanger.worldY, 2.2), .4, 1.1);
+    target.beginPath();
+    target.moveTo(hanger.cable.x, hanger.cable.y);
+    target.lineTo(hanger.rail.x, hanger.rail.y);
+    target.stroke();
+  }
+  target.restore();
+
+  // The far tower, over the cable saddles, lightly hazed by distance.
+  const sprite = runtimeAssets.bridgeTowerFar;
+  target.save();
+  target.globalAlpha = .9;
+  if (sprite) {
+    // Sprite leg centers sit at 19.7% and 83.8% of its width; size the draw so
+    // they land exactly on the geometry's pillar stations.
+    const legSpanFrac = .838 - .197;
+    const drawWidth = (farTower.xs[1] - farTower.xs[0]) / legSpanFrac;
+    const drawHeight = drawWidth * (sprite.height / sprite.width);
+    const centerX = (farTower.xs[0] + farTower.xs[1]) / 2;
+    target.drawImage(sprite, centerX - drawWidth * .5175, farTower.baseY - drawHeight * .997, drawWidth, drawHeight);
+  } else {
+    drawTower(target, farTower, towerColors);
+  }
+  target.restore();
+}
+
 function drawBridgeStructure(target, geometry) {
   // Physical bridge furniture: a two-rail safety fence on tapered posts with base
   // plates and contact shadows, plus lamp posts with arms, housings and pooled
@@ -2266,6 +2339,8 @@ function drawStaticEnvironment(target) {
   haze.addColorStop(1, 'rgba(180,219,238,0)');
   target.fillStyle = haze;
   target.fillRect(0, horizon - H * .025, W, fogReach + H * .025);
+
+  drawSuspensionStructure(target, cachedGeometry);
 }
 
 function ensureEnvironment() {
