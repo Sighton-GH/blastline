@@ -84,12 +84,14 @@
     <section id="pausePanel" class="overlay pause-overlay" role="dialog" aria-modal="true" aria-label="Game paused">
       <div class="card dashboard-card">
         <div class="dashboard-head">
-          <div><p class="eyebrow">RUN PAUSED</p><h2>TAKE A BREATH</h2></div><b id="pausePoints" class="sr-only">0</b>
+          <div><p class="eyebrow"><span class="hold-dot" aria-hidden="true"></span>TACTICAL HOLD</p><h2>HOLD THE LINE</h2></div>
+          <div class="pause-points"><small>POINTS BANKED</small><b id="pausePoints">0</b></div>
         </div>
+        <div id="runBrief" class="run-brief" aria-label="Run status"></div>
         <div id="buildSummary" class="build-summary" aria-label="Current build"></div>
         <div class="pause-footer">
           <div class="control-note"><b>STEER</b> Drag, touch, A/D or arrows <span>·</span> <b>PAUSE</b> Space or P</div>
-          <div class="button-row"><button id="pauseShopBtn" class="secondary" type="button">SHOP</button><button id="resumeBtn" class="primary" type="button">RESUME</button><button id="restartBtn" class="secondary" type="button">RESTART RUN</button></div>
+          <div class="button-row"><button id="pauseShopBtn" class="secondary" type="button">SHOP</button><button id="resumeBtn" class="primary" type="button">RESUME</button><button id="restartBtn" class="secondary danger-button" type="button">RESTART</button></div>
         </div>
       </div>
     </section>

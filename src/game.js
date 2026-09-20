@@ -98,7 +98,7 @@ const dom = Object.fromEntries([
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
-  'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
+  'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints', 'runBrief',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
   'buildSummary', 'shopGrid', 'shopMessage', 'finalScore', 'finalWave', 'finalKills',
   'finalDifficulty', 'finalBestCombo',
@@ -1769,6 +1769,19 @@ function returnHome() {
 
 function renderPauseDashboard() {
   setText(dom.pausePoints, format(run.points));
+  const brief = [
+    ['WAVE', format(run.wave)], ['SCORE', format(run.score)], ['KILLS', format(run.kills)],
+  ];
+  dom.runBrief.replaceChildren(...brief.map(([label, value]) => {
+    const item = document.createElement('div');
+    item.className = 'brief-item';
+    const small = document.createElement('small');
+    small.textContent = label;
+    const bold = document.createElement('b');
+    bold.textContent = value;
+    item.append(small, bold);
+    return item;
+  }));
   const build = [
     ['SQUAD', format(run.player.troops)], ['POWER', format(run.player.power)],
     ['RATE', run.player.fireRate.toFixed(1)], ['MULTI', `×${run.player.projectiles}`],
