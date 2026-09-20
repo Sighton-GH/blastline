@@ -18,8 +18,7 @@
     <header id="hud" class="panel hidden" aria-label="Run status">
       <div class="hud-cluster hud-primary">
         <img id="portrait" src="assets/portrait.webp" alt="Blue squad commander" />
-        <div class="metric score-metric"><small>SCORE</small><b id="scoreLabel">0</b></div>
-        <div class="metric points-metric"><small>SKILL</small><b id="pointsLabel">0</b></div>
+        <div class="metric points-metric"><small>POINTS</small><b id="scoreLabel">0</b><b id="pointsLabel" class="sr-only">0</b></div>
       </div>
       <div class="hud-cluster hud-run">
         <div class="wave-pill">
@@ -71,7 +70,7 @@
           <button id="playBtn" class="primary play-button" type="button"><span>DEPLOY</span><small id="playDifficulty">VETERAN RUN</small></button>
           <div class="controls"><span>DRAG / A D / ← →</span><span>AUTO FIRE</span><span>SPACE / P PAUSE</span></div>
           <div id="careerStrip" class="career-strip" aria-label="Personal records">
-            <span><small>BEST SCORE</small><b id="homeBestScore">0</b></span>
+            <span><small>BEST POINTS</small><b id="homeBestScore">0</b></span>
             <span><small>BEST WAVE</small><b id="homeBestWave">1</b></span>
             <span><small>BEST COMBO</small><b id="homeBestCombo">×0</b></span>
           </div>
@@ -83,12 +82,9 @@
     <section id="pausePanel" class="overlay pause-overlay" aria-label="Game paused">
       <div class="card dashboard-card">
         <div class="dashboard-head">
-          <div><p class="eyebrow">RUN DASHBOARD</p><h2>PAUSED</h2></div>
-          <div class="pause-points"><small>SKILL POINTS</small><b id="pausePoints">0</b></div>
+          <div><p class="eyebrow">RUN PAUSED</p><h2>TAKE A BREATH</h2></div><b id="pausePoints" class="sr-only">0</b>
         </div>
         <div id="buildSummary" class="build-summary" aria-label="Current build"></div>
-        <div class="shop-heading"><div><b>FIELD SHOP</b><span>Costs rise with every purchase</span></div><p id="shopMessage" aria-live="polite"></p></div>
-        <div id="shopGrid" class="shop-grid"></div>
         <div class="pause-footer">
           <div class="control-note"><b>STEER</b> Drag, touch, A/D or arrows <span>·</span> <b>PAUSE</b> Space or P</div>
           <div class="button-row"><button id="resumeBtn" class="primary" type="button">RESUME</button><button id="restartBtn" class="secondary" type="button">RESTART RUN</button></div>
@@ -96,11 +92,11 @@
       </div>
     </section>
 
-    <section id="rewardPanel" class="overlay reward-overlay" aria-label="Choose a boss reward">
+    <section id="rewardPanel" class="overlay reward-overlay" aria-label="Between-wave armory">
       <div class="card reward-shell">
-        <p class="eyebrow">BOSS ELIMINATED · WAVE <span id="rewardWave">1</span></p>
-        <h2>CHOOSE YOUR EDGE</h2>
-        <p class="reward-sub">One free upgrade. Your build carries into every wave that follows.</p>
+        <p class="eyebrow">WAVE CLEARED · <span id="rewardWave">1</span></p>
+        <h2>ARMORY</h2>
+        <p class="reward-sub">Spend Points or continue. Your build carries through the run.</p>
         <div id="rewardCards" class="reward-grid"></div>
       </div>
     </section>
@@ -115,7 +111,7 @@
         <h2>RUN OVER</h2>
         <p class="end-message">The bridge keeps going. This squad doesn’t.</p>
         <div class="results">
-          <div><span>Score</span><b id="finalScore">0</b></div>
+          <div><span>Points</span><b id="finalScore">0</b></div>
           <div><span>Wave</span><b id="finalWave">1</b></div>
           <div><span>Kills</span><b id="finalKills">0</b></div>
           <div><span>Mode</span><b id="finalDifficulty">Veteran</b></div>

@@ -14,8 +14,8 @@ import {
 } from '../src/projection.mjs';
 
 const VIEWPORTS = [
-  { width: 1365, height: 768, profile: 'landscape', horizon: .145 },
-  { width: 390, height: 844, profile: 'portrait', horizon: .165 },
+  { width: 1365, height: 768, profile: 'landscape', horizon: -.16 },
+  { width: 390, height: 844, profile: 'portrait', horizon: -.10 },
 ];
 
 test('camera profiles place a finite-width far gameplay plane below the horizon', () => {

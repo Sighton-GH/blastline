@@ -48,7 +48,7 @@ test('wave generation is endless, bounded, and numerically stable', () => {
       assert.ok(Number.isFinite(config.duration));
       assert.ok(Number.isFinite(config.activeTarget));
       assert.ok(Number.isFinite(config.bossHp));
-      assert.ok(config.duration >= 32 && config.duration <= 48);
+      assert.ok(config.duration >= 26 && config.duration <= 38);
       assert.ok(config.activeTarget > 0 && config.activeTarget <= MAX_ACTIVE_ENEMIES);
       assert.ok(config.hordeSize > 0 && config.hordeSize <= 54);
       assert.ok(config.spawnInterval >= .5);
@@ -57,7 +57,7 @@ test('wave generation is endless, bounded, and numerically stable', () => {
       assert.ok(Math.abs(compositionTotal - 1) < 1e-9);
     }
   }
-  assert.equal(getWaveConfig(1_000_000).duration, 48);
+  assert.equal(getWaveConfig(1_000_000).duration, 38);
   assert.equal(getWaveConfig(1_000_000).activeTarget, MAX_ACTIVE_ENEMIES);
   assert.ok(getWaveConfig(30).bossHp > getWaveConfig(1).bossHp);
 });
@@ -142,17 +142,17 @@ test('shop prices rise, spending is atomic, and insufficient points do nothing',
   assert.equal(failed.reason, 'insufficient');
   assert.deepEqual(failed.session, poor);
 
-  const funded = { ...createCleanRun(2), skillPoints: 20 };
+  const funded = { ...createCleanRun(2), points: 2_000 };
   const bought = purchaseUpgrade(funded, 'damage');
   assert.equal(bought.ok, true);
   assert.equal(bought.session.player.power, 2);
-  assert.equal(bought.session.skillPoints, 20 - shopPrice('damage', 0));
+  assert.equal(bought.session.points, 2_000 - shopPrice('damage', 0));
   assert.equal(bought.session.purchaseCounts.damage, 1);
   assert.equal(bought.session.upgradeTiers.damage, 1);
 });
 
 test('all shop upgrades apply and hard caps cannot be exceeded', () => {
-  let session = { ...createCleanRun(3), skillPoints: 1_000_000 };
+  let session = { ...createCleanRun(3), points: 1_000_000 };
   for (const item of SHOP_CATALOG) {
     const limit = item.id === 'extraLife' ? MAX_LIVES : item.maxTier + 2;
     for (let count = 0; count < limit; count += 1) session = purchaseUpgrade(session, item.id).session;
@@ -174,10 +174,10 @@ test('boss reward choices are unique, tiered, and contain synergy information', 
     assert.ok(choices.every(choice => choice.tier === 1 && choice.tierLabel === 'TIER 1'));
     assert.ok(choices.every(choice => choice.synergy.length > 0));
   }
-  const rewarded = applyBossReward(session, 'piercing');
-  assert.equal(rewarded.player.pierce, 1);
-  assert.equal(rewarded.upgradeTiers.piercing, 1);
-  assert.equal(rewarded.skillPoints, session.skillPoints, 'boss rewards are free');
+  const rewarded = applyBossReward(session, 'multishot');
+  assert.equal(rewarded.player.projectiles, 2);
+  assert.equal(rewarded.upgradeTiers.multishot, 1);
+  assert.equal(rewarded.points, session.points, 'reward helpers do not alter points');
 });
 
 test('boss defeat always transitions to another endless reward, never Victory', () => {
@@ -206,10 +206,10 @@ test('armor absorbs first; reserves revive with protection and retain the build'
 });
 
 test('kill rewards grant milestone and elite skill points only once', () => {
-  const milestone = claimKillReward({ type: 'grunt', rewarded: false }, 24);
-  assert.equal(milestone.reward.skillPoints, 1);
+  const milestone = claimKillReward({ type: 'grunt', rewarded: false }, 20);
+  assert.equal(milestone.reward.points, 58);
   const elite = claimKillReward({ type: 'heavy', rewarded: false }, 25);
-  assert.equal(elite.reward.skillPoints, 1);
+  assert.equal(elite.reward.points, 54);
   assert.equal(claimKillReward(elite.enemy, 26).reward, null);
 });
 
@@ -217,7 +217,7 @@ test('clean retry resets every session value and transient collection', () => {
   const dirty = createCleanRun(9, 'elite');
   dirty.wave = 30;
   dirty.score = 999;
-  dirty.skillPoints = 12;
+  dirty.points = 1200;
   dirty.lives = 2;
   dirty.player = applyUpgrade(dirty.player, 'damage');
   dirty.purchaseCounts.damage = 1;
@@ -228,7 +228,7 @@ test('clean retry resets every session value and transient collection', () => {
   const retry = createCleanRun(10, 'veteran');
   assert.equal(retry.wave, 1);
   assert.equal(retry.score, 0);
-  assert.equal(retry.skillPoints, 0);
+  assert.equal(retry.points, 0);
   assert.equal(retry.lives, 0);
   assert.deepEqual(retry.purchaseCounts, {});
   assert.deepEqual(retry.upgradeTiers, {});
@@ -237,8 +237,8 @@ test('clean retry resets every session value and transient collection', () => {
 });
 
 test('visible squad sprites remain individual through stress scale', () => {
-  assert.deepEqual([1, 14, 32, 60, 1000].map(value => visibleSquadCount(value)), [1, 14, 32, 60, 60]);
-  assert.equal(visibleSquadCount(240, 6), 72);
+  assert.deepEqual([1, 14, 32, 60, 1000].map(value => visibleSquadCount(value)), [1, 14, 24, 24, 24]);
+  assert.equal(visibleSquadCount(240, 6), 24);
 });
 
 test('the runtime only persists local personal records, never run progression', () => {

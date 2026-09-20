@@ -189,11 +189,11 @@ function commitRunRecords() {
   if (runCommitted) return { score: false, wave: false, combo: false };
   runCommitted = true;
   const result = {
-    score: run.score > records.bestScore,
+    score: run.points > records.bestScore,
     wave: run.wave > records.bestWave,
     combo: run.bestCombo > records.bestCombo,
   };
-  records.bestScore = Math.max(records.bestScore, Math.round(run.score));
+  records.bestScore = Math.max(records.bestScore, Math.round(run.points));
   records.bestWave = Math.max(records.bestWave, Math.round(run.wave));
   records.bestCombo = Math.max(records.bestCombo, Math.round(run.bestCombo));
   records.runs += 1;
@@ -510,8 +510,8 @@ function updateHud(force = false) {
   setText(dom.powerLabel, format(run.player.power));
   setText(dom.rateLabel, run.player.fireRate.toFixed(1));
   setText(dom.armorLabel, format(run.player.armor));
-  setText(dom.scoreLabel, format(run.score));
-  setText(dom.pointsLabel, format(run.skillPoints));
+  setText(dom.scoreLabel, format(run.points));
+  setText(dom.pointsLabel, format(run.points));
   setText(dom.livesLabel, format(run.lives));
   setText(dom.frenzyTimeLabel, run.frenzyTimer.toFixed(1));
   setText(dom.comboLabel, `×${Math.min(5, 1 + Math.floor(run.combo / 5))}`);
@@ -581,7 +581,7 @@ function squadLogicalSlots(troops = run.player.troops) {
 function soldierHeightAt(y) {
   const visible = visibleSquadCount(run.player.troops, run.player.formationDensity);
   const crowdScale = lerp(1.0, .42, clamp((visible - 8) / 56, 0, 1));
-  const near = Math.min(H * .31, W * .50, 240) * crowdScale;
+  const near = Math.min(H * .20, W * .28, 145) * crowdScale;
   return projectedPixels(sceneProjection, y, near);
 }
 
@@ -783,7 +783,7 @@ function updateBossPhase() {
   const phase = config.bossPhaseCount === 2 ? (fraction <= .48 ? 2 : 1) : (fraction <= .28 ? 3 : fraction <= .64 ? 2 : 1);
   if (phase > run.boss.phase) {
     run.boss.phase = phase;
-    run.boss.attackTimer = .42;
+    run.boss.attackTimer = .85;
     addFloater(run.boss.x, run.boss.y + .1, `PHASE ${phase}`, '#ffb25f', 25);
     burst(run.boss.x, run.boss.y, '#ff704e', 24);
     addTrauma(.7);
@@ -799,17 +799,11 @@ function spawnBossAttack() {
   const pattern = boss.attackSerial % patternCount;
   boss.attackSerial += 1;
   if (pattern === 0) {
-    const targetX = run.player.x;
-    const speed = .47 * config.pressure;
-    const travel = Math.max(.45, (.9 - boss.y) / speed);
-    for (const offset of [-.045, .045]) {
-      spawnEnemyProjectile(boss, { kind: 'boss-aimed', lane: nearestLane(targetX), x: boss.x + offset, vx: (targetX - boss.x) / travel, vy: speed, radius: .065, color: '#ff9b3e' });
-    }
+    const targetLane = nearestLane(run.player.x);
+    addTelegraph(targetLane, boss.phase === 1 ? .95 : .72, 'boss-aimed', boss, { damage: boss.phase >= 3 ? 2 : 1, speed: .47 * config.pressure });
   } else if (pattern === 1) {
     const safeLane = (boss.attackSerial + run.wave) % 3;
-    for (let lane = 0; lane < 3; lane += 1) {
-      if (lane !== safeLane) spawnEnemyProjectile(boss, { kind: 'lane-gap', lane, x: laneCenter(lane), vx: 0, vy: .43 * config.pressure, radius: .1, color: '#ff4f4f' });
-    }
+    for (let lane = 0; lane < 3; lane += 1) if (lane !== safeLane) addTelegraph(lane, boss.phase === 1 ? .9 : .68, 'lane-gap', boss, { damage: boss.phase >= 3 ? 2 : 1, speed: .43 * config.pressure });
   } else if (pattern === 2) {
     const safeLane = (boss.attackSerial * 2 + run.wave) % 3;
     for (let lane = 0; lane < 3; lane += 1) if (lane !== safeLane) addTelegraph(lane, .78, 'suppression', boss, { damage: boss.phase >= 3 ? 2 : 1, speed: .56 });
@@ -825,8 +819,8 @@ function finishBoss() {
   const boss = run.boss;
   if (!boss || boss.rewarded) return;
   boss.rewarded = true;
-  run.score += 900 + run.wave * 175;
-  run.skillPoints += config.skillReward;
+  run.points += config.bossReward;
+  run.bossesDefeated += 1;
   burst(boss.x, boss.y, '#ffc54a', 48);
   addTrauma(.85);
   audio.explosion();
@@ -842,42 +836,51 @@ function finishBoss() {
   updateHud(true);
 }
 
+function openArmory() {
+  setState(GAME_STATE.BOSS_REWARD);
+  showBossRewards();
+}
+
 function showBossRewards() {
-  const rewards = pickBossRewards(rng, run);
   setText(dom.rewardWave, run.wave);
   dom.rewardCards.replaceChildren();
-  for (const item of rewards) {
+  for (const item of SHOP_CATALOG) {
+    const tier = upgradeTier(run, item.id);
+    const cost = shopPrice(item.id, run.purchaseCounts[item.id] || 0);
+    const capped = item.id === 'extraLife' ? run.lives >= 2 : tier >= item.maxTier;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-card tone-${item.tone}`;
     button.dataset.upgrade = item.id;
-    const image = document.createElement('img');
-    image.src = item.asset;
-    image.alt = '';
-    const title = document.createElement('b');
-    title.textContent = item.title;
-    const tier = document.createElement('span');
-    tier.className = 'tier';
-    tier.textContent = item.tierLabel;
-    const description = document.createElement('span');
-    description.className = 'description';
-    description.textContent = item.description;
-    const synergy = document.createElement('span');
-    synergy.className = 'synergy';
-    synergy.textContent = item.synergy;
-    button.append(image, title, tier, description, synergy);
+    button.disabled = capped || run.points < cost;
+    const image = document.createElement('img'); image.src = item.asset; image.alt = '';
+    const title = document.createElement('b'); title.textContent = item.title;
+    const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : `TIER ${tier}/${item.maxTier}`;
+    const description = document.createElement('span'); description.className = 'description'; description.textContent = item.short;
+    const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = capped ? 'Fully upgraded' : `${cost} POINTS`;
+    button.append(image, title, rank, description, synergy);
     button.onclick = () => chooseBossReward(item.id);
     dom.rewardCards.append(button);
   }
+  const continueButton = document.createElement('button');
+  continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
+  continueButton.textContent = run.wave % 3 === 0 ? 'START NEXT CHAPTER' : 'START NEXT WAVE';
+  continueButton.onclick = continueFromArmory;
+  dom.rewardCards.append(continueButton);
 }
 
 function chooseBossReward(id) {
   if (state !== GAME_STATE.BOSS_REWARD) return false;
-  run = applyBossReward(run, id);
-  audio.purchase();
-  run.wave += 1;
-  startWave();
+  const result = purchaseUpgrade(run, id);
+  if (!result.ok) return false;
+  run = result.session;
+  audio.purchase(); updateHud(true); showBossRewards();
   return true;
+}
+
+function continueFromArmory() {
+  if (state !== GAME_STATE.BOSS_REWARD) return false;
+  run.wave += 1; startWave(); return true;
 }
 
 function defeatEnemy(enemy) {
@@ -898,15 +901,15 @@ function defeatEnemy(enemy) {
   const claim = claimKillReward(enemy, run.kills);
   enemy.rewarded = claim.enemy.rewarded;
   if (!claim.reward) return;
-  run.score += claim.reward.score * comboMultiplier;
-  run.skillPoints += claim.reward.skillPoints;
+  run.points += claim.reward.points * comboMultiplier;
+  run.points += claim.reward.points;
   if (run.combo === 5 || run.combo === 10 || run.combo === 20 || run.combo === 30) {
     addFloater(enemy.x, enemy.y - .035, `${run.combo} KILL STREAK · ×${comboMultiplier}`, '#fff07a', 19);
     addTrauma(.07);
     audio.streak(comboMultiplier);
   }
   run.frenzy += claim.reward.frenzy;
-  if (claim.reward.skillPoints) addFloater(enemy.x, enemy.y, `+${claim.reward.skillPoints} SKILL`, '#ffe06b', 15);
+  if (claim.reward.points) addFloater(enemy.x, enemy.y, `+${claim.reward.points} POINTS`, '#ffe06b', 15);
   if (run.frenzy >= 18) {
     run.frenzy = 0;
     run.frenzyTimer = run.player.frenzyDuration;
@@ -963,7 +966,7 @@ function gameOver() {
   run.player.troops = 0;
   releaseAll(run.enemyBullets, pools.enemyBullets);
   releaseAll(run.telegraphs, pools.telegraphs);
-  setText(dom.finalScore, format(run.score));
+  setText(dom.finalScore, format(run.points));
   setText(dom.finalWave, format(run.wave));
   setText(dom.finalKills, format(run.kills));
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
@@ -1023,7 +1026,7 @@ function collidePlayerBullets() {
         bullet.dead = true;
         boss.hp -= bullet.power;
         boss.hitFlash = .085;
-        run.score += bullet.critical ? 4 : 2;
+        run.points += bullet.critical ? 4 : 2;
         if (!stressMode) { burst(bullet.x, boss.y, bullet.critical ? '#fff076' : '#ffad4a', bullet.critical ? 5 : 2); audio.bossHit(); }
         updateBossPhase();
         if (boss.hp <= 0) {
@@ -1121,7 +1124,8 @@ function update(dt) {
       run.spawnTimer = 2.8;
     }
     if (run.waveTime >= config.duration) {
-      spawnBoss();
+      if (run.wave % 3 === 0) spawnBoss();
+      else openArmory();
       return;
     }
   }
@@ -1162,7 +1166,7 @@ function update(dt) {
       run.boss.attackTimer -= dt;
       if (run.boss.attackTimer <= 0) {
         spawnBossAttack();
-        const enrage = run.boss.phase === 3 ? .72 : run.boss.phase === 2 ? .86 : 1;
+        const enrage = run.boss.phase === 3 ? .92 : run.boss.phase === 2 ? 1.02 : 1.12;
         run.boss.attackTimer = config.bossCadence * enrage + (run.boss.attackSerial % 3) * .07;
       }
     }
@@ -1305,7 +1309,7 @@ function returnHome() {
 }
 
 function renderPauseDashboard() {
-  setText(dom.pausePoints, format(run.skillPoints));
+  setText(dom.pausePoints, format(run.points));
   const build = [
     ['SQUAD', format(run.player.troops)], ['POWER', format(run.player.power)],
     ['RATE', run.player.fireRate.toFixed(1)], ['MULTI', `×${run.player.projectiles}`],
@@ -1322,7 +1326,6 @@ function renderPauseDashboard() {
     item.append(small, bold);
     return item;
   }));
-  renderShop();
 }
 
 function renderShop() {
@@ -1359,10 +1362,10 @@ function renderShop() {
 }
 
 function buyFromShop(id) {
-  if (state !== GAME_STATE.PAUSED) return false;
+  if (state !== GAME_STATE.BOSS_REWARD) return false;
   const result = purchaseUpgrade(run, id);
   if (!result.ok) {
-    setText(dom.shopMessage, result.reason === 'insufficient' ? `Need ${result.cost} skill points` : 'Upgrade is at maximum');
+    setText(dom.shopMessage, result.reason === 'insufficient' ? `Need ${result.cost} points` : 'Upgrade is at maximum');
     return false;
   }
   run = result.session;
@@ -1556,122 +1559,38 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
 function drawBridgeStructure(target, geometry) {
-  const red = '#e54a38';
-  const mid = '#c74329';
-  const dark = '#7e2823';
-  const deep = '#4a1a16';
-  const light = '#ff9772';
-  const railHeight = y => H * cameraProfile().railWorldHeight * depthCurve(y);
-  const edgePoint = (side, y, factor = 1.035) => ({
-    x: W / 2 + side * bridgeHalfWidth(y) * factor,
-    y: perspectiveY(y),
-  });
-
-  // Deep side girders and alternating cross braces give the deck real thickness.
+  const railHeight = y => H * .032 * depthCurve(y);
+  const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
   for (const side of [-1, 1]) {
-    target.fillStyle = deep;
-    target.beginPath();
-    for (let index = 0; index <= 40; index += 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.035);
-      index ? target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 4)) : target.moveTo(point.x, point.y);
-    }
-    for (let index = 40; index >= 0; index -= 1) {
-      const y = index / 40 * 1.03;
-      const point = edgePoint(side, y, 1.085);
-      target.lineTo(point.x, point.y + projectedPixels(sceneProjection, y, 19));
-    }
-    target.closePath();
-    target.fill();
-    for (let index = 2; index < 25; index += 1) {
-      const y0 = (index - 1) / 25;
-      const y1 = index / 25;
-      const from = edgePoint(side, index % 2 ? y0 : y1, 1.042);
-      const to = edgePoint(side, index % 2 ? y1 : y0, 1.078);
-      target.strokeStyle = index % 2 ? mid : dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y1, 3.8));
-      target.beginPath();
-      target.moveTo(from.x, from.y + projectedPixels(sceneProjection, y0, 4));
-      target.lineTo(to.x, to.y + projectedPixels(sceneProjection, y1, 17));
-      target.stroke();
-    }
-  }
-
-  // Hangers use the exact cable samples and matching rail points from geometry.
-  for (const hanger of geometry.hangers) {
-    target.strokeStyle = `rgba(91,25,31,${lerp(.5, .9, clamp(hanger.worldY, 0, 1))})`;
-    target.lineWidth = Math.max(.5, projectedPixels(sceneProjection, hanger.worldY, 2.15));
-    target.beginPath();
-    target.moveTo(hanger.cable.x, hanger.cable.y);
-    target.lineTo(hanger.rail.x, hanger.rail.y);
-    target.stroke();
-  }
-  for (const cable of geometry.cables) {
     target.lineCap = 'round';
-    target.beginPath();
-    cable.points.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
-    target.strokeStyle = deep;
-    target.lineWidth = Math.max(2.4, W * .0052);
-    target.stroke();
-    target.strokeStyle = dark;
-    target.lineWidth = Math.max(1.6, W * .0034);
-    target.stroke();
-    target.strokeStyle = 'rgba(255,171,138,.85)';
-    target.lineWidth = Math.max(.7, W * .0013);
-    target.stroke();
-  }
-
-  // Both tower stations project the same world-space dimensions.
-  for (const tower of geometry.towers) drawTower(target, tower, { red, mid, dark, deep, light });
-
-  // Rails, uprights, and small lamps stay outside the playable road.
-  for (const side of [-1, 1]) {
-    for (const level of [1, .48]) {
+    for (const level of [1, .42]) {
       target.beginPath();
-      for (let index = 0; index <= 52; index += 1) {
-        const y = index / 52 * 1.03;
-        const point = edgePoint(side, y);
-        const yy = point.y - railHeight(y) * level;
-        index ? target.lineTo(point.x, yy) : target.moveTo(point.x, yy);
+      for (let i = 0; i <= 64; i += 1) {
+        const y = i / 64 * 1.04, p = edgePoint(side, y);
+        const yy = p.y - railHeight(y) * level;
+        i ? target.lineTo(p.x, yy) : target.moveTo(p.x, yy);
       }
-      target.strokeStyle = level === 1 ? red : dark;
-      target.lineWidth = Math.max(.7, projectedPixels(sceneProjection, .72, level === 1 ? 3.3 : 2));
-      target.stroke();
+      target.strokeStyle = level === 1 ? '#d94b3f' : '#6b2a2a';
+      target.lineWidth = level === 1 ? 3 : 1.5; target.stroke();
     }
-    for (let index = 2; index < 32; index += 1) {
-      const y = index / 32;
-      const point = edgePoint(side, y);
-      target.strokeStyle = dark;
-      target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 2.4));
-      target.beginPath();
-      target.moveTo(point.x, point.y + projectedPixels(sceneProjection, y, 2));
-      target.lineTo(point.x, point.y - railHeight(y));
-      target.stroke();
+    for (let i = 3; i < 29; i += 1) {
+      const y = i / 29, p = edgePoint(side, y);
+      target.strokeStyle = 'rgba(67,40,39,.78)';
+      target.lineWidth = Math.max(.6, projectedPixels(sceneProjection, y, 2));
+      target.beginPath(); target.moveTo(p.x, p.y); target.lineTo(p.x, p.y - railHeight(y)); target.stroke();
     }
-    for (const y of [.2, .47, .78]) {
-      const base = edgePoint(side, y, 1.065);
-      const scale = depthCurve(y);
-      const postHeight = 57 * scale;
-      const arm = 15 * scale;
-      target.strokeStyle = '#24343a';
-      target.lineWidth = Math.max(.65, 3.3 * scale);
-      target.lineCap = 'round';
-      target.beginPath();
-      target.moveTo(base.x, base.y);
-      target.lineTo(base.x, base.y - postHeight);
-      target.quadraticCurveTo(base.x, base.y - postHeight - arm * .3, base.x - side * arm, base.y - postHeight - arm * .3);
-      target.stroke();
-      target.fillStyle = '#ffe5a1';
-      target.beginPath();
-      target.ellipse(base.x - side * arm, base.y - postHeight, Math.max(.5, arm * .42), Math.max(.35, arm * .23), 0, 0, Math.PI * 2);
-      target.fill();
+    for (const y of [.24,.56,.88]) {
+      const p=edgePoint(side,y,1.055), h=projectedPixels(sceneProjection,y,34);
+      target.strokeStyle='#34434a'; target.lineWidth=Math.max(1,projectedPixels(sceneProjection,y,3));
+      target.beginPath(); target.moveTo(p.x,p.y); target.lineTo(p.x,p.y-h); target.stroke();
+      target.fillStyle='#ffd772'; target.beginPath(); target.arc(p.x,p.y-h,Math.max(1.2,projectedPixels(sceneProjection,y,3)),0,Math.PI*2); target.fill();
     }
   }
 }
 
 function drawStaticEnvironment(target) {
   const horizon = sceneHorizon();
-  const sky = target.createLinearGradient(0, 0, 0, horizon + H * .08);
+  const sky = target.createLinearGradient(0, 0, 0, Math.max(1, horizon + H * .22));
   sky.addColorStop(0, '#4aa8e4');
   sky.addColorStop(.55, '#7cc6ee');
   sky.addColorStop(1, '#a9dcf4');
@@ -2014,7 +1933,7 @@ function drawTowerForeground() {
 }
 
 function enemyHeightAt(y, type = 'grunt') {
-  const nearHeight = Math.min(190, H * .24, W * .50);
+  const nearHeight = Math.min(122, H * .17, W * .28);
   // Only ever engages in the synthetic QA stress scene (180 simultaneous enemies + boss +
   // telegraphs + max squad, all at once) -- never in real gameplay, which stays well under
   // the perf budget at the full size. Keeps the throttled-CPU dense-scene frame budget without
@@ -2120,7 +2039,7 @@ function drawBoss() {
   // Boss scale stays independent from crowd LOD. Shrinking ordinary stress-scene
   // enemies is useful; shrinking the single boss destroys the focal silhouette.
   const bossNearHeight = Math.min(190, H * .24, W * .5) * (TYPE_STATS.heavy.scale || 1);
-  const height = Math.min(projectedPixels(sceneProjection, y, bossNearHeight) * 4.2, 340, H * .46, W * .52);
+  const height = Math.min(projectedPixels(sceneProjection, y, bossNearHeight) * 2.35, H * .28, W * .34);
   if (!screen.visible || height < 1) return;
   const bob = Math.sin(run.bossTime * 3.3) * height * .008;
   const bossImage = height < 210
@@ -2461,7 +2380,7 @@ function draw() {
   drawPlayerBullets();
   drawPlayer();
   drawGateForeground();
-  drawTowerForeground();
+
   drawEffects();
 }
 
@@ -2518,7 +2437,7 @@ function getStateSnapshot() {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
-    score: run.score, skillPoints: run.skillPoints, lives: run.lives, kills: run.kills,
+    score: run.points, skillPoints: run.points, lives: run.lives, kills: run.kills,
     combo: run.combo, comboTimer: run.comboTimer, bestCombo: run.bestCombo, records: { ...records },
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,
@@ -2617,7 +2536,7 @@ if (qaMode) {
     advance(seconds) { const steps = clamp(Math.ceil((Number(seconds) || 0) / SIM_STEP), 0, 120_000); for (let index = 0; index < steps && ACTIVE_STATES.includes(state); index += 1) update(SIM_STEP); return this.getState(); },
     setTroops(value) { run.player.troops = clamp(Math.round(value), 0, MAX_TROOPS); updateHud(true); return visibleSquadCount(Math.max(1, run.player.troops), run.player.formationDensity); },
     setPower(value) { run.player.power = clamp(Number(value) || 1, 1, 16); updateHud(true); return run.player.power; },
-    setPoints(value) { run.skillPoints = Math.max(0, Math.round(Number(value) || 0)); updateHud(true); return run.skillPoints; },
+    setPoints(value) { run.points = Math.max(0, Math.round(Number(value) || 0)); updateHud(true); return run.points; },
     setLives(value) { run.lives = clamp(Math.round(Number(value) || 0), 0, 2); updateHud(true); return run.lives; },
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
@@ -2633,7 +2552,7 @@ if (qaMode) {
     defeatBoss() { if (!run.boss) this.forceBoss(); run.boss.hp = 0; finishBoss(); return state; },
     chooseReward(id) { return chooseBossReward(id || dom.rewardCards.firstElementChild?.dataset.upgrade); },
     forceReward() { setState(GAME_STATE.BOSS_REWARD); showBossRewards(); return state; },
-    purchase(id) { if (state !== GAME_STATE.PAUSED) pauseGame(); return buyFromShop(id); },
+    purchase(id) { if (state !== GAME_STATE.BOSS_REWARD) openArmory(); return buyFromShop(id); },
     damageTroops(value) { damageSquad(value, run.player.x); return run.player.troops; },
     forceRevival() { run.lives = Math.max(1, run.lives); run.player.troops = 1; damageSquad(99, run.player.x); return this.getState(); },
     forceGameOver() { run.lives = 0; run.player.troops = 1; damageSquad(99, run.player.x); return state; },
@@ -2717,12 +2636,12 @@ function prepareCapture(mode) {
     fireBurst();
   } else if (mode === 'reward' || mode === 'upgrade') {
     run.wave = 5;
-    run.skillPoints = 8;
+    run.points = 8;
     setState(GAME_STATE.BOSS_REWARD);
     showBossRewards();
   } else if (mode === 'shop' || mode === 'pause') {
     run.wave = 7;
-    run.skillPoints = 24;
+    run.points = 24;
     run.player.troops = 38;
     pauseGame();
   } else if (mode === 'revive') {
@@ -2735,7 +2654,7 @@ function prepareCapture(mode) {
     setupStressScene();
   } else if (mode === 'gameover' || mode === 'game-over') {
     run.wave = 11;
-    run.score = 18420;
+    run.points = 18420;
     run.kills = 734;
     run.bestCombo = 42;
     run.player.troops = 0;

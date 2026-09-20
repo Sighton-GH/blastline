@@ -4,9 +4,9 @@ const lerp = (start, end, amount) => start + (end - start) * amount;
 export const CAMERA_PROFILES = Object.freeze({
   landscape: Object.freeze({
     name: 'landscape',
-    horizon: .145,
+    horizon: -.16,
     nearRoadHalf: .300,
-    shoulderRatio: 1.32,
+    shoulderRatio: 1.18,
     depthRatio: 5.0,
     towerDepths: Object.freeze([.26, 1.00]),
     towerWorldHeight: 1.00,
@@ -14,11 +14,11 @@ export const CAMERA_PROFILES = Object.freeze({
   }),
   portrait: Object.freeze({
     name: 'portrait',
-    horizon: .165,
+    horizon: -.10,
     nearRoadHalf: .355,
-    shoulderRatio: 1.26,
+    shoulderRatio: 1.16,
     depthRatio: 5.6,
-    towerDepths: Object.freeze([.28, 1.00]),
+    towerDepths: Object.freeze([.26, 1.00]),
     towerWorldHeight: .95,
     railWorldHeight: .068,
   }),
@@ -206,11 +206,11 @@ export function projectionAuditGeometry(projection, geometry = buildBridgeGeomet
       Math.hypot(last.x - cable.to.x, last.y - cable.to.y),
     ];
   });
-  const towerClearance = Math.min(...geometry.towers.flatMap(tower => tower.xs.map((x, index) => {
+  const towerClearance = geometry.towers.length ? Math.min(...geometry.towers.flatMap(tower => tower.xs.map((x, index) => {
     const side = index ? 1 : -1;
     const roadEdge = projection.centerX + side * roadHalfWidth(projection, tower.worldY);
     return Math.abs(x - projection.centerX) - tower.pillarWidth * .62 - Math.abs(roadEdge - projection.centerX);
-  })));
+  }))) : Infinity;
   return {
     horizon: projection.horizon,
     deckBottom: groundY(projection, 1),
@@ -224,9 +224,7 @@ export function projectionAuditGeometry(projection, geometry = buildBridgeGeomet
     cableAnchorError: Math.max(0, ...anchorErrors),
     hangerAnchorError: 0,
     towerClearance,
-    towerHeightScaleError: Math.abs(
-      geometry.towers[0].height / geometry.towers[0].scale - geometry.towers[1].height / geometry.towers[1].scale
-    ),
+    towerHeightScaleError: geometry.towers.length >= 2 ? Math.abs(geometry.towers[0].height / geometry.towers[0].scale - geometry.towers[1].height / geometry.towers[1].scale) : 0,
     profile: projection.profile.name,
   };
 }

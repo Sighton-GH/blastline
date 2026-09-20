@@ -15,7 +15,8 @@ export const GAME_STATE = Object.freeze({
   HOME: 'home',
   PLAYING: 'playing',
   BOSS: 'boss',
-  BOSS_REWARD: 'boss-reward',
+  ARMORY: 'armory',
+  BOSS_REWARD: 'armory',
   PAUSED: 'paused',
   RECOVERY: 'recovery',
   GAME_OVER: 'game-over',
@@ -79,7 +80,7 @@ export function clampToLane(x, lane, padding = 0.02) {
 }
 
 export const MAX_TROOPS = 240;
-export const MAX_VISIBLE_SQUAD = 72;
+export const MAX_VISIBLE_SQUAD = 24;
 export const MAX_PROJECTILES = 4;
 export const MAX_FIRE_RATE = 16;
 export const MAX_PIERCE = 4;
@@ -90,7 +91,7 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const wave = clamp(Math.floor(Number.isFinite(waveIndex) ? waveIndex : 1), 1, 1_000_000);
   const mode = DIFFICULTIES[normalizeDifficulty(difficulty)];
   const logScale = Math.log2(wave + 1);
-  const duration = Math.min(48, 32 + (wave - 1) * 0.9);
+  const duration = Math.min(38, 26 + (wave - 1) * 0.65);
   const activeTarget = Math.min(
     MAX_ACTIVE_ENEMIES,
     Math.round((32 + (wave - 1) * 8.5) * mode.density),
@@ -118,27 +119,21 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
     spawnInterval,
     enemySpeed,
     bossHp,
-    bossPhaseCount: wave < 3 ? 2 : 3,
+    bossPhaseCount: 3,
     bossCadence: Math.max(0.62, 1.48 / mode.cadence - logScale * 0.035),
     pressure: mode.pressure,
-    skillReward: 2 + Math.floor((wave - 1) / 3),
+    bossReward: 700 + wave * 90,
     composition: Object.freeze(composition),
   });
 }
 
 export const SHOP_CATALOG = Object.freeze([
-  { id: 'reinforcements', title: 'Reinforcements', short: '+10 squad', baseCost: 2, maxTier: 12, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Scales multishot volume' },
-  { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 3, maxTier: 10, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Excellent with critical hits' },
-  { id: 'fireRate', title: 'Fire Rate', short: '+12% cadence', baseCost: 3, maxTier: 8, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds Frenzy quickly' },
-  { id: 'projectileSpeed', title: 'Velocity', short: '+15% speed', baseCost: 2, maxTier: 7, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-velocity.webp', synergy: 'Improves distant accuracy' },
-  { id: 'multishot', title: 'Multishot', short: '+1 round', baseCost: 6, maxTier: 3, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Multiplies every soldier' },
-  { id: 'piercing', title: 'Piercing', short: '+1 target', baseCost: 5, maxTier: 4, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Breaks dense columns' },
-  { id: 'criticalChance', title: 'Critical Hits', short: '+5% chance', baseCost: 4, maxTier: 7, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Doubles projectile damage' },
-  { id: 'armor', title: 'Armor', short: '+3 plates', baseCost: 2, maxTier: 12, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Preserves large squads' },
-  { id: 'formationDensity', title: 'Formation', short: 'tighter ranks', baseCost: 3, maxTier: 6, tone: 'steel', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Dodges lane fire cleanly' },
-  { id: 'frenzyDuration', title: 'Frenzy', short: '+0.8 seconds', baseCost: 3, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rewards kill streaks' },
-  { id: 'recovery', title: 'Recovery', short: '+3 revive squad', baseCost: 4, maxTier: 6, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Makes reserves stronger' },
-  { id: 'extraLife', title: 'Extra Life', short: '+1 reserve', baseCost: 8, maxTier: MAX_LIVES, tone: 'red', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Keep the entire build' },
+  { id: 'reinforcements', title: 'Squad', short: '+8 squad', baseCost: 240, maxTier: 10, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'More rifles on the line' },
+  { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 320, maxTier: 8, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Breaks armored targets' },
+  { id: 'fireRate', title: 'Fire Rate', short: '+12% cadence', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds pressure faster' },
+  { id: 'multishot', title: 'Multishot', short: '+1 round', baseCost: 720, maxTier: 3, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes' },
+  { id: 'armor', title: 'Armor', short: '+4 plates', baseCost: 260, maxTier: 10, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Absorbs incoming fire' },
+  { id: 'extraLife', title: 'Reserve', short: '+1 reserve', baseCost: 950, maxTier: MAX_LIVES, tone: 'red', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Redeploys the squad' },
 ]);
 
 export const SHOP_BY_ID = Object.freeze(Object.fromEntries(SHOP_CATALOG.map(item => [item.id, item])));
@@ -182,14 +177,14 @@ export function shopPrice(id, purchaseCount = 0) {
 
 export function applyUpgrade(player, id) {
   const next = { ...player };
-  if (id === 'reinforcements') next.troops = Math.min(MAX_TROOPS, next.troops + 10);
+  if (id === 'reinforcements') next.troops = Math.min(MAX_TROOPS, next.troops + 8);
   else if (id === 'damage') next.power = Math.min(16, next.power + 1);
   else if (id === 'fireRate') next.fireRate = Math.min(MAX_FIRE_RATE, next.fireRate * 1.12);
   else if (id === 'projectileSpeed') next.bulletSpeed = Math.min(2.4, next.bulletSpeed * 1.15);
   else if (id === 'multishot') next.projectiles = Math.min(MAX_PROJECTILES, next.projectiles + 1);
   else if (id === 'piercing') next.pierce = Math.min(MAX_PIERCE, next.pierce + 1);
   else if (id === 'criticalChance') next.criticalChance = Math.min(0.35, next.criticalChance + 0.05);
-  else if (id === 'armor') next.armor = Math.min(60, next.armor + 3);
+  else if (id === 'armor') next.armor = Math.min(60, next.armor + 4);
   else if (id === 'formationDensity') next.formationDensity = Math.min(6, next.formationDensity + 1);
   else if (id === 'frenzyDuration') next.frenzyDuration = Math.min(10, next.frenzyDuration + 0.8);
   else if (id === 'recovery') next.recovery = Math.min(6, next.recovery + 1);
@@ -201,13 +196,14 @@ export function purchaseUpgrade(session, id) {
   if (!item) return { session, ok: false, reason: 'unknown' };
   if (isUpgradeCapped(session, id)) return { session, ok: false, reason: 'capped' };
   const count = Math.max(0, session.purchaseCounts?.[id] || 0);
+  const availablePoints = Number.isFinite(session.points) ? session.points : (session.skillPoints || 0);
   const cost = shopPrice(id, count);
-  if ((session.skillPoints || 0) < cost) return { session, ok: false, reason: 'insufficient', cost };
+  if (availablePoints < cost) return { session, ok: false, reason: 'insufficient', cost };
   const purchaseCounts = { ...(session.purchaseCounts || {}), [id]: count + 1 };
   const upgradeTiers = { ...(session.upgradeTiers || {}), [id]: upgradeTier(session, id) + 1 };
   const next = {
     ...session,
-    skillPoints: session.skillPoints - cost,
+    points: availablePoints - cost,
     purchaseCounts,
     upgradeTiers,
   };
@@ -358,14 +354,14 @@ export function stateAfterBossDefeat() {
 
 export function enemyReward(type, killCount = 0) {
   const table = {
-    grunt: { score: 12, frenzy: 1, skillPoints: 0 },
-    gunner: { score: 20, frenzy: 1, skillPoints: 0 },
-    shield: { score: 28, frenzy: 2, skillPoints: 0 },
-    heavy: { score: 42, frenzy: 3, skillPoints: 1 },
-    demolition: { score: 52, frenzy: 3, skillPoints: 1 },
+    grunt: { points: 18, frenzy: 1 },
+    gunner: { points: 26, frenzy: 1 },
+    shield: { points: 36, frenzy: 2 },
+    heavy: { points: 54, frenzy: 3 },
+    demolition: { points: 68, frenzy: 3 },
   };
   const reward = { ...(table[type] || table.grunt) };
-  if (killCount > 0 && killCount % 24 === 0) reward.skillPoints += 1;
+  if (killCount > 0 && killCount % 20 === 0) reward.points += 40;
   return reward;
 }
 
@@ -401,8 +397,10 @@ export function createCleanRun(seed = 0, difficulty = 'veteran') {
     state: GAME_STATE.PLAYING,
     resumeState: null,
     player: initialPlayer(),
+    points: 0,
     score: 0,
     skillPoints: 0,
+    bossesDefeated: 0,
     lives: 0,
     kills: 0,
     combo: 0,
