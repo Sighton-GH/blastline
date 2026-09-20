@@ -333,10 +333,12 @@ async function runInteractionValidation() {
   });
   record('enemyFormationLaneOwnership', laneStable, retainedEnemies.slice(0, 8));
 
-  await page.evaluate(() => { __blastlineTest.freeze(false); __blastlineTest.reset(203, 'veteran'); __blastlineTest.setWave(5); __blastlineTest.spawnEnemyAt('gunner', 2, .28, true); });
+  // Anti mid-lane camping: gunner volleys aim at the SQUAD's lane, not their
+  // own. Park the squad mid and assert the lane-2 gunner's warning lands mid.
+  await page.evaluate(() => { __blastlineTest.freeze(false); __blastlineTest.reset(203, 'veteran'); __blastlineTest.setWave(5); __blastlineTest.setPlayerX(0); __blastlineTest.spawnEnemyAt('gunner', 2, .28, true); });
   await page.waitForFunction(() => { const state = __blastlineTest.getState(); return state.telegraphs.length > 0 || state.enemyBullets > 0; });
   const ranged = await page.evaluate(() => __blastlineTest.getState());
-  record('laneTelegraphedEnemyFire', ranged.telegraphs.every(warning => warning.lane === 2 && Math.abs(warning.x - .58) < 1e-9), ranged.telegraphs);
+  record('gunnerFireAimsAtSquadLane', ranged.telegraphs.length > 0 && ranged.telegraphs.every(warning => warning.lane === 1 && Math.abs(warning.x) < 1e-9), ranged.telegraphs);
 
   const comboResult = await page.evaluate(() => {
     __blastlineTest.reset(207, 'veteran');

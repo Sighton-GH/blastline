@@ -1086,6 +1086,7 @@ function addTelegraph(lane, time, kind, source = null, options = {}) {
   const warning = pools.telegraphs.take({
     lane, x: laneCenter(lane), time, maxTime: time, kind, source,
     damage: options.damage ?? 1, speed: options.speed ?? .48,
+    muzzleX: source && Number.isFinite(source.x) ? source.x : null,
     fired: false, dead: false,
   });
   run.telegraphs.push(warning);
@@ -1680,12 +1681,25 @@ function updateTelegraphs(dt) {
     // Boss fire leaves from the blasters beside the hull and converges onto the
     // warned lane, so the projectile path visibly starts at the weapon.
     const muzzleSide = warning.lane === 0 ? -1 : warning.lane === 2 ? 1 : ((source.attackSerial || 0) % 2 ? -1 : 1);
-    const muzzleX = fromBoss ? source.x + muzzleSide * .14 : laneCenter(warning.lane);
-    const converge = fromBoss ? clamp((laneCenter(warning.lane) - muzzleX) / .45, -.55, .55) : 0;
+    const startY = Math.max(.14, source.y + .03);
+    let muzzleX = laneCenter(warning.lane);
+    let converge = 0;
+    if (fromBoss) {
+      muzzleX = source.x + muzzleSide * .14;
+      converge = clamp((laneCenter(warning.lane) - muzzleX) / .45, -.55, .55);
+    } else if (warning.muzzleX != null) {
+      // Aimed volleys (anti mid-lane camping): the shot visibly leaves the
+      // shooter's gun and converges onto the warned lane, landing on its
+      // center at the line. vx is solved from the real flight time so the
+      // crossing point is the line, not somewhere mid-field.
+      muzzleX = warning.muzzleX;
+      const flight = Math.max(.2, (.875 - startY) / Math.max(.05, warning.speed));
+      converge = clamp((laneCenter(warning.lane) - muzzleX) / flight, -.55, .55);
+    }
     if (fromBoss) source.shotFlash = .12;
     spawnEnemyProjectile(source, {
       kind: warning.kind === 'demolition' ? 'hazard' : 'lane', lane: warning.lane,
-      x: muzzleX, y: Math.max(.14, source.y + .03), vx: converge,
+      x: muzzleX, y: startY, vx: converge,
       vy: warning.speed, radius: warning.kind === 'demolition' ? .17 : .13,
       damage: warning.damage, color: '#ff543f',
     });
@@ -1715,7 +1729,13 @@ function updateEnemyAttacks(enemy, dt) {
     enemy.shotTimer = (enemy.volleyCadence || 3.4) / config.pressure + rng() * 1.1;
     return;
   }
-  if (enemy.type === 'gunner') addTelegraph(enemy.lane, .46, 'gunner', enemy, { speed: .4 * config.pressure, damage: 1 });
+  // Anti mid-lane camping (Aston backlog): gunner and technical volleys track
+  // the squad's lane, locked when the telegraph lands. A parked squad eats
+  // every volley; switching lanes dodges. The fair-play invariant still caps
+  // concurrent threatened lanes, so an escape lane always exists. Damage and
+  // cadence are unchanged - only the aim moved.
+  if (enemy.type === 'gunner') addTelegraph(nearestLane(run.player.x), .46, 'gunner', enemy, { speed: .4 * config.pressure, damage: 1 });
+  else if (enemy.type === 'technical') addTelegraph(nearestLane(run.player.x), .85, 'demolition', enemy, { speed: .31 * config.pressure, damage: run.wave >= 10 ? 2 : 1 });
   else addTelegraph(enemy.lane, .85, 'demolition', enemy, { speed: .31 * config.pressure, damage: run.wave >= 10 ? 2 : 1 });
   enemy.shotTimer = (enemy.type === 'gunner' ? 3.4 : 5.0) / config.pressure + rng() * 2.1;
 }
@@ -3985,6 +4005,7 @@ if (qaMode) {
     debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, y: +(enemy.y).toFixed(2), chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
     arcFlashCount() { return (run.arcFlashes || []).length; },
     spillCount() { return run.debugSpills || 0; },
+    enemyBulletList() { return run.enemyBullets.filter(b => !b.dead).map(b => ({ x: +b.x.toFixed(3), y: +b.y.toFixed(3), lane: b.lane, kind: b.kind, damage: b.damage })); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
     spawnEnemyAt(type = 'grunt', lane = 1, y = .82, ready = false) { const enemy = spawnEnemy(type, { lane, x: laneCenter(lane), y }); if (enemy && ready) enemy.shotTimer = 0; return enemy ? { type: enemy.type, lane: enemy.lane, x: enemy.x, y: enemy.y, hp: enemy.hp, shield: enemy.shield } : null; },
