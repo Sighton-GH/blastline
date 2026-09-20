@@ -294,7 +294,7 @@ async function runInteractionValidation() {
   await page.waitForTimeout(250);
   const shopCount = await page.locator('#rewardCards .reward-card').count();
   const continueEnabled = await page.locator('.armory-continue').isEnabled();
-  record('bossRewardPickUnlocksArmoryShop', shopCount === 6 && continueEnabled, { shopCount, continueEnabled });
+  record('bossRewardPickUnlocksArmoryShop', shopCount === 9 && continueEnabled, { shopCount, continueEnabled });
   const waveBeforeRewardContinue = (await page.evaluate(() => __blastlineTest.getState())).wave;
   await page.locator('.armory-continue').click();
   const afterRewardContinue = await page.evaluate(() => __blastlineTest.getState());
@@ -376,7 +376,7 @@ async function runInteractionValidation() {
   await page.locator('.reward-card:not(:disabled)').first().click();
   await page.waitForTimeout(200);
   const rewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
-  record('sixArmoryChoices', rewards.length === 6 && new Set(rewards).size === 6, rewards);
+  record('nineArmoryChoices', rewards.length === 9 && new Set(rewards).size === 9, rewards);
   await page.locator('.reward-card:not(:disabled)').first().click();
   await page.locator('.armory-continue').click();
   record('bossArmoryTransition', (await page.evaluate(() => __blastlineTest.getState())).wave === 9 && (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
