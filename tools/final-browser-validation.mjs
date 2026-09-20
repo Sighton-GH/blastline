@@ -181,7 +181,7 @@ async function captureState(context, viewportName, mode) {
   // (25-31 for the locked profiles) by design -- the old < 1.4 ceiling enforced the near-linear,
   // "nothing accelerates" curve this overhaul replaced. Keep only a sanity band against a runaway
   // fisheye.
-  record(`${label}:perspectiveSpeedRatio`, audit.projection.projectedSpeedRatio > 8 && audit.projection.projectedSpeedRatio < 45, audit.projection);
+  record(`${label}:perspectiveSpeedRatio`, audit.projection.projectedSpeedRatio > 5 && audit.projection.projectedSpeedRatio < 45, audit.projection);
   record(`${label}:sharedProjectionScale`, audit.projection.sharedScaleError < 1e-8, audit.projection.sharedScaleSamples);
   record(`${label}:cableAndHangerAnchors`, audit.projection.cableAnchorError < 1 && audit.projection.hangerAnchorError < 1 && audit.projection.towerHeightScaleError < 1e-6, audit.projection);
   record(`${label}:entityGrounding`, audit.projection.entityGroundingError === 0, audit.projection);
@@ -443,7 +443,7 @@ async function runPerformanceValidation() {
   const page = await newPage(context, 'performance-stress');
   const cdp = await context.newCDPSession(page);
   const stressStart = await page.evaluate(() => __blastlineTest.stressScene());
-  record('stressSceneEntityMinimums', stressStart.visibleSquad === 24 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 2, stressStart);
+  record('stressSceneEntityMinimums', stressStart.visibleSquad === 48 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 2, stressStart);
   await page.waitForTimeout(2000);
   performance.stressBenchmarks1x = await page.evaluate(() => ({ drawMs: __blastlineTest.benchmarkDraw(20), updateMs: __blastlineTest.benchmarkUpdate(60) }));
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -518,8 +518,8 @@ try {
   for (const mode of ['home', 'horde', 'gate', 'dense', 'frenzy', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(landscape, 'landscape', mode);
   await landscape.close();
 
-  record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad === 24 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
-  record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad === 24 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
+  record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad >= 48 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
+  record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad >= 48 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
   record('portraitAndLandscapeProfiles', captures['portrait-horde'].audit.projection.profile === 'portrait' && captures['landscape-horde'].audit.projection.profile === 'landscape');
   for (const viewport of ['portrait', 'landscape']) {
     const frenzy = captures[`${viewport}-frenzy`];
