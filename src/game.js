@@ -2317,13 +2317,11 @@ function drawSprite(image, x, y, height) {
 
 function gateVisual(gate) {
   const y = gate.encounter.y;
-  // Extend the edge facing the neutral lane part-way into that gap, so the two gates
-  // read as most of the road width and the untouched lane reads as a gap, not a lane (V5).
+  // Gates must stay fully inside their own lane at every depth -- frame, sign, glow,
+  // feet and shadows included. The untouched lane reads as open road (Bryan, V6).
   const bounds = laneBounds(gate.lane, .016);
-  const towardGap = Math.sign(laneCenter(gate.encounter.neutralLane) - laneCenter(gate.lane));
-  const gapExtend = LANE_HALF_WIDTH * .35;
-  const worldLeft = bounds.min - (towardGap < 0 ? gapExtend : 0);
-  const worldRight = bounds.max + (towardGap > 0 ? gapExtend : 0);
+  const worldLeft = bounds.min;
+  const worldRight = bounds.max;
   const center = worldToScreen(gate.x, y);
   const left = worldToScreen(worldLeft, y);
   const right = worldToScreen(worldRight, y);
@@ -2349,12 +2347,19 @@ function drawGate(gate, foreground = false) {
   if (visual.fade <= 0 || visual.scale <= .008 || (foreground && (visual.y < .78 || visual.y > .99))) return;
   if (!foreground && visual.y > .78) return;
   const [main, bright, dark, deep] = gatePalette(gate.tone);
-  const postWidth = visual.width * .16;
+  const postWidth = visual.width * .15;
+  // Inset the structure from the strict lane bounds so the widest elements
+  // (pedestal feet at .75x post width past the post centers, the beam overhang,
+  // and the ground shadow) still finish inside the lane.
+  const laneInset = postWidth * .8;
+  const gateLeft = visual.left.x + laneInset;
+  const gateRight = visual.right.x - laneInset;
+  const gateWidth = gateRight - gateLeft;
   const beamHeight = visual.panelHeight * .17;
   const panelTop = visual.topY + beamHeight * .55;
   const panelBottom = visual.deckY - visual.frameHeight * .055;
-  const panelLeft = visual.left.x + postWidth * .42;
-  const panelRight = visual.right.x - postWidth * .42;
+  const panelLeft = gateLeft + postWidth * .42;
+  const panelRight = gateRight - postWidth * .42;
   const panelRadius = Math.min(postWidth * .5, (panelBottom - panelTop) * .16);
   const frameColor = foreground ? dark : main;
   const frameBright = foreground ? deep : bright;
@@ -2366,7 +2371,7 @@ function drawGate(gate, foreground = false) {
     ctx.globalAlpha = visual.fade * .4;
     ctx.fillStyle = 'rgba(10,20,26,.5)';
     ctx.beginPath();
-    ctx.ellipse(visual.center.x, visual.deckY + beamHeight * .16, visual.width * .52, beamHeight * .26, 0, 0, Math.PI * 2);
+    ctx.ellipse(visual.center.x, visual.deckY + beamHeight * .16, gateWidth * .5, beamHeight * .26, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
     // Energy panel: glassy gradient with a bright inner rim and diagonal sheen,
@@ -2408,7 +2413,7 @@ function drawGate(gate, foreground = false) {
   }
   // Pedestal bases: gray plinths anchor each post to the deck (matches the
   // established gate sheet -- stone-grey feet under glossy colored frames).
-  for (const x of [visual.left.x, visual.right.x]) {
+  for (const x of [gateLeft, gateRight]) {
     ctx.fillStyle = 'rgba(10,18,24,.5)';
     ctx.beginPath();
     ctx.ellipse(x, visual.deckY + beamHeight * .1, postWidth * 1.2, beamHeight * .16, 0, 0, Math.PI * 2);
@@ -2432,7 +2437,7 @@ function drawGate(gate, foreground = false) {
   }
   // Glossy rounded frame: tapered posts with a glow strip on the inner edge and a
   // thick rounded beam with elbow corners, per the established gate art sheet.
-  for (const x of [visual.left.x, visual.right.x]) {
+  for (const x of [gateLeft, gateRight]) {
     const postGrad = ctx.createLinearGradient(x - postWidth / 2, 0, x + postWidth / 2, 0);
     postGrad.addColorStop(0, deep);
     postGrad.addColorStop(.4, frameColor);
@@ -2442,7 +2447,7 @@ function drawGate(gate, foreground = false) {
     ctx.beginPath();
     ctx.roundRect(x - postWidth / 2, visual.topY + beamHeight * .3, postWidth, visual.deckY - visual.topY - beamHeight * .3, [postWidth * .32, postWidth * .32, 0, 0]);
     ctx.fill();
-    const towardCenter = x === visual.left.x ? 1 : -1;
+    const towardCenter = x === gateLeft ? 1 : -1;
     ctx.fillStyle = frameBright;
     ctx.globalAlpha = visual.fade * .8;
     ctx.fillRect(x + towardCenter * postWidth * .3 - postWidth * .06, visual.topY + beamHeight * .8, postWidth * .12, visual.deckY - visual.topY - beamHeight * 1.1);
@@ -2460,8 +2465,8 @@ function drawGate(gate, foreground = false) {
     }
   }
   // Beam with rounded elbow corners overlapping the post tops.
-  const beamLeft = visual.left.x - postWidth * .3;
-  const beamRight = visual.right.x + postWidth * .3;
+  const beamLeft = gateLeft - postWidth * .3;
+  const beamRight = gateRight + postWidth * .3;
   const beamGrad = ctx.createLinearGradient(0, visual.topY, 0, visual.topY + beamHeight);
   beamGrad.addColorStop(0, frameBright);
   beamGrad.addColorStop(.5, frameColor);
@@ -2476,7 +2481,7 @@ function drawGate(gate, foreground = false) {
   ctx.roundRect(beamLeft + beamHeight * .12, visual.topY + beamHeight * .1, beamRight - beamLeft - beamHeight * .24, beamHeight * .2, beamHeight * .1);
   ctx.fill();
   ctx.fillStyle = 'rgba(8,14,20,.4)';
-  ctx.fillRect(visual.left.x + postWidth * .4, visual.topY + beamHeight * .82, visual.right.x - visual.left.x - postWidth * .8, beamHeight * .12);
+  ctx.fillRect(gateLeft + postWidth * .4, visual.topY + beamHeight * .82, gateRight - gateLeft - postWidth * .8, beamHeight * .12);
   if (!foreground) {
     // Fixture glow under the beam -- a soft light bar washing the panel top.
     const glowX = visual.center.x;
@@ -2487,7 +2492,7 @@ function drawGate(gate, foreground = false) {
     ctx.beginPath();
     ctx.ellipse(glowX, visual.topY + beamHeight, beamHeight * 1.6, beamHeight * .9, 0, 0, Math.PI * 2);
     ctx.fill();
-    for (const fx of [visual.left.x, visual.center.x, visual.right.x]) {
+    for (const fx of [gateLeft, visual.center.x, gateRight]) {
       ctx.fillStyle = '#ffe9b0';
       ctx.beginPath();
       ctx.arc(fx, visual.topY + beamHeight * .92, Math.max(.8, beamHeight * .1), 0, Math.PI * 2);
@@ -2516,7 +2521,7 @@ function drawGate(gate, foreground = false) {
       ctx.globalAlpha *= textAlpha;
       let fontSize = Math.min(64, visual.panelHeight * .46);
       ctx.font = `1000 ${fontSize}px system-ui`;
-      const limit = visual.width - postWidth * 2.3;
+      const limit = gateWidth - postWidth * 2.3;
       while (fontSize > 9 && ctx.measureText(gateText(gate)).width > limit) {
         fontSize -= 1;
         ctx.font = `1000 ${fontSize}px system-ui`;

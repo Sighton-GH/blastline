@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T17:33:58.837Z",
+  "generatedAt": "2026-09-20T17:43:29.810Z",
   "fullSoak": false,
   "durations": {
     "normalMs": 3000,
@@ -420,7 +420,7 @@
   "failures": [],
   "performance": {
     "mobile": {
-      "samples": 176,
+      "samples": 175,
       "p50": 16.699999999999818,
       "p95": 16.700000000000728,
       "max": 16.800000000000182,
@@ -430,47 +430,47 @@
     "desktop": {
       "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.700000000000273,
+      "p95": 16.700000000000728,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
     },
     "stressBenchmarks1x": {
-      "drawMs": 0.55,
+      "drawMs": 0.45,
       "updateMs": 0.3066666666418314
     },
     "stressBenchmarks4x": {
-      "drawMs": 1.433333333581686,
-      "updateMs": 1.3100000000248353,
+      "drawMs": 1.5250000000620882,
+      "updateMs": 1.3799999999503294,
       "layers": {
         "foregroundClear": 0,
-        "environmentMotion": 0.5375000000931323,
-        "telegraphs": 0.08749999990686774,
-        "enemiesAndBoss": 1.6125000002793968,
-        "hostileProjectiles": 0.0625,
-        "squadProjectiles": 0.012499999720603228,
-        "squad": 0.6625000000931323,
-        "effects": 0
+        "environmentMotion": 0.5,
+        "telegraphs": 0,
+        "enemiesAndBoss": 2.3374999999068677,
+        "hostileProjectiles": 0.012500000186264515,
+        "squadProjectiles": 0.03750000009313226,
+        "squad": 0.1875,
+        "effects": 0.6499999999068677
       }
     },
     "stress4x": {
-      "samples": 468,
+      "samples": 457,
       "p50": 16.69999999999891,
       "p95": 16.799999999999272,
-      "max": 116.60000000000036,
-      "over50": 0.002136752136752137,
+      "max": 150,
+      "over50": 0.002188183807439825,
       "refreshNormalizedP95": 16.799999999999272
     },
     "soak": {
       "durationMs": 15000,
-      "initialHeap": 3289688,
-      "finalHeap": 3441276,
-      "heapGrowth": 0.04607974981214024,
+      "initialHeap": 3293408,
+      "finalHeap": 3382208,
+      "heapGrowth": 0.02696295144725464,
       "entitySamples": [
         {
           "enemies": 180,
-          "bullets": 139,
-          "enemyBullets": 6,
+          "bullets": 173,
+          "enemyBullets": 9,
           "particles": 0,
           "created": {
             "enemies": {
@@ -479,11 +479,11 @@
             },
             "bullets": {
               "created": 457,
-              "free": 318
+              "free": 284
             },
             "enemyBullets": {
               "created": 10,
-              "free": 4
+              "free": 1
             },
             "particles": {
               "created": 80,
@@ -501,21 +501,21 @@
         },
         {
           "enemies": 180,
-          "bullets": 202,
-          "enemyBullets": 2,
+          "bullets": 174,
+          "enemyBullets": 1,
           "particles": 0,
           "created": {
             "enemies": {
               "created": 202,
-              "free": 15
+              "free": 16
             },
             "bullets": {
               "created": 457,
-              "free": 255
+              "free": 283
             },
             "enemyBullets": {
               "created": 10,
-              "free": 8
+              "free": 9
             },
             "particles": {
               "created": 80,
@@ -523,31 +523,31 @@
             },
             "floaters": {
               "created": 21,
-              "free": 17
+              "free": 16
             },
             "telegraphs": {
               "created": 9,
-              "free": 8
+              "free": 7
             }
           }
         },
         {
           "enemies": 180,
-          "bullets": 144,
-          "enemyBullets": 5,
+          "bullets": 182,
+          "enemyBullets": 8,
           "particles": 0,
           "created": {
             "enemies": {
               "created": 202,
-              "free": 21
+              "free": 20
             },
             "bullets": {
               "created": 457,
-              "free": 313
+              "free": 275
             },
             "enemyBullets": {
               "created": 12,
-              "free": 7
+              "free": 4
             },
             "particles": {
               "created": 80,
@@ -587,7 +587,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.08333333333333333
+        "synchronousDrawMeanMs": 0.09722222222222222
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -698,7 +698,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.33055555551416343
+        "synchronousDrawMeanMs": 0.39722222224291825
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -849,7 +849,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5666666667287549
+        "synchronousDrawMeanMs": 0.5555555555555556
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1000,7 +1000,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5833333333333334
+        "synchronousDrawMeanMs": 0.5777777777984738
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1151,7 +1151,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.39722222224291825
+        "synchronousDrawMeanMs": 0.3805555555348595
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1211,7 +1211,7 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 59.111111111111114,
+        "maxWaterJump": 59.12499999999997,
         "projection": {
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
@@ -1315,7 +1315,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.20277777769499356
+        "synchronousDrawMeanMs": 0.34166666658388245
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1466,7 +1466,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2916666666666667
+        "synchronousDrawMeanMs": 0.25
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1577,7 +1577,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2805555554934674
+        "synchronousDrawMeanMs": 0.2416666666459706
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1728,7 +1728,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2666666666045785
+        "synchronousDrawMeanMs": 0.29722222220152617
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1892,7 +1892,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3722222221808301
+        "synchronousDrawMeanMs": 0.3500000000413921
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2056,7 +2056,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6694444443823563
+        "synchronousDrawMeanMs": 0.6027777777570817
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2220,7 +2220,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.10000000004139212
+        "synchronousDrawMeanMs": 0.08333333333333333
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2331,7 +2331,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.17222222220152617
+        "synchronousDrawMeanMs": 0.18611111109041506
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2442,7 +2442,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5277777777777778
+        "synchronousDrawMeanMs": 0.46666666668736273
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2593,7 +2593,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.9638888888681928
+        "synchronousDrawMeanMs": 0.7305555555762516
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2744,7 +2744,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6694444443823563
+        "synchronousDrawMeanMs": 0.5694444444444444
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2895,7 +2895,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3916666667080588
+        "synchronousDrawMeanMs": 0.3888888888888889
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2955,7 +2955,7 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.08333333333336,
+        "maxWaterJump": 79.88888888888889,
         "projection": {
           "horizon": -122.88,
           "deckBottom": 787.1999999999999,
@@ -3210,7 +3210,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2749999999586079
+        "synchronousDrawMeanMs": 0.386111111069719
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3321,7 +3321,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.25
+        "synchronousDrawMeanMs": 0.2750000000620882
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3472,7 +3472,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.21944444440305233
+        "synchronousDrawMeanMs": 0.25
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3636,7 +3636,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3472222222222222
+        "synchronousDrawMeanMs": 0.33611111115250325
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3800,7 +3800,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5499999999172158
+        "synchronousDrawMeanMs": 0.5388888888474967
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3964,7 +3964,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.20277777779847383
+        "synchronousDrawMeanMs": 0.30833333337472546
       },
       "runtimeAssetCount": 21,
       "audit": {
