@@ -854,8 +854,10 @@ function fireBurst() {
         run.bullets.push(pools.bullets.take({
           x: origin.x + barrel, y: origin.y, previousX: origin.x + barrel, previousY: origin.y, originX: origin.x + barrel, originY: origin.y,
           vx: offset * .72 + barrel * .4, vy: -1.02 * run.player.bulletSpeed * (frenzy ? 1.18 : 1),
-          power: frenzyPower * (veteran ? 1.05 : 1) * (bonus ? .55 : 1) * (critical ? 2 : 1), critical,
+          power: frenzyPower * (veteran ? 1.05 : 1) * (bonus ? .55 : 1) * (critical ? 2 : 1)
+            * (1 - .07 * (run.player.shock || 0)) * (1 - .05 * (run.player.frost || 0)), critical,
           hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
+          shock: run.player.shock || 0, frost: run.player.frost || 0,
         }));
         emitted += 1;
       }
@@ -1564,6 +1566,28 @@ function collidePlayerBullets() {
         if (damage > 0) damage *= wardenAuraFactor(enemy, activeWardens);
         enemy.hp -= damage;
         enemy.hitFlash = .08;
+        // Frost rounds chill: march slows for a beat, fresh hits refresh it.
+        if (bullet.frost > 0) {
+          enemy.chillFactor = Math.min(enemy.chillFactor ?? 1, 1 - .11 * bullet.frost);
+          enemy.chillUntil = ambientTime + 1.6;
+        }
+        // Shock rounds arc: lightning jumps to the nearest other visible enemy
+        // and halts its march. The arc is drawn as a flash so the chain READS.
+        if (bullet.shock > 0 && rng() < .12 * bullet.shock) {
+          let arc = null; let arcBest = .42;
+          for (const other of run.enemies) {
+            if (other.dead || other.id === enemy.id || other.y < engageWorldY) continue;
+            const d = Math.abs(other.x - enemy.x) + Math.abs(other.y - enemy.y) * .6;
+            if (d < arcBest) { arcBest = d; arc = other; }
+          }
+          if (arc) {
+            arc.hp -= cappedHitDamage(arc, damage * .6);
+            arc.hitFlash = .08;
+            arc.haltUntil = ambientTime + .35;
+            if (!stressMode) (run.arcFlashes ||= []).push({ x1: enemy.x, y1: enemy.y, x2: arc.x, y2: arc.y, until: ambientTime + .12 });
+            if (arc.hp <= 0) defeatEnemy(arc);
+          }
+        }
         bullet.lastHitId = enemy.id;
         if (enemy.type === 'reflector' && !enemy.reflectedOnce) {
           enemy.reflectedOnce = true;
@@ -1797,15 +1821,17 @@ function update(dt) {
     // Gunners weave laterally and demolition units alternate a charge/lurch rhythm --
     // both stay strictly inside their lane via clampToLaneLocal, same containment the
     // validator enforces everywhere else.
+    const marchFactor = (enemy.haltUntil || 0) > ambientTime ? 0
+      : (enemy.chillUntil || 0) > ambientTime ? (enemy.chillFactor ?? 1) : 1;
     if (enemy.type === 'demolition') {
       const charging = Math.sin(enemy.y * 5.5 + (enemy.bob || 0)) > .55;
-      enemy.y += dt * enemy.speed * (charging ? 1.9 : .85);
+      enemy.y += dt * enemy.speed * marchFactor * (charging ? 1.9 : .85);
       enemy.x = enemy.lineX;
     } else if (enemy.type === 'gunner') {
-      enemy.y += dt * enemy.speed;
+      enemy.y += dt * enemy.speed * marchFactor;
       enemy.x = clampToLaneLocal(enemy.lineX + Math.sin(enemy.y * 13 + (enemy.bob || 0) * 3) * .05, enemy.lane);
     } else {
-      enemy.y += dt * enemy.speed;
+      enemy.y += dt * enemy.speed * marchFactor;
       enemy.x = enemy.lineX;
     }
     if (enemy.engagedAt === null && enemy.y >= engageWorldY) enemy.engagedAt = ambientTime;
@@ -3079,6 +3105,16 @@ function drawEnemy(enemy) {
       ctx.ellipse(screen.x, baseline - height * .4, rx, height * .46, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    if ((enemy.chillUntil || 0) > ambientTime || (enemy.haltUntil || 0) > ambientTime) {
+      ctx.save();
+      ctx.globalAlpha = (enemy.haltUntil || 0) > ambientTime ? .5 : .34;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = (enemy.haltUntil || 0) > ambientTime ? '#ffe98f' : '#9fe4ff';
+      ctx.beginPath();
+      ctx.ellipse(screen.x, baseline - height * .44, height * .24, height * .44, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     if (enemy.hitFlash > 0) {
       ctx.save();
       ctx.globalAlpha = clamp(enemy.hitFlash / .08, 0, 1) * .42;
@@ -3385,7 +3421,13 @@ function drawPlayerBullets() {
   ctx.save();
   ctx.lineCap = 'round';
   const frenzy = run.frenzyTimer > 0;
-  ctx.strokeStyle = frenzy ? '#fff2a4' : '#ffc33f';
+  const shockTint = (run.player.shock || 0) > 0;
+  const frostTint = (run.player.frost || 0) > 0;
+  ctx.strokeStyle = frenzy ? '#fff2a4'
+    : shockTint && frostTint ? '#dff6c8'
+    : shockTint ? '#ffe08a'
+    : frostTint ? '#bfeaff'
+    : '#ffc33f';
   const stride = stressMode && run.bullets.length > 540 ? 2 : 1;
   const BANDS = 8;
   for (let band = 0; band < BANDS; band += 1) {
@@ -3413,6 +3455,29 @@ function drawPlayerBullets() {
       ctx.fill();
       ctx.restore();
     }
+  }
+  // Shock arcs: jagged lightning between the hit enemy and the arc target,
+  // kept to a short life so the chain reads without lingering clutter.
+  if (run.arcFlashes && run.arcFlashes.length) {
+    run.arcFlashes = run.arcFlashes.filter(flash => flash.until > ambientTime);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.strokeStyle = '#ffe98f';
+    ctx.lineWidth = 2;
+    for (const flash of run.arcFlashes) {
+      const a = projectToScreen(flash.x1, flash.y1, projectionScratchA);
+      const b = projectToScreen(flash.x2, flash.y2, projectionScratchB);
+      const jitter = Math.sin(flash.x1 * 91.7 + flash.y2 * 57.3 + flash.until * 431);
+      const midX = (a.x + b.x) / 2 + jitter * 7;
+      const midY = (a.y + b.y) / 2 + Math.sin(jitter * 13.1) * 5;
+      ctx.globalAlpha = clamp((flash.until - ambientTime) / .12, 0, 1) * .9;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(midX, midY);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -3821,6 +3886,8 @@ if (qaMode) {
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
     setVeterans(value = 0) { run.player.veterans = clamp(Math.round(Number(value) || 0), 0, run.player.troops); return run.player.veterans; },
     setUpgradeTiers(tiers = {}) { run.upgradeTiers = { ...(run.upgradeTiers || {}), ...tiers }; updateHud(true); return this.getState(); },
+    debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
+    arcFlashCount() { return (run.arcFlashes || []).length; },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
     spawnEnemyAt(type = 'grunt', lane = 1, y = .82, ready = false) { const enemy = spawnEnemy(type, { lane, x: laneCenter(lane), y }); if (enemy && ready) enemy.shotTimer = 0; return enemy ? { type: enemy.type, lane: enemy.lane, x: enemy.x, y: enemy.y, hp: enemy.hp, shield: enemy.shield } : null; },

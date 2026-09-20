@@ -294,7 +294,7 @@ async function runInteractionValidation() {
   await page.waitForTimeout(250);
   const shopCount = await page.locator('#rewardCards .reward-card').count();
   const continueEnabled = await page.locator('.armory-continue').isEnabled();
-  record('bossRewardPickUnlocksArmoryShop', shopCount === 11 && continueEnabled, { shopCount, continueEnabled });
+  record('bossRewardPickUnlocksArmoryShop', shopCount === 13 && continueEnabled, { shopCount, continueEnabled });
   const waveBeforeRewardContinue = (await page.evaluate(() => __blastlineTest.getState())).wave;
   await page.locator('.armory-continue').click();
   const afterRewardContinue = await page.evaluate(() => __blastlineTest.getState());

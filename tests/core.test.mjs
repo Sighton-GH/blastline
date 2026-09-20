@@ -36,6 +36,8 @@ import {
   itemCapFor,
   buildItemCount,
   isItemCapped,
+  isUpgradeCapped,
+  upgradeTier,
   UTILITY_UPGRADES,
   resolveGateEncounter,
   reviveSession,
@@ -250,6 +252,24 @@ test('item cap: base six items, bosses raise it, utility and free boss tiers exe
   // The free boss-reward tier is exempt from the item cap.
   const rewarded = applyBossReward(full, 'piercing');
   assert.equal(rewarded.upgradeTiers.piercing, 1);
+});
+
+test('elemental lines: shock and frost tier to three with real tradeoffs', () => {
+  let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
+  for (const id of ['shock', 'frost']) {
+    assert.equal(isUpgradeCapped(session, id), false);
+    for (let i = 0; i < 3; i += 1) { session.armoryPicks = 0; session = purchaseUpgrade(session, id).session; }
+    assert.equal(upgradeTier(session, id), 3);
+    assert.equal(isUpgradeCapped(session, id), true);
+    session.armoryPicks = 0;
+    assert.equal(purchaseUpgrade(session, id).reason, 'capped');
+  }
+  // Both are build lines: they count toward the line cap and the item cap.
+  assert.ok(buildLines(session).includes('shock') && buildLines(session).includes('frost'));
+  assert.equal(buildItemCount(session), 6);
+  // Boss reward pool can offer them while uncapped.
+  const offers = pickBossRewards(mulberry32(7), { ...createCleanRun(5), upgradeTiers: {} });
+  assert.equal(offers.length, 3);
 });
 
 test('veteranize converts two bodies into one double-fire veteran', () => {

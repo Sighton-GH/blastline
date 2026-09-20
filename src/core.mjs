@@ -192,6 +192,8 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner', info: "+15% bullet velocity. Rounds cross the bridge sooner, so less fire is wasted on enemies that are already dead and hits land earlier. Scales: +15% per tier, up to 7 tiers." },
   { id: 'veteranTraining', title: 'Veteranize', short: '2 squad -> 1 veteran', baseCost: 340, maxTier: 99, tone: 'gold', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Veterans fire double and hold the line', info: "Two soldiers combine into one veteran: a bigger unit that fires two rounds per volley at slightly higher power and is always the last to fall. Concentrates your fire into fewer bodies - you cover fewer lanes per body, so positioning matters more. Requires at least 6 squad. Scales: one conversion per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own', info: "+1 bounce. After a hit, the round jumps to a nearby enemy at 60% damage - and every Multishot round bounces on its own. Scales: +1 bounce per tier, up to 3 tiers." },
+  { id: 'shock', title: 'Shock Rounds', short: '12% arc chance, lighter rounds', baseCost: 520, maxTier: 3, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Rounds arc to a second enemy and halt it - but every round is 7% lighter per tier', info: "+12% chance per tier that a round arcs on impact: lightning jumps to the nearest visible enemy for 60% of the hit and halts its march for a beat. Tradeoff: charged coils make every round 7% lighter per tier. Scales: +12% arc chance per tier, up to 3 tiers." },
+  { id: 'frost', title: 'Frost Rounds', short: 'hits chill march speed', baseCost: 480, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Hits slow the march 11% per tier for 1.6s - but cryo rounds hit 5% softer per tier', info: "Every hit chills: the enemy marches 11% slower per tier for 1.6 seconds (fresh hits refresh it). Chilled enemies stay on the bridge longer - more time to watch them melt. Tradeoff: cryo rounds are subsonic and hit 5% softer per tier. Scales: +11% slow per tier, up to 3 tiers." },
 ]);
 
 export const UNCAPPED_UPGRADES = Object.freeze(['reinforcements', 'damage', 'fireRate', 'piercing', 'projectileSpeed']);
@@ -259,6 +261,8 @@ export function initialPlayer() {
     plates: 2,
     platesMax: 2,
     ricochet: 0,
+    shock: 0,
+    frost: 0,
     formationDensity: 0,
     veterans: 0,
     frenzyDuration: 4.2,
@@ -280,6 +284,7 @@ export function isUpgradeCapped(session, id) {
   if (id === 'criticalChance') return upgradeTier(session, id) >= 17; // 0.03 x 17 = 0.51 > 0.5 cap
   if (id === 'armor') return (session?.player?.platesMax ?? 0) >= MAX_PLATES;
   if (id === 'ricochet') return upgradeTier(session, id) >= 3;
+  if (id === 'shock' || id === 'frost') return upgradeTier(session, id) >= 3;
   if (id === 'veteranTraining') return (session?.player?.troops ?? 0) < 6; // never merge the line below viability
   return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
@@ -309,6 +314,8 @@ export function applyUpgrade(player, id) {
     next.platesMax = Math.min(MAX_PLATES, (next.platesMax ?? 2) + 2);
   }
   else if (id === 'ricochet') next.ricochet = Math.min(3, (next.ricochet || 0) + 1);
+  else if (id === 'shock') next.shock = Math.min(3, (next.shock || 0) + 1);
+  else if (id === 'frost') next.frost = Math.min(3, (next.frost || 0) + 1);
   else if (id === 'veteranTraining') {
     // 2 bodies combine into 1 veteran: troops -1, veterans +1.
     if (next.troops >= 6) { next.troops -= 1; next.veterans = (next.veterans || 0) + 1; }
