@@ -26,6 +26,7 @@ import {
   UNCAPPED_UPGRADES,
   enemyHitPoints,
   GENERIC_HP_GROWTH,
+  exclusiveLockFor,
   enemyContactDamage,
   projectileDamageFactor,
   PLATE_REGEN_SECONDS,
@@ -1321,6 +1322,7 @@ function showBossRewards() {
     const synergy = document.createElement('span');
     synergy.className = 'synergy';
     if (capped) synergy.textContent = item.id === 'veteranTraining' ? 'NEEDS 6+ SQUAD' : 'Fully upgraded';
+    else if (lineLocked && exclusiveLockFor(run, item.id)) { synergy.textContent = `PICK ONE - ${SHOP_BY_ID[exclusiveLockFor(run, item.id)].title.toUpperCase()} OWNED`; synergy.classList.add('short'); }
     else if (lineLocked) { synergy.textContent = `BUILD FULL - ${MAX_BUILD_LINES}/${MAX_BUILD_LINES} LINES`; synergy.classList.add('short'); }
     else if (itemCapped) { synergy.textContent = `ITEM CAP ${buildItemCount(run)}/${itemCapFor(run)} - BOSS +${ITEM_CAP_PER_BOSS}`; synergy.classList.add('short'); }
     else if (visitCapped) { synergy.textContent = 'PICKS USED - NEXT WAVE'; synergy.classList.add('short'); }

@@ -200,6 +200,7 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
 export const SHOP_CATALOG = Object.freeze([
   { id: 'reinforcements', title: 'Squad', short: '+8 squad', baseCost: 240, maxTier: 99, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'More rifles on the line', info: "Adds 8 soldiers to the firing line. Every soldier fires every volley, so a bigger squad multiplies your total output. Scales: +8 squad per tier, no tier cap - the point cost rises with each purchase. Fallen soldiers only come back through this upgrade or squad gates." },
   { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 320, maxTier: 98, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Breaks armored targets', info: "+1 power on every hit. Each round your squad fires lands harder - the most direct answer to armored enemies and bosses. Scales: +1 power per tier, no tier cap - the point cost rises with each purchase." },
+  { id: 'heavyOrdnance', title: 'Ordnance', short: '+2 power, slower volleys', baseCost: 520, maxTier: 8, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Pick one damage path', info: "+2 power on every hit, but heavier shells slow every volley 6% per tier. A sidegrade, not an upgrade: each round hits much harder - the answer to armored targets and bosses - but fewer shots means slower Frenzy charge and more overkill wasted on light crowds. Mutually exclusive with the Damage line: pick one damage path per run. Scales: +2 power and -6% cadence per tier, up to 8 tiers; the standard Damage line costs less per point and keeps scaling uncapped past it." },
   { id: 'fireRate', title: 'Fire Rate', short: '+0.4 cadence', baseCost: 300, maxTier: 9, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds pressure faster', info: "+0.4 volleys per second. Same bullets, delivered faster - and because you land more hits per second, Frenzy charges faster too. Scales: +0.4 cadence per tier, up to 9 tiers." },
   { id: 'multishot', title: 'Multishot', short: '+1 round, softer hits', baseCost: 720, maxTier: 5, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes; each extra round trades 12% damage', info: "+1 round per soldier in every volley, but each round hits 12% softer. Covers more lanes at once and shreds crowds. Scales: +1 round per tier, up to 5 tiers. Tradeoff: total damage climbs, but single-target punch per bullet drops." },
   { id: 'armor', title: 'Plating', short: '+2 plates', baseCost: 260, maxTier: 19, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Each plate absorbs one hit, then regenerates', info: "+2 armor plates. Each plate absorbs one enemy hit before a soldier falls, and broken plates regenerate one at a time during the run. Scales: +2 plates per tier, up to 19 tiers." },
@@ -255,9 +256,20 @@ export function buildLines(session) {
   return Object.keys(tiers).filter(id => (tiers[id] || 0) > 0 && SHOP_BY_ID[id] && !UTILITY_UPGRADES.includes(id));
 }
 
+// Weapon sidegrades (Aston backlog): some lines are two forms of one weapon -
+// a run picks ONE form. The Damage/Ordnance pair is the first: same anti-armor
+// job, different shape (steady scaling vs heavy burst). Owning a tier in one
+// locks the other exactly like a full build does.
+export const EXCLUSIVE_LINES = Object.freeze({ damage: 'heavyOrdnance', heavyOrdnance: 'damage' });
+export function exclusiveLockFor(session, id) {
+  const partner = EXCLUSIVE_LINES[id];
+  return partner && upgradeTier(session, partner) > 0 ? partner : null;
+}
+
 export function isLineLocked(session, id) {
   if (UTILITY_UPGRADES.includes(id)) return false;
   if (upgradeTier(session, id) > 0) return false;
+  if (exclusiveLockFor(session, id)) return true;
   return buildLines(session).length >= MAX_BUILD_LINES;
 }
 
@@ -302,12 +314,13 @@ export function isUpgradeCapped(session, id) {
   if (id === 'armor') return (session?.player?.platesMax ?? 0) >= MAX_PLATES;
   if (id === 'ricochet') return upgradeTier(session, id) >= 3;
   if (id === 'shock' || id === 'frost') return upgradeTier(session, id) >= 3;
+  if (id === 'heavyOrdnance') return upgradeTier(session, id) >= 8;
   if (id === 'veteranTraining') return (session?.player?.troops ?? 0) < 6; // never merge the line below viability
   return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
 
 export const SHOP_PRICE_EXPONENTS = Object.freeze({
-  damage: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, veteranTraining: 1.55,
+  damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, veteranTraining: 1.55,
 });
 
 export function shopPrice(id, purchaseCount = 0) {
@@ -321,6 +334,10 @@ export function applyUpgrade(player, id) {
   const next = { ...player };
   if (id === 'reinforcements') next.troops = Math.min(MAX_TROOPS, next.troops + 8);
   else if (id === 'damage') next.power = Math.min(99, next.power + 1); // uncapped by design; rail only
+  else if (id === 'heavyOrdnance') {
+    next.power = Math.min(99, next.power + 2);
+    next.fireRate = Math.max(1.2, Math.round(next.fireRate * 0.94 * 1000) / 1000);
+  }
   else if (id === 'fireRate') next.fireRate = Math.min(MAX_FIRE_RATE, next.fireRate + 0.4);
   else if (id === 'projectileSpeed') next.bulletSpeed = Math.min(2.4, next.bulletSpeed * 1.15);
   else if (id === 'multishot') next.projectiles = Math.min(MAX_PROJECTILES, next.projectiles + 1);
@@ -350,6 +367,7 @@ export function applyUpgrade(player, id) {
 export const SQUAD_ROLES = Object.freeze([
   { id: 'rifleman', line: null, label: 'Rifleman' },
   { id: 'heavy', line: 'damage', label: 'Heavy' },
+  { id: 'heavy', line: 'heavyOrdnance', label: 'Heavy' },
   { id: 'gunner', line: 'fireRate', label: 'Gunner' },
   { id: 'scatter', line: 'multishot', label: 'Scatter' },
   { id: 'bulwark', line: 'armor', label: 'Bulwark' },

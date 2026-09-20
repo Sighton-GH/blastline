@@ -53,7 +53,7 @@ export const MECHANICS_V2 = Object.freeze({
     return Math.min(1, .5 + player.plating * .04);
   },
   price: (item, count) => {
-    const exp = { damage: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9 }[item.id] || 1.7;
+    const exp = { damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9 }[item.id] || 1.7;
     return Math.max(1, Math.round(item.baseCost * Math.pow(count + 1, exp)));
   },
   caps: { power: Infinity, fireRate: Infinity, projectiles: 6, troops: Infinity, crit: .5, pierce: Infinity, armor: Infinity },
@@ -80,6 +80,7 @@ function applyTier(player, id, mech) {
   const caps = mech.caps;
   if (id === 'reinforcements') p.troops = Math.min(caps.troops, p.troops + 8);
   else if (id === 'damage') p.power = Math.min(caps.power, p.power + 1);
+  else if (id === 'heavyOrdnance') { p.power = Math.min(caps.power, p.power + 2); p.fireRate = Math.max(1.2, p.fireRate * 0.94); }
   else if (id === 'fireRate') p.fireRate = mech.id === 'v2-redesign' ? p.fireRate + .4 : Math.min(caps.fireRate, p.fireRate * 1.12);
   else if (id === 'multishot') p.projectiles = Math.min(caps.projectiles, p.projectiles + 1);
   else if (id === 'piercing') p.pierce = Math.min(caps.pierce, p.pierce + 1);

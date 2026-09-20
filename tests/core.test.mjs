@@ -40,6 +40,8 @@ import {
   upgradeTier,
   enemyHitPoints,
   GENERIC_HP_GROWTH,
+  isLineLocked,
+  exclusiveLockFor,
   enemyContactDamage,
   UTILITY_UPGRADES,
   resolveGateEncounter,
@@ -269,6 +271,33 @@ test('vehicles join the wave table on schedule and scale like enemies', () => {
   assert.ok(enemyHitPoints('transport', 1) > enemyHitPoints('heavy', 1));
   assert.ok(enemyContactDamage('transport', 1) > enemyContactDamage('heavy', 1));
   assert.ok(enemyHitPoints('transport', 10) > enemyHitPoints('transport', 1));
+});
+
+test('heavy ordnance sidegrade: burst form of the damage line, mutually exclusive, no free-reward leak', () => {
+  // The sidegrade applies its tradeoff: +2 power, -6% cadence per tier.
+  let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
+  const rate0 = session.player.fireRate;
+  const buy = purchaseUpgrade(session, 'heavyOrdnance');
+  assert.equal(buy.ok, true);
+  session = buy.session;
+  assert.equal(session.player.power, 3);
+  assert.ok(Math.abs(session.player.fireRate - rate0 * 0.94) < 1e-9, 'volleys slow 6% per tier');
+  // Mutually exclusive both directions, through the purchase path.
+  assert.equal(isLineLocked(session, 'damage'), true);
+  assert.equal(exclusiveLockFor(session, 'damage'), 'heavyOrdnance');
+  assert.equal(purchaseUpgrade(session, 'damage').ok, false, 'standard damage locked once ordnance is owned');
+  const other = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
+  const otherBought = purchaseUpgrade(other, 'damage').session;
+  assert.equal(isLineLocked(otherBought, 'heavyOrdnance'), true);
+  // Free boss rewards never offer the locked partner (seeded rolls).
+  for (let seed = 1; seed <= 25; seed += 1) {
+    const picks = pickBossRewards(mulberry32(seed), otherBought);
+    assert.ok(picks.every(p => p.id !== 'heavyOrdnance'), `seed ${seed} pool excludes ordnance`);
+  }
+  // Ordnance crews read as Heavies on the line (reused sprite).
+  assert.equal(squadRoleForSlot(session, 0), 'heavy');
+  // Tier cap holds.
+  assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { heavyOrdnance: 8 } }, 'heavyOrdnance'), true);
 });
 
 test('grunt curve: early waves stay readable, late grunts outgrow the generic slope (Bryan 2026-09-20)', () => {
