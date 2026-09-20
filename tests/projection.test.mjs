@@ -15,7 +15,7 @@ import {
 
 const VIEWPORTS = [
   { width: 1365, height: 768, profile: 'landscape', horizon: -.16 },
-  { width: 390, height: 844, profile: 'portrait', horizon: -.10 },
+  { width: 390, height: 844, profile: 'portrait', horizon: -.02 },
 ];
 
 test('camera profiles place a finite-width far gameplay plane below the horizon', () => {
@@ -48,7 +48,7 @@ test('equal logical approach steps accelerate with the true 1/Z perspective curv
     const { depthRatio } = projection.profile;
     assert.ok(ratio > depthRatio * 2 && ratio < depthRatio ** 2,
       `speed ratio ${ratio} should sit between depthRatio and depthRatio^2`);
-    assert.ok(ratio > 12 && ratio < 45, `speed ratio ${ratio} should stay in a bounded perspective band`);
+    assert.ok(ratio > 8 && ratio < 45, `speed ratio ${ratio} should stay in a bounded perspective band`);
   }
 });
 

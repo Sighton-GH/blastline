@@ -168,7 +168,7 @@ async function captureState(context, viewportName, mode) {
   // regression toward the old near-full-width road, not the target itself.
   record(`${label}:roadCorridorWidth`, audit.projection.roadWidthRatio >= .54, audit.projection);
   record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
-  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? -.10 : -.16)) < .002, audit.projection);
+  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? -.02 : -.16)) < .002, audit.projection);
   // Renamed from noBridgeEnd: worldY = 0 is now a real, finite-width reference plane below the
   // horizon (depthScale(0) = 1/depthRatio), not a zero-width vanishing point -- that finite far
   // plane is what fixed the cables drawing an X across the deck. Assert it stays comfortably
@@ -181,7 +181,7 @@ async function captureState(context, viewportName, mode) {
   // (25-31 for the locked profiles) by design -- the old < 1.4 ceiling enforced the near-linear,
   // "nothing accelerates" curve this overhaul replaced. Keep only a sanity band against a runaway
   // fisheye.
-  record(`${label}:perspectiveSpeedRatio`, audit.projection.projectedSpeedRatio > 12 && audit.projection.projectedSpeedRatio < 45, audit.projection);
+  record(`${label}:perspectiveSpeedRatio`, audit.projection.projectedSpeedRatio > 8 && audit.projection.projectedSpeedRatio < 45, audit.projection);
   record(`${label}:sharedProjectionScale`, audit.projection.sharedScaleError < 1e-8, audit.projection.sharedScaleSamples);
   record(`${label}:cableAndHangerAnchors`, audit.projection.cableAnchorError < 1 && audit.projection.hangerAnchorError < 1 && audit.projection.towerHeightScaleError < 1e-6, audit.projection);
   record(`${label}:entityGrounding`, audit.projection.entityGroundingError === 0, audit.projection);

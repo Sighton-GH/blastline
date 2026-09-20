@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T13:55:36.283Z",
+  "generatedAt": "2026-09-20T14:20:22.343Z",
   "fullSoak": false,
   "durations": {
     "normalMs": 3000,
@@ -422,7 +422,7 @@
     "mobile": {
       "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.700000000000273,
+      "p95": 16.799999999999727,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
@@ -430,56 +430,56 @@
     "desktop": {
       "samples": 175,
       "p50": 16.699999999999818,
-      "p95": 16.799999999999727,
+      "p95": 16.700000000000728,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
     },
     "stressBenchmarks1x": {
-      "drawMs": 0.4349999999627471,
-      "updateMs": 0.28499999999379116
+      "drawMs": 0.42999999998137356,
+      "updateMs": 0.2866666666852931
     },
     "stressBenchmarks4x": {
-      "drawMs": 1.7083333333333333,
-      "updateMs": 0.9800000000124176,
+      "drawMs": 1.4666666666356225,
+      "updateMs": 1.2100000000248352,
       "layers": {
-        "foregroundClear": 0.05000000004656613,
+        "foregroundClear": 0.012500000186264515,
         "environmentMotion": 0.21249999990686774,
-        "telegraphs": 0.19999999995343387,
-        "enemiesAndBoss": 1.6125000000465661,
-        "hostileProjectiles": 0.13749999995343387,
+        "telegraphs": 0.13749999995343387,
+        "enemiesAndBoss": 1.5625,
+        "hostileProjectiles": 0.125,
         "squadProjectiles": 0.025000000139698386,
-        "squad": 0.4874999998137355,
+        "squad": 0.375,
         "effects": 0
       }
     },
     "stress4x": {
       "samples": 470,
       "p50": 16.69999999999891,
-      "p95": 16.700000000000728,
+      "p95": 16.799999999999272,
       "max": 100,
       "over50": 0.002127659574468085,
-      "refreshNormalizedP95": 16.700000000000728
+      "refreshNormalizedP95": 16.799999999999272
     },
     "soak": {
       "durationMs": 15000,
-      "initialHeap": 3256116,
-      "finalHeap": 3235296,
-      "heapGrowth": -0.00639412109396594,
+      "initialHeap": 3278832,
+      "finalHeap": 3249696,
+      "heapGrowth": -0.00888609114465151,
       "entitySamples": [
         {
           "enemies": 180,
-          "bullets": 127,
+          "bullets": 136,
           "enemyBullets": 9,
           "particles": 0,
           "created": {
             "enemies": {
               "created": 202,
-              "free": 22
+              "free": 21
             },
             "bullets": {
               "created": 433,
-              "free": 306
+              "free": 297
             },
             "enemyBullets": {
               "created": 17,
@@ -491,7 +491,7 @@
             },
             "floaters": {
               "created": 23,
-              "free": 19
+              "free": 18
             },
             "telegraphs": {
               "created": 13,
@@ -501,7 +501,7 @@
         },
         {
           "enemies": 180,
-          "bullets": 170,
+          "bullets": 175,
           "enemyBullets": 1,
           "particles": 0,
           "created": {
@@ -511,7 +511,7 @@
             },
             "bullets": {
               "created": 433,
-              "free": 263
+              "free": 258
             },
             "enemyBullets": {
               "created": 17,
@@ -523,7 +523,7 @@
             },
             "floaters": {
               "created": 23,
-              "free": 15
+              "free": 14
             },
             "telegraphs": {
               "created": 13,
@@ -533,7 +533,7 @@
         },
         {
           "enemies": 180,
-          "bullets": 158,
+          "bullets": 168,
           "enemyBullets": 7,
           "particles": 0,
           "created": {
@@ -543,7 +543,7 @@
             },
             "bullets": {
               "created": 433,
-              "free": 275
+              "free": 265
             },
             "enemyBullets": {
               "created": 17,
@@ -555,7 +555,7 @@
             },
             "floaters": {
               "created": 23,
-              "free": 21
+              "free": 20
             },
             "telegraphs": {
               "created": 13,
@@ -587,63 +587,63 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.08333333333333333
+        "synchronousDrawMeanMs": 0.09722222222222222
       },
       "runtimeAssetCount": 21,
       "audit": {
         "visibleBoxes": [],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -698,7 +698,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.32222222226361436
+        "synchronousDrawMeanMs": 0.34166666668736273
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -745,56 +745,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -849,7 +849,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.35277777780882186
+        "synchronousDrawMeanMs": 0.6777777777363857
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -896,56 +896,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1000,7 +1000,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4944444444651405
+        "synchronousDrawMeanMs": 0.5833333333333334
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1047,56 +1047,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1151,7 +1151,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4027777777777778
+        "synchronousDrawMeanMs": 0.5222222221911781
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1211,56 +1211,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 77.37500000000001,
+        "maxWaterJump": 59.111111111111114,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1315,7 +1315,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.21944444445479247
+        "synchronousDrawMeanMs": 0.1833333333229853
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1362,56 +1362,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1466,63 +1466,63 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.21388888886819282
+        "synchronousDrawMeanMs": 0.15555555554520753
       },
       "runtimeAssetCount": 21,
       "audit": {
         "visibleBoxes": [],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1577,7 +1577,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.238888888930281
+        "synchronousDrawMeanMs": 0.21111111110076308
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1624,56 +1624,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1728,7 +1728,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.30277777773638564
+        "synchronousDrawMeanMs": 0.25
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1788,56 +1788,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -1892,7 +1892,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3472222222222222
+        "synchronousDrawMeanMs": 0.32499999997930396
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1952,56 +1952,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -2056,7 +2056,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5777777777467337
+        "synchronousDrawMeanMs": 0.48333333334368134
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2116,56 +2116,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -2220,63 +2220,63 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.09722222222222222
+        "synchronousDrawMeanMs": 0.10555555557625161
       },
       "runtimeAssetCount": 21,
       "audit": {
         "visibleBoxes": [],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 60.4722222222222,
         "projection": {
-          "horizon": -84.4,
+          "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 62.67857142857143,
-          "vanishingBridgeWidth": 66.43928571428572,
+          "vanishingRoadWidth": 97.5,
+          "vanishingBridgeWidth": 103.35000000000001,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 7.262071029529153,
-          "maxProjectedStep": 177.54878048780506,
-          "projectedSpeedRatio": 24.448780487804825,
+          "minProjectedStep": 9.178466218379754,
+          "maxProjectedStep": 101.46672566371706,
+          "projectedSpeedRatio": 11.054867256637205,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 2.5180858310626775,
+          "towerClearance": 3.792629958960312,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 2.842170943040401e-14,
+          "leftMaxDeviation": 1.4210854715202004e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.19113149847094804,
-              "roadScale": 0.19113149847094804,
-              "enemyScale": 0.19113149847094804,
-              "gateScale": 0.19113149847094807,
-              "shadowScale": 0.19113149847094804
+              "scale": 0.294811320754717,
+              "roadScale": 0.294811320754717,
+              "enemyScale": 0.294811320754717,
+              "gateScale": 0.294811320754717,
+              "shadowScale": 0.294811320754717
             },
             {
               "y": 0.24,
-              "scale": 0.2224199288256228,
-              "roadScale": 0.2224199288256228,
-              "enemyScale": 0.2224199288256228,
-              "gateScale": 0.2224199288256228,
-              "shadowScale": 0.2224199288256228
+              "scale": 0.33602150537634407,
+              "roadScale": 0.33602150537634407,
+              "enemyScale": 0.33602150537634407,
+              "gateScale": 0.33602150537634407,
+              "shadowScale": 0.33602150537634407
             },
             {
               "y": 0.5,
-              "scale": 0.30303030303030304,
-              "roadScale": 0.30303030303030304,
-              "enemyScale": 0.30303030303030304,
-              "gateScale": 0.30303030303030304,
-              "shadowScale": 0.30303030303030304
+              "scale": 0.4347826086956522,
+              "roadScale": 0.4347826086956522,
+              "enemyScale": 0.4347826086956522,
+              "gateScale": 0.4347826086956522,
+              "shadowScale": 0.4347826086956523
             },
             {
               "y": 0.76,
-              "scale": 0.47528517110266155,
-              "roadScale": 0.4752851711026616,
-              "enemyScale": 0.4752851711026615,
-              "gateScale": 0.47528517110266155,
-              "shadowScale": 0.47528517110266155
+              "scale": 0.6157635467980296,
+              "roadScale": 0.6157635467980296,
+              "enemyScale": 0.6157635467980296,
+              "gateScale": 0.6157635467980296,
+              "shadowScale": 0.6157635467980296
             },
             {
               "y": 1,
@@ -2331,7 +2331,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.16666666666666666
+        "synchronousDrawMeanMs": 0.09444444445479247
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2442,7 +2442,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.35277777775708175
+        "synchronousDrawMeanMs": 0.32777777774673367
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2593,7 +2593,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6916666666770147
+        "synchronousDrawMeanMs": 0.6749999999689559
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2744,7 +2744,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6027777777570817
+        "synchronousDrawMeanMs": 0.5638888888578448
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2895,7 +2895,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3805555555348595
+        "synchronousDrawMeanMs": 0.5249999999586079
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3059,7 +3059,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4277777777881258
+        "synchronousDrawMeanMs": 0.3361111111007631
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3210,7 +3210,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4194444444340964
+        "synchronousDrawMeanMs": 0.261111111069719
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3321,7 +3321,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.31388888890958494
+        "synchronousDrawMeanMs": 0.2222222222222222
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3472,7 +3472,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.32222222226361436
+        "synchronousDrawMeanMs": 0.2416666666459706
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3636,7 +3636,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.33888888891993296
+        "synchronousDrawMeanMs": 0.32499999997930396
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3800,7 +3800,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5027777777674297
+        "synchronousDrawMeanMs": 0.49444444441340035
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3964,7 +3964,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.18055555555555555
+        "synchronousDrawMeanMs": 0.17222222220152617
       },
       "runtimeAssetCount": 21,
       "audit": {
