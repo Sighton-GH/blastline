@@ -522,3 +522,8 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .meta-card .meta-cost.owned { color: #7ddc8a; }
 @media (max-width: 560px) { .meta-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .final-salvage { margin: 6px 0 0; font-size: 15px; font-weight: 800; letter-spacing: .06em; color: #ffd56a; text-shadow: 0 2px 8px rgba(255,180,60,.35); }
+
+/* Desktop armory: 10-card shop fits without scrolling; 3-card boss rewards keep the 3-col layout */
+@media (min-width: 900px) {
+  .reward-grid:has(.reward-card:nth-child(4)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
