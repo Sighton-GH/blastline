@@ -79,13 +79,50 @@ export function clampToLane(x, lane, padding = 0.02) {
   return clamp(Number(x) || bounds.center, bounds.min, bounds.max);
 }
 
-export const MAX_TROOPS = 240;
+export const MAX_TROOPS = 9_999; // safety rail, not a design cap (v2: polynomial growth)
 export const MAX_VISIBLE_SQUAD = 24;
-export const MAX_PROJECTILES = 4;
-export const MAX_FIRE_RATE = 16;
+export const MAX_PROJECTILES = 6;
+export const MAX_FIRE_RATE = 40; // safety rail, not a design cap (v2: +0.4/tier additive)
 export const MAX_PIERCE = 4;
 export const MAX_LIVES = 2;
 export const MAX_ACTIVE_ENEMIES = 220;
+
+export const ENEMY_BASE_STATS = Object.freeze({
+  grunt: Object.freeze({ hp: 1, contact: 1 }),
+  gunner: Object.freeze({ hp: 1, contact: 1 }),
+  shield: Object.freeze({ hp: 3, contact: 2 }),
+  heavy: Object.freeze({ hp: 4, contact: 3 }),
+  demolition: Object.freeze({ hp: 2, contact: 2 }),
+  sprinter: Object.freeze({ hp: 1, contact: 1 }),
+  reflector: Object.freeze({ hp: 3, contact: 2 }),
+  swarmer: Object.freeze({ hp: 2, contact: 1 }),
+});
+
+// v2: exponential enemy scaling (owner directive 2026-09-19) - enemies always
+// outgrow polynomial player scaling; a well-played veteran run ends ~waves 11-14.
+export function enemyHitPoints(type, wave = 1) {
+  const base = (ENEMY_BASE_STATS[type] || ENEMY_BASE_STATS.grunt).hp;
+  const w = clamp(Math.floor(Number.isFinite(wave) ? wave : 1), 1, 1_000_000);
+  return Math.max(1, Math.round(base * Math.pow(1.5, w - 1)));
+}
+
+export function enemyContactDamage(type, wave = 1) {
+  const base = (ENEMY_BASE_STATS[type] || ENEMY_BASE_STATS.grunt).contact;
+  const w = clamp(Math.floor(Number.isFinite(wave) ? wave : 1), 1, 1_000_000);
+  return Math.max(1, Math.round(base * Math.pow(1.16, w - 1)));
+}
+
+// v2: multishot adds coverage, not raw multiplication - each extra projectile
+// reduces per-bullet damage.
+export function projectileDamageFactor(projectiles = 1) {
+  const count = clamp(Math.round(Number.isFinite(projectiles) ? projectiles : 1), 1, MAX_PROJECTILES);
+  return Math.pow(0.88, count - 1);
+}
+
+// v2: plating - each plate absorbs up to PLATE_CAPACITY damage then breaks.
+export const PLATE_CAPACITY = 4;
+export const PLATE_REGEN_SECONDS = 20;
+export const MAX_PLATES = 40;
 
 export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const wave = clamp(Math.floor(Number.isFinite(waveIndex) ? waveIndex : 1), 1, 1_000_000);
@@ -98,9 +135,9 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   );
   const hordeSize = Math.min(84, Math.max(36, Math.round((44 + wave * 2.2) * mode.density)));
   const spawnInterval = Math.max(0.5, (2.3 - logScale * 0.28) / mode.cadence);
-  const enemySpeed = Math.min(0.071, 0.048 + logScale * 0.0034) * (0.97 + (mode.pressure - 1) * 0.12);
-  const bossEscalation = wave >= 3 ? 1 + (wave - 3) * 0.08 : 1;
-  const bossHp = Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + mode.pressure * 0.08) * bossEscalation));
+  const enemySpeed = Math.min(0.085, 0.048 + logScale * 0.004) * (0.97 + (mode.pressure - 1) * 0.12);
+  const bossIndex = Math.max(1, Math.round(wave / 3));
+  const bossHp = Math.round(Math.min(1e12, (bossIndex === 1 ? 320 : 420) * Math.pow(1.55, Math.min(60, bossIndex - 1)) * (0.92 + mode.pressure * 0.08)));
   const composition = {
     grunt: Math.max(0.38, 0.82 - logScale * 0.055),
     gunner: Math.min(0.2, Math.max(0, (wave - 1) * 0.014)),
@@ -154,6 +191,7 @@ export function initialPlayer() {
     pierce: 0,
     criticalChance: 0,
     armor: 0,
+    plates: 2,
     formationDensity: 0,
     frenzyDuration: 4.2,
     recovery: 0,
@@ -170,25 +208,33 @@ export function isUpgradeCapped(session, id) {
   const item = SHOP_BY_ID[id];
   if (!item) return true;
   if (id === 'extraLife') return (session?.lives || 0) >= MAX_LIVES;
-  return upgradeTier(session, id) >= item.maxTier;
+  if (id === 'multishot') return upgradeTier(session, id) >= MAX_PROJECTILES - 1;
+  if (id === 'criticalChance') return upgradeTier(session, id) >= 17; // 0.03 x 17 = 0.51 > 0.5 cap
+  if (id === 'armor') return (session?.player?.plates ?? 0) >= MAX_PLATES;
+  return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
+
+export const SHOP_PRICE_EXPONENTS = Object.freeze({
+  damage: 2, fireRate: 1.8, reinforcements: 1.7, piercing: 1.9,
+});
 
 export function shopPrice(id, purchaseCount = 0) {
   const item = SHOP_BY_ID[id];
   if (!item) return Infinity;
-  return Math.max(1, Math.round(item.baseCost * Math.pow(1.75, Math.max(0, purchaseCount))));
+  const exponent = SHOP_PRICE_EXPONENTS[id] || 1.7;
+  return Math.max(1, Math.round(item.baseCost * Math.pow(Math.max(0, purchaseCount) + 1, exponent)));
 }
 
 export function applyUpgrade(player, id) {
   const next = { ...player };
   if (id === 'reinforcements') next.troops = Math.min(MAX_TROOPS, next.troops + 8);
-  else if (id === 'damage') next.power = Math.min(16, next.power + 1);
-  else if (id === 'fireRate') next.fireRate = Math.min(MAX_FIRE_RATE, next.fireRate * 1.12);
+  else if (id === 'damage') next.power = Math.min(99, next.power + 1); // uncapped by design; rail only
+  else if (id === 'fireRate') next.fireRate = Math.min(MAX_FIRE_RATE, next.fireRate + 0.4);
   else if (id === 'projectileSpeed') next.bulletSpeed = Math.min(2.4, next.bulletSpeed * 1.15);
   else if (id === 'multishot') next.projectiles = Math.min(MAX_PROJECTILES, next.projectiles + 1);
-  else if (id === 'piercing') next.pierce = Math.min(MAX_PIERCE, next.pierce + 1);
-  else if (id === 'criticalChance') next.criticalChance = Math.min(0.35, next.criticalChance + 0.05);
-  else if (id === 'armor') next.armor = Math.min(60, next.armor + 4);
+  else if (id === 'piercing') next.pierce = Math.min(24, next.pierce + 1); // rail only
+  else if (id === 'criticalChance') next.criticalChance = Math.min(0.5, next.criticalChance + 0.03);
+  else if (id === 'armor') next.plates = Math.min(MAX_PLATES, (next.plates ?? next.armor ?? 0) + 2);
   else if (id === 'formationDensity') next.formationDensity = Math.min(6, next.formationDensity + 1);
   else if (id === 'frenzyDuration') next.frenzyDuration = Math.min(10, next.frenzyDuration + 0.8);
   else if (id === 'recovery') next.recovery = Math.min(6, next.recovery + 1);
@@ -234,10 +280,11 @@ export function applyGate(player, gate) {
     next[effect.stat] = effect.mode === 'multiply' ? current * effect.value : current + effect.value;
   }
   next.troops = clamp(Math.round(next.troops), 1, MAX_TROOPS);
-  next.power = clamp(next.power, 1, 16);
+  next.power = clamp(next.power, 1, 99);
   next.fireRate = clamp(next.fireRate, 1.5, MAX_FIRE_RATE);
   next.bulletSpeed = clamp(next.bulletSpeed, 0.65, 2.4);
-  next.armor = clamp(Math.round(next.armor), 0, 60);
+  next.armor = clamp(Math.round(next.armor), 0, MAX_PLATES);
+  next.plates = clamp(Math.round(next.plates ?? next.armor), 0, MAX_PLATES);
   next.formationDensity = clamp(Math.round(next.formationDensity), 0, 6);
   return next;
 }
@@ -341,10 +388,14 @@ export function applyTroopDamage(player, amount) {
   const next = { ...player };
   if (next.protectedFor > 0) return { player: next, absorbed: 0, lost: 0, protected: true };
   const incoming = Math.max(0, Math.round(amount));
-  const absorbed = Math.min(next.armor, incoming);
-  next.armor -= absorbed;
-  next.troops = Math.max(0, next.troops - (incoming - absorbed));
-  return { player: next, absorbed, lost: incoming - absorbed, protected: false };
+  const platesAvailable = Math.max(0, Math.round(next.plates ?? next.armor ?? 0));
+  const plateAbsorb = Math.min(incoming, platesAvailable * PLATE_CAPACITY);
+  const platesUsed = Math.ceil(plateAbsorb / PLATE_CAPACITY);
+  next.plates = platesAvailable - platesUsed;
+  next.armor = next.plates; // legacy alias, removed with the render integration
+  const remaining = incoming - plateAbsorb;
+  next.troops = Math.max(0, next.troops - remaining);
+  return { player: next, absorbed: plateAbsorb, lost: remaining, protected: false };
 }
 
 export function stateAfterTroopDamage(player, activeState, lives = 0) {
@@ -356,15 +407,19 @@ export function stateAfterBossDefeat() {
   return GAME_STATE.BOSS_REWARD;
 }
 
-export function enemyReward(type, killCount = 0) {
+export function enemyReward(type, killCount = 0, density = 1) {
   const table = {
-    grunt: { points: 18, frenzy: 1 },
-    gunner: { points: 26, frenzy: 1 },
-    shield: { points: 36, frenzy: 2 },
-    heavy: { points: 54, frenzy: 3 },
-    demolition: { points: 68, frenzy: 3 },
+    grunt: { points: 13, frenzy: 1 },
+    gunner: { points: 19, frenzy: 1 },
+    shield: { points: 26, frenzy: 2 },
+    heavy: { points: 39, frenzy: 3 },
+    demolition: { points: 49, frenzy: 3 },
+    sprinter: { points: 15, frenzy: 1 },
+    reflector: { points: 30, frenzy: 2 },
+    swarmer: { points: 16, frenzy: 1 },
   };
   const reward = { ...(table[type] || table.grunt) };
+  reward.points = Math.max(1, Math.round(reward.points / Math.max(0.25, density)));
   if (killCount > 0 && killCount % 20 === 0) reward.points += 40;
   return reward;
 }

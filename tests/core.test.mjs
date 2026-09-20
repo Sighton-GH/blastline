@@ -126,8 +126,10 @@ test('gate effects apply all benefits and costs while preserving safety caps', (
   assert.equal(ranks.fireRate, 4.4);
   const harmful = applyGate(start, { effects: [{ stat: 'troops', mode: 'add', value: -100 }] });
   assert.equal(harmful.troops, 1);
-  const capped = applyGate({ ...start, fireRate: 15 }, { effects: [{ stat: 'fireRate', mode: 'multiply', value: 2 }] });
-  assert.equal(capped.fireRate, MAX_FIRE_RATE);
+  const past16 = applyGate({ ...start, fireRate: 15 }, { effects: [{ stat: 'fireRate', mode: 'multiply', value: 2 }] });
+  assert.equal(past16.fireRate, 30); // v2: no hard utility cap below the safety rail
+  const railed = applyGate({ ...start, fireRate: 25 }, { effects: [{ stat: 'fireRate', mode: 'multiply', value: 2 }] });
+  assert.equal(railed.fireRate, MAX_FIRE_RATE);
 });
 
 test('shop prices rise, spending is atomic, and insufficient points do nothing', () => {
@@ -151,18 +153,32 @@ test('shop prices rise, spending is atomic, and insufficient points do nothing',
   assert.equal(bought.session.upgradeTiers.damage, 1);
 });
 
-test('all shop upgrades apply and hard caps cannot be exceeded', () => {
-  let session = { ...createCleanRun(3), points: 1_000_000 };
+test('v2 shop: polynomial stats are uncapped, design caps hold for multishot/crit/lives', () => {
+  let session = { ...createCleanRun(3), points: 100_000_000 };
   for (const item of SHOP_CATALOG) {
     const limit = item.id === 'extraLife' ? MAX_LIVES : item.maxTier + 2;
     for (let count = 0; count < limit; count += 1) session = purchaseUpgrade(session, item.id).session;
   }
   assert.equal(session.player.projectiles, MAX_PROJECTILES);
   assert.ok(session.player.fireRate <= MAX_FIRE_RATE);
-  assert.equal(session.upgradeTiers.fireRate, SHOP_CATALOG.find(item => item.id === 'fireRate').maxTier);
+  // fireRate is uncapped in v2: all maxTier + 2 purchases apply (+0.4 each)
+  assert.equal(session.upgradeTiers.fireRate, SHOP_CATALOG.find(item => item.id === 'fireRate').maxTier + 2);
   assert.equal(session.lives, MAX_LIVES);
-  assert.ok(session.player.criticalChance <= .35);
-  assert.ok(session.player.pierce <= 4);
+  assert.ok(session.player.criticalChance <= .5);
+  assert.equal(Math.round(session.player.criticalChance * 100), 30); // 10 tiers x +0.03
+  let critPlayer = createCleanRun().player;
+  for (let i = 0; i < 20; i += 1) critPlayer = applyUpgrade(critPlayer, 'criticalChance');
+  assert.ok(critPlayer.criticalChance > .35, 'crit exceeds the old v1 cap');
+  assert.ok(critPlayer.criticalChance <= .5, 'crit respects the v2 cap');
+  assert.ok(session.player.pierce > 4, 'pierce exceeds the old v1 cap');
+  assert.equal(session.player.power, 15); // 14 uncapped purchases
+  let powerPlayer = createCleanRun().player;
+  for (let i = 0; i < 20; i += 1) powerPlayer = applyUpgrade(powerPlayer, 'damage');
+  assert.equal(powerPlayer.power, 21); // v2: power grows past the old 16 cap
+  let firePlayer = createCleanRun().player;
+  for (let i = 0; i < 30; i += 1) firePlayer = applyUpgrade(firePlayer, 'fireRate');
+  assert.ok(firePlayer.fireRate > 16, 'fireRate exceeds the old v1 cap');
+  assert.ok(session.player.plates <= 40);
 });
 
 test('boss reward choices are unique, tiered, and contain synergy information', () => {
@@ -187,9 +203,10 @@ test('boss defeat always transitions to another endless reward, never Victory', 
 
 test('armor absorbs first; reserves revive with protection and retain the build', () => {
   const upgradedPlayer = applyUpgrade(applyUpgrade(createCleanRun().player, 'damage'), 'piercing');
-  const damaged = applyTroopDamage({ ...upgradedPlayer, troops: 2, armor: 3 }, 4);
-  assert.deepEqual({ troops: damaged.player.troops, armor: damaged.player.armor, absorbed: damaged.absorbed, lost: damaged.lost }, { troops: 1, armor: 0, absorbed: 3, lost: 1 });
-  const fatal = applyTroopDamage(damaged.player, 1);
+  const damaged = applyTroopDamage({ ...upgradedPlayer, troops: 2, armor: 3, plates: 3 }, 4);
+  assert.deepEqual({ troops: damaged.player.troops, plates: damaged.player.plates, absorbed: damaged.absorbed, lost: damaged.lost }, { troops: 2, plates: 2, absorbed: 4, lost: 0 });
+  const fatal = applyTroopDamage({ ...damaged.player, plates: 0, armor: 0, troops: 1 }, 1);
+  assert.equal(fatal.player.troops, 0);
   assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.PLAYING, 1), GAME_STATE.RECOVERY);
   assert.equal(stateAfterTroopDamage(fatal.player, GAME_STATE.BOSS, 0), GAME_STATE.GAME_OVER);
 
@@ -207,9 +224,9 @@ test('armor absorbs first; reserves revive with protection and retain the build'
 
 test('kill rewards grant milestone and elite skill points only once', () => {
   const milestone = claimKillReward({ type: 'grunt', rewarded: false }, 20);
-  assert.equal(milestone.reward.points, 58);
+  assert.equal(milestone.reward.points, 53); // v2: 13 base + 40 streak
   const elite = claimKillReward({ type: 'heavy', rewarded: false }, 25);
-  assert.equal(elite.reward.points, 54);
+  assert.equal(elite.reward.points, 39);
   assert.equal(claimKillReward(elite.enemy, 26).reward, null);
 });
 
