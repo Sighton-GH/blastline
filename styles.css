@@ -40,10 +40,8 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 
 #app { position: relative; width: 100%; height: 100%; isolation: isolate; }
 #stage { position: absolute; inset: 0; will-change: transform; }
-#environment,
 #game { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-#environment { z-index: 0; background: #27a9d2; }
-#game { z-index: 1; background: transparent; touch-action: none; }
+#game { background: linear-gradient(#4aa8e4, #0291d4); touch-action: none; }
 .panel { position: absolute; z-index: 12; pointer-events: none; }
 
 #hud {

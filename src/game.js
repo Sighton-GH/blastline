@@ -79,7 +79,6 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
 });
 
 const canvas = document.querySelector('#game');
-const environmentSurface = document.querySelector('#environment');
 const stageElement = document.querySelector('#stage');
 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
@@ -214,10 +213,16 @@ let enemySerial = 0;
 let hordeSerial = 0;
 let gateSerial = 0;
 let qaFrozen = false;
-let environmentCanvas = environmentSurface;
+// Environment background renders into a JS-side offscreen canvas that is
+// composited into the main canvas every frame. A separate DOM canvas layer
+// can lose its backing store on memory-pressured mobile browsers and come
+// back opaque black (alpha:false) with nothing left to mark it dirty,
+// which made the bridge/water disappear on real Android devices.
+const environmentCanvas = document.createElement('canvas');
 let environmentDirty = true;
 let backgroundDpr = 1;
 let frameSamples = [];
+let frameCounter = 0;
 let stressMode = false;
 let stressRenderPhase = 0;
 let hudUpdateTimer = 0;
@@ -326,8 +331,6 @@ function configureRenderSurface() {
   canvas.style.height = `${H}px`;
   environmentCanvas.width = Math.max(1, Math.round(W * backgroundDpr));
   environmentCanvas.height = Math.max(1, Math.round(H * backgroundDpr));
-  environmentCanvas.style.width = `${W}px`;
-  environmentCanvas.style.height = `${H}px`;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = true;
   canvas.dataset.renderScale = DPR.toFixed(2);
@@ -349,6 +352,14 @@ function resize() {
 }
 
 addEventListener('resize', resize, { passive: true });
+// Repaint the cached environment whenever its pixels could have been lost:
+// GPU context loss/restore, returning to a backgrounded tab, or a bfcache restore.
+for (const surface of [canvas, environmentCanvas]) {
+  surface.addEventListener('contextlost', event => event.preventDefault());
+  surface.addEventListener('contextrestored', () => { environmentDirty = true; });
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) environmentDirty = true; });
+addEventListener('pageshow', () => { environmentDirty = true; });
 resize();
 
 function cameraProfile() { return sceneProjection.profile; }
@@ -1788,6 +1799,7 @@ function drawStaticEnvironment(target) {
 function ensureEnvironment() {
   if (!environmentDirty) return;
   const target = environmentCanvas.getContext('2d', { alpha: false });
+  if (!target) return;
   target.setTransform(backgroundDpr, 0, 0, backgroundDpr, 0, 0);
   drawStaticEnvironment(target);
   environmentDirty = false;
@@ -2435,6 +2447,7 @@ function drawEffects() {
 function draw() {
   ensureEnvironment();
   ctx.clearRect(0, 0, W, H);
+  ctx.drawImage(environmentCanvas, 0, 0, W, H);
   drawDynamicEnvironment();
   if (state === GAME_STATE.HOME) {
     drawHomeHero();
@@ -2775,6 +2788,7 @@ function loop(timestamp) {
   // The synthetic max-density fixture represents far more simultaneous action than
   // normal play. Alternate its render frames while keeping fixed-step simulation live;
   // this mirrors the dense-scene LOD strategy and protects input/update cadence.
+  if ((frameCounter = (frameCounter + 1) % 300) === 0) environmentDirty = true;
   stressRenderPhase = (stressRenderPhase + 1) % 3;
   if (!stressMode || stressRenderPhase === 0) draw();
   requestAnimationFrame(loop);
