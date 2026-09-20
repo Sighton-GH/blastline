@@ -12,6 +12,7 @@ Every deployment is a fresh run. Reloading or retrying resets score, skill point
 - Use the top-right control, Space, or P to pause and open the run dashboard.
 - Spend skill points in the armory offered after each cleared wave. Boss victories also grant one free three-card reward before the shop. Pausing shows the current build and records, not the shop.
 - Up to two reserve lives can restore a protected, difficulty-scaled squad after defeat.
+- Reinforcement boats sail in beside the bridge during play, tie up mid-deck, and offload a small wave-scaled squad top-up.
 
 There is no final wave or Victory state. Each boss reward advances directly into the next, harder wave.
 

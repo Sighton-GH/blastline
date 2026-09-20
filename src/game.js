@@ -55,6 +55,7 @@ import { drawBlueSoldier, drawBossCombatant } from './production-render.mjs';
 import { drawEnemyCombatant } from './enemy-render.mjs';
 import { loadProfile, saveProfile, offlineAccrual, recordRunEnd, startingBonuses, purchaseMeta, metaCost, metaTier, META_TRACKS } from './meta.mjs';
 import * as audio from './audio.mjs';
+import { createBoatFleet, drawBoatFleet, spawnBoat, updateBoatFleet } from './boats.mjs';
 import {
   bridgeHalfWidth as projectedBridgeHalfWidth,
   buildBridgeGeometry,
@@ -197,6 +198,7 @@ let accumulator = 0;
 let lastTimestamp = 0;
 let ambientTime = 0;
 let roadScroll = 0;
+let boatFleet = createBoatFleet();
 let cachedGeometry = null;
 let shakeTrauma = 0;
 let hitStopHold = 0;
@@ -568,6 +570,7 @@ function startRun(seed = Date.now() >>> 0, difficulty = selectedDifficulty) {
   hordeSerial = 0;
   gateSerial = 0;
   roadScroll = 0;
+  boatFleet = createBoatFleet();
   stressMode = false;
   runCommitted = false;
   startWave();
@@ -1558,6 +1561,11 @@ function update(dt) {
     return;
   }
   roadScroll += dt * (102 + Math.log2(run.wave + 1) * 8);
+  updateBoatFleet(boatFleet, dt, {
+    wave: run.wave,
+    worldScroll: (102 + Math.log2(run.wave + 1) * 8) / 720,
+    onDeliver: deliverBoatReinforcements,
+  });
   if (state === GAME_STATE.PLAYING) run.waveTime += dt;
   else run.bossTime += dt;
   if (run.frenzyTimer > 0) run.frenzyTimer = Math.max(0, run.frenzyTimer - dt);
@@ -2490,6 +2498,57 @@ function drawDynamicEnvironment() {
   }
 }
 
+function deliverBoatReinforcements(boat) {
+  run.player.troops = clamp(Math.round(run.player.troops + boat.troops), 1, MAX_TROOPS);
+  addFloater(boat.side * .7, .68, `+${boat.troops} SQUAD BY SEA`, '#91ebff', 21, 1.5);
+  burst(boat.side * .8, .8, '#59d6e8', 8);
+  audio.gateGood();
+  updateHud(true);
+}
+
+// Boats live in the water channels: clip to the water so hulls never overdraw
+// the deck, rails, or furniture. The glint trace (96 segments per side) is
+// overkill for clipping two small hulls and cost ~1ms/frame (4ms+ under the
+// validator's 4x CPU throttle); 14 segments per side is visually identical
+// for containing boats.
+function traceBoatClip(target) {
+  const segments = 14;
+  const horizon = sceneHorizon();
+  target.beginPath();
+  target.moveTo(0, horizon);
+  target.lineTo(W / 2, horizon);
+  for (let index = 1; index <= segments; index += 1) {
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
+    target.lineTo(W / 2 - bridgeHalfWidth(y) * 1.025, perspectiveY(y));
+  }
+  target.lineTo(0, H * 1.08);
+  target.closePath();
+  target.moveTo(W, horizon);
+  target.lineTo(W / 2, horizon);
+  for (let index = 1; index <= segments; index += 1) {
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
+    target.lineTo(W / 2 + bridgeHalfWidth(y) * 1.025, perspectiveY(y));
+  }
+  target.lineTo(W, H * 1.08);
+  target.closePath();
+}
+
+function drawBoats() {
+  if (!boatFleet.boats.length) return;
+  ctx.save();
+  traceBoatClip(ctx);
+  ctx.clip();
+  drawBoatFleet(ctx, boatFleet, {
+    perspectiveY,
+    bridgeHalfWidth,
+    scale: (y, nearPixels) => projectedPixels(sceneProjection, y, nearPixels),
+    width: W,
+    height: H,
+    ambientTime,
+  });
+  ctx.restore();
+}
+
 function drawHomeHero() {
   const image = runtimeAssets.homeHero;
   if (!image) return;
@@ -3363,6 +3422,7 @@ function draw() {
   ctx.clearRect(0, 0, W, H);
   ctx.drawImage(environmentCanvas, 0, 0, W, H);
   drawDynamicEnvironment();
+  drawBoats();
   if (state === GAME_STATE.HOME) {
     drawHomeHero();
     return;
@@ -3484,6 +3544,8 @@ function getStateSnapshot() {
     }))),
     telegraphs: run.telegraphs.map(warning => ({ lane: warning.lane, x: warning.x, kind: warning.kind, time: warning.time })),
     particles: run.particles.length, floaters: run.floaters.length, muzzleFlashes: run.muzzleFlashes.length,
+    boats: boatFleet.boats.map(boat => ({ id: boat.id, side: boat.side, y: +boat.y.toFixed(3), phase: boat.phase, troops: boat.troops })),
+    boatsDelivered: boatFleet.delivered, boatsDeliveredTroops: boatFleet.deliveredTroops,
     boss: run.boss ? { x: run.boss.x, y: run.boss.y, hp: run.boss.hp, maxHp: run.boss.maxHp, phase: run.boss.phase, attackSerial: run.boss.attackSerial } : null,
     purchaseCounts: { ...run.purchaseCounts }, upgradeTiers: { ...run.upgradeTiers },
     pool: Object.fromEntries(Object.entries(pools).map(([name, pool]) => [name, { created: pool.created, free: pool.free.length }])),
@@ -3589,6 +3651,7 @@ if (qaMode) {
     projectionAudit() { return bridgeProjectionAudit(); },
     waterMaskAudit() { return waterMaskPixelAudit(); },
     frenzyAudit() { return frenzyPixelAudit(); },
+    forceBoat(side = 1, y = .35) { const boat = spawnBoat(boatFleet, run.wave, { side, y }); return { id: boat.id, side: boat.side, y: boat.y, troops: boat.troops }; },
     setFrenzy(seconds = 6) { run.frenzyTimer = Math.max(0, Number(seconds) || 0); updateHud(true); return run.frenzyTimer; },
     qualityAudit() { return { renderQualityScale, sceneQualityActive, frameQualityActive, windowSize: frameQualityWindow.length, slowFraction: frameQualityWindow.length ? frameQualityWindow.filter(ms => ms > 25).length / frameQualityWindow.length : 0 }; },
     simulateFrameTimes(ms, count = 48) { const n = clamp(Math.round(count), 1, 1200); for (let index = 0; index < n; index += 1) adaptRenderQuality(Number(ms) || 0); return this.qualityAudit(); },
@@ -3626,7 +3689,18 @@ function prepareCapture(mode) {
   if (!mode) { returnHome(); return; }
   if (mode === 'home') { returnHome(); qaFrozen = true; return; }
   startRun(700 + mode.length, mode === 'chaos' ? 'elite' : 'veteran');
-  if (mode === 'gameplay' || mode === 'horde' || mode === 'frenzy') {
+  if (mode === 'boats') {
+    // Capture fixture for the reinforcement-boats lane: one craft mid-approach
+    // on the right channel, one tied up and offloading on the left.
+    run.player.troops = 24;
+    spawnFormation('wall', 30);
+    for (const enemy of run.enemies) { enemy.y += .2; enemy.previousY = enemy.y; }
+    spawnBoat(boatFleet, run.wave, { side: 1, y: -.35 });
+    const docked = spawnBoat(boatFleet, run.wave, { side: -1, y: .62 });
+    docked.phase = 'unloading';
+    docked.unloadTimer = 60; // fixture: stay tied up for the capture
+    fireBurst();
+  } else if (mode === 'gameplay' || mode === 'horde' || mode === 'frenzy') {
     run.player.troops = 24;
     spawnFormation('wall', 36);
     for (const enemy of run.enemies) { enemy.y += .17; enemy.previousY = enemy.y; }
