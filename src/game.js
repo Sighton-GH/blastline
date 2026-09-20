@@ -2349,47 +2349,164 @@ function drawGate(gate, foreground = false) {
   if (visual.fade <= 0 || visual.scale <= .008 || (foreground && (visual.y < .78 || visual.y > .99))) return;
   if (!foreground && visual.y > .78) return;
   const [main, bright, dark, deep] = gatePalette(gate.tone);
-  const postWidth = visual.width * .085;
-  const railHeight = visual.panelHeight * .14;
-  const panelTop = visual.topY + visual.frameHeight * .15;
-  const panelBottom = visual.deckY - visual.frameHeight * .13;
+  const postWidth = visual.width * .16;
+  const beamHeight = visual.panelHeight * .17;
+  const panelTop = visual.topY + beamHeight * .55;
+  const panelBottom = visual.deckY - visual.frameHeight * .055;
+  const panelLeft = visual.left.x + postWidth * .42;
+  const panelRight = visual.right.x - postWidth * .42;
+  const panelRadius = Math.min(postWidth * .5, (panelBottom - panelTop) * .16);
+  const frameColor = foreground ? dark : main;
+  const frameBright = foreground ? deep : bright;
   ctx.save();
   ctx.globalAlpha = visual.fade;
-  ctx.fillStyle = foreground ? dark : `color-mix(in srgb, ${main} 76%, transparent)`;
   if (!foreground) {
     // Ground contact shadow -- without this the gate reads as floating above the deck (V4).
     ctx.save();
     ctx.globalAlpha = visual.fade * .4;
     ctx.fillStyle = 'rgba(10,20,26,.5)';
     ctx.beginPath();
-    ctx.ellipse(visual.center.x, visual.deckY + railHeight * .3, visual.width * .52, railHeight * .5, 0, 0, Math.PI * 2);
+    ctx.ellipse(visual.center.x, visual.deckY + beamHeight * .16, visual.width * .52, beamHeight * .26, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+    // Energy panel: glassy gradient with a bright inner rim and diagonal sheen,
+    // set INTO the frame -- the posts and beam overlap its edges so it reads mounted.
     const fill = ctx.createLinearGradient(0, panelTop, 0, panelBottom);
     fill.addColorStop(0, main);
-    fill.addColorStop(.5, bright);
+    fill.addColorStop(.45, bright);
     fill.addColorStop(1, main);
-    ctx.globalAlpha = visual.fade * .82;
+    ctx.globalAlpha = visual.fade * .84;
     ctx.fillStyle = fill;
-    ctx.fillRect(visual.left.x + postWidth * .45, panelTop, visual.right.x - visual.left.x - postWidth * .9, panelBottom - panelTop);
+    ctx.beginPath();
+    ctx.roundRect(panelLeft, panelTop, panelRight - panelLeft, panelBottom - panelTop, panelRadius);
+    ctx.fill();
+    ctx.globalAlpha = visual.fade;
+    // Diagonal sheen streaks sell the glass.
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(panelLeft, panelTop, panelRight - panelLeft, panelBottom - panelTop, panelRadius);
+    ctx.clip();
+    ctx.globalAlpha = visual.fade * .16;
+    ctx.fillStyle = '#ffffff';
+    for (const off of [.28, .52]) {
+      const sx = panelLeft + (panelRight - panelLeft) * off;
+      ctx.beginPath();
+      ctx.moveTo(sx, panelBottom);
+      ctx.lineTo(sx + (panelBottom - panelTop) * .5, panelTop);
+      ctx.lineTo(sx + (panelBottom - panelTop) * .5 + (panelRight - panelLeft) * .09, panelTop);
+      ctx.lineTo(sx + (panelRight - panelLeft) * .09, panelBottom);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    // Scan line sweeping the panel keeps it alive without hiding the value.
+    const scanY = lerp(panelTop, panelBottom, (ambientTime * .45 + gate.lane * .33) % 1);
+    ctx.globalAlpha = visual.fade * .3;
+    ctx.fillStyle = bright;
+    ctx.fillRect(panelLeft + panelRadius * .4, scanY, panelRight - panelLeft - panelRadius * .8, Math.max(1, beamHeight * .1));
     ctx.globalAlpha = visual.fade;
   }
+  // Pedestal bases: gray plinths anchor each post to the deck (matches the
+  // established gate sheet -- stone-grey feet under glossy colored frames).
   for (const x of [visual.left.x, visual.right.x]) {
-    ctx.fillStyle = deep;
+    ctx.fillStyle = 'rgba(10,18,24,.5)';
     ctx.beginPath();
-    ctx.roundRect(x - postWidth * .66, visual.deckY - railHeight * .08, postWidth * 1.32, railHeight * .72, railHeight * .18);
+    ctx.ellipse(x, visual.deckY + beamHeight * .1, postWidth * 1.2, beamHeight * .16, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = dark;
+    const pedW = postWidth * 1.5;
+    const pedH = beamHeight * .5;
+    const pedGrad = ctx.createLinearGradient(x - pedW / 2, 0, x + pedW / 2, 0);
+    pedGrad.addColorStop(0, '#5c6675');
+    pedGrad.addColorStop(.45, '#a9b4c4');
+    pedGrad.addColorStop(1, '#4a5361');
+    ctx.fillStyle = pedGrad;
     ctx.beginPath();
-    ctx.roundRect(x - postWidth / 2, visual.topY, postWidth, visual.frameHeight, postWidth * .2);
+    ctx.moveTo(x - pedW * .32, visual.deckY - pedH);
+    ctx.lineTo(x + pedW * .32, visual.deckY - pedH);
+    ctx.lineTo(x + pedW / 2, visual.deckY);
+    ctx.lineTo(x - pedW / 2, visual.deckY);
+    ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = main;
-    ctx.fillRect(x - postWidth * .22, visual.topY + railHeight * .48, postWidth * .44, visual.frameHeight * .68);
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fillRect(x - pedW * .3, visual.deckY - pedH, pedW * .6, Math.max(1, pedH * .12));
   }
-  ctx.fillStyle = dark;
-  ctx.fillRect(visual.left.x - postWidth * .2, visual.topY, visual.right.x - visual.left.x + postWidth * .4, railHeight);
-  ctx.fillStyle = main;
-  ctx.fillRect(visual.left.x, visual.topY, visual.right.x - visual.left.x, railHeight * .57);
+  // Glossy rounded frame: tapered posts with a glow strip on the inner edge and a
+  // thick rounded beam with elbow corners, per the established gate art sheet.
+  for (const x of [visual.left.x, visual.right.x]) {
+    const postGrad = ctx.createLinearGradient(x - postWidth / 2, 0, x + postWidth / 2, 0);
+    postGrad.addColorStop(0, deep);
+    postGrad.addColorStop(.4, frameColor);
+    postGrad.addColorStop(.75, frameBright);
+    postGrad.addColorStop(1, deep);
+    ctx.fillStyle = postGrad;
+    ctx.beginPath();
+    ctx.roundRect(x - postWidth / 2, visual.topY + beamHeight * .3, postWidth, visual.deckY - visual.topY - beamHeight * .3, [postWidth * .32, postWidth * .32, 0, 0]);
+    ctx.fill();
+    const towardCenter = x === visual.left.x ? 1 : -1;
+    ctx.fillStyle = frameBright;
+    ctx.globalAlpha = visual.fade * .8;
+    ctx.fillRect(x + towardCenter * postWidth * .3 - postWidth * .06, visual.topY + beamHeight * .8, postWidth * .12, visual.deckY - visual.topY - beamHeight * 1.1);
+    ctx.globalAlpha = visual.fade;
+    // Bolt rows sell the plating at decision depth. Skipped in the near
+    // pass-through pass, where they read as floating lights instead of rivets.
+    if (!foreground) {
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      for (let bolt = 1; bolt <= 4; bolt += 1) {
+        const by = visual.topY + (visual.frameHeight * bolt) / 5;
+        ctx.beginPath();
+        ctx.arc(x, by, Math.max(.7, postWidth * .07), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  // Beam with rounded elbow corners overlapping the post tops.
+  const beamLeft = visual.left.x - postWidth * .3;
+  const beamRight = visual.right.x + postWidth * .3;
+  const beamGrad = ctx.createLinearGradient(0, visual.topY, 0, visual.topY + beamHeight);
+  beamGrad.addColorStop(0, frameBright);
+  beamGrad.addColorStop(.5, frameColor);
+  beamGrad.addColorStop(1, deep);
+  ctx.fillStyle = beamGrad;
+  ctx.beginPath();
+  ctx.roundRect(beamLeft, visual.topY, beamRight - beamLeft, beamHeight, beamHeight * .45);
+  ctx.fill();
+  // Gloss highlight along the beam top and a shadow line where the panel hangs.
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.beginPath();
+  ctx.roundRect(beamLeft + beamHeight * .12, visual.topY + beamHeight * .1, beamRight - beamLeft - beamHeight * .24, beamHeight * .2, beamHeight * .1);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(8,14,20,.4)';
+  ctx.fillRect(visual.left.x + postWidth * .4, visual.topY + beamHeight * .82, visual.right.x - visual.left.x - postWidth * .8, beamHeight * .12);
+  if (!foreground) {
+    // Fixture glow under the beam -- a soft light bar washing the panel top.
+    const glowX = visual.center.x;
+    const glow = ctx.createRadialGradient(glowX, visual.topY + beamHeight, 0, glowX, visual.topY + beamHeight, beamHeight * 1.4);
+    glow.addColorStop(0, 'rgba(255,240,190,.5)');
+    glow.addColorStop(1, 'rgba(255,180,80,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.ellipse(glowX, visual.topY + beamHeight, beamHeight * 1.6, beamHeight * .9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (const fx of [visual.left.x, visual.center.x, visual.right.x]) {
+      ctx.fillStyle = '#ffe9b0';
+      ctx.beginPath();
+      ctx.arc(fx, visual.topY + beamHeight * .92, Math.max(.8, beamHeight * .1), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Panel rim: dark outer edge plus a bright inner line, like a mounted sign.
+    ctx.strokeStyle = 'rgba(8,14,20,.8)';
+    ctx.lineWidth = Math.max(1, beamHeight * .14);
+    ctx.beginPath();
+    ctx.roundRect(panelLeft, panelTop, panelRight - panelLeft, panelBottom - panelTop, panelRadius);
+    ctx.stroke();
+    ctx.strokeStyle = frameBright;
+    ctx.globalAlpha = visual.fade * .5;
+    ctx.lineWidth = Math.max(.8, beamHeight * .06);
+    ctx.beginPath();
+    ctx.roundRect(panelLeft + beamHeight * .08, panelTop + beamHeight * .08, panelRight - panelLeft - beamHeight * .16, panelBottom - panelTop - beamHeight * .16, panelRadius * .8);
+    ctx.stroke();
+    ctx.globalAlpha = visual.fade;
+  }
   if (!foreground) {
     // At spawn depth a gate pair still overlaps on screen, so both labels render on top
     // of each other as one garbled cluster. Fade text in with depth: by the time it is
