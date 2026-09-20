@@ -2112,7 +2112,7 @@ function drawBridgeStructure(target, geometry) {
   const railSegments = 120;
   for (const side of [-1, 1]) {
     // Fence posts first, so the rails lay over their tops.
-    for (let y = .05; y < 1; y += .024) {
+    for (let y = -1.1; y < 1; y += .024) {
       const p = edgePoint(side, y);
       const rh = railHeight(y);
       const pw = Math.max(.9, projectedPixels(sceneProjection, y, 5.4));
@@ -2143,7 +2143,7 @@ function drawBridgeStructure(target, geometry) {
     }
     // Vertical pickets between the posts, matching the bridge-kit railing.
     target.lineCap = 'round';
-    for (let y = .055; y < .99; y += .011) {
+    for (let y = -1.1; y < .99; y += .011) {
       const p = edgePoint(side, y);
       const rh = railHeight(y);
       const w = Math.max(.4, projectedPixels(sceneProjection, y, 1.1));
@@ -2178,7 +2178,7 @@ function drawBridgeStructure(target, geometry) {
     }
     // Lamp posts: flanged base, tapered pole, arm reaching over the walkway,
     // housed head with a warm glow and a pool of light on the deck.
-    for (const y of [.2, .44, .68, .9]) {
+    for (const y of [-.34, -.08, .2, .44, .68, .9]) {
       const p = edgePoint(side, y, .985);
       const h = projectedPixels(sceneProjection, y, 168);
       const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 8.5));
@@ -2397,12 +2397,14 @@ function drawDynamicEnvironment() {
 
   const phase = (roadScroll / 720) % .12;
   for (const separator of [-.29, .29]) {
-    for (let index = -1; index < 11; index += 1) {
+    // Dashes continue past the far gameplay plane (worldY 0) toward the horizon;
+    // stopping at 0 leaves a long bare strip of road on tall screens (Bryan).
+    for (let index = -19; index < 11; index += 1) {
       const y0 = index * .12 + phase;
       const y1 = y0 + .05;
-      if (y1 <= 0 || y0 >= 1) continue;
-      const a = clamp(y0, 0, 1);
-      const b = clamp(y1, 0, 1);
+      if (y1 <= -2.2 || y0 >= 1) continue;
+      const a = clamp(y0, -2.2, 1);
+      const b = clamp(y1, -2.2, 1);
       const start = worldToScreen(separator, a);
       const end = worldToScreen(separator, b);
       const w0 = Math.max(.6, projectedPixels(sceneProjection, a, 3.4));

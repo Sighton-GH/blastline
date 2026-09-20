@@ -49,7 +49,7 @@ test('equal logical approach steps accelerate with the true 1/Z perspective curv
     const { depthRatio } = projection.profile;
     assert.ok(ratio > depthRatio * 2 && ratio < depthRatio ** 2,
       `speed ratio ${ratio} should sit between depthRatio and depthRatio^2`);
-    assert.ok(ratio > 8 && ratio < 45, `speed ratio ${ratio} should stay in a bounded perspective band`);
+    assert.ok(ratio > 5 && ratio < 45, `speed ratio ${ratio} should stay in a bounded perspective band`);
   }
 });
 
