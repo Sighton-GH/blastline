@@ -2225,29 +2225,36 @@ function drawGate(gate, foreground = false) {
   ctx.fillStyle = main;
   ctx.fillRect(visual.left.x, visual.topY, visual.right.x - visual.left.x, railHeight * .57);
   if (!foreground) {
-    let fontSize = Math.min(64, visual.panelHeight * .46);
-    ctx.font = `1000 ${fontSize}px system-ui`;
-    const limit = visual.width - postWidth * 2.3;
-    while (fontSize > 9 && ctx.measureText(gateText(gate)).width > limit) {
-      fontSize -= 1;
+    // At spawn depth a gate pair still overlaps on screen, so both labels render on top
+    // of each other as one garbled cluster. Fade text in with depth: by the time it is
+    // visible the panels have physically separated and each label sits inside its own gate.
+    const textAlpha = clamp((gate.encounter.y - .06) / .08, 0, 1);
+    if (textAlpha > 0) {
+      ctx.globalAlpha *= textAlpha;
+      let fontSize = Math.min(64, visual.panelHeight * .46);
       ctx.font = `1000 ${fontSize}px system-ui`;
-    }
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = clamp(fontSize * .14, 2, 5);
-    ctx.strokeStyle = 'rgba(20,23,28,.78)';
-    ctx.fillStyle = '#fff';
-    const textY = lerp(panelTop, panelBottom, .47);
-    ctx.strokeText(gateText(gate), visual.center.x, textY);
-    ctx.fillText(gateText(gate), visual.center.x, textY);
-    // At long range a second text line turns into overlapping shimmer. Keep the
-    // decision value readable first, then reveal the explanatory subtitle as the
-    // gate approaches and has enough physical pixels to support it.
-    if (fontSize >= 13) {
-      ctx.font = `950 ${Math.max(7, fontSize * .3)}px system-ui`;
-      ctx.fillStyle = '#eaf9ff';
-      ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, textY + fontSize * .55);
+      const limit = visual.width - postWidth * 2.3;
+      while (fontSize > 9 && ctx.measureText(gateText(gate)).width > limit) {
+        fontSize -= 1;
+        ctx.font = `1000 ${fontSize}px system-ui`;
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = clamp(fontSize * .14, 2, 5);
+      ctx.strokeStyle = 'rgba(20,23,28,.78)';
+      ctx.fillStyle = '#fff';
+      const textY = lerp(panelTop, panelBottom, .47);
+      ctx.strokeText(gateText(gate), visual.center.x, textY);
+      ctx.fillText(gateText(gate), visual.center.x, textY);
+      // At long range a second text line turns into overlapping shimmer. Keep the
+      // decision value readable first, then reveal the explanatory subtitle as the
+      // gate approaches and has enough physical pixels to support it.
+      if (fontSize >= 13) {
+        ctx.font = `950 ${Math.max(7, fontSize * .3)}px system-ui`;
+        ctx.fillStyle = '#eaf9ff';
+        ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, textY + fontSize * .55);
+      }
     }
   }
   ctx.restore();
