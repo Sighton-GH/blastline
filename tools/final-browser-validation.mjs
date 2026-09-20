@@ -90,7 +90,8 @@ async function visualAudit(page) {
       if (area > 4) overlaps.push([visibleBoxes[a].id, visibleBoxes[b].id, area]);
     }
     const safeArea = visibleBoxes.every(({ rect }) => rect.left >= -1 && rect.top >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1);
-    const canvas = document.querySelector('#environment');
+    // The environment is composited into the main #game canvas every frame (offscreen buffer), so read water pixels there.
+    const canvas = document.querySelector('#game');
     const context = canvas.getContext('2d');
     const backingScale = canvas.width / innerWidth;
     const horizon = Math.round(__blastlineTest.projectionAudit().horizon);
