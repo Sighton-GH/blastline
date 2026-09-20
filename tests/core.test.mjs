@@ -29,6 +29,7 @@ import {
   purchaseUpgrade,
   buildLines,
   SHOP_BY_ID,
+  squadRoleForSlot,
   MAX_BUILD_LINES,
   UTILITY_UPGRADES,
   resolveGateEncounter,
@@ -205,6 +206,19 @@ test('v2 shop: polynomial stats are uncapped, design caps hold for multishot/cri
   for (let i = 0; i < 30; i += 1) firePlayer = applyUpgrade(firePlayer, 'fireRate');
   assert.ok(firePlayer.fireRate > 16, 'fireRate exceeds the old v1 cap');
   assert.ok(session.player.plates <= 40);
+});
+
+test('squad roles follow owned build lines, weighted by tier', () => {
+  const clean = createCleanRun(2);
+  assert.equal(squadRoleForSlot(clean, 0), 'rifleman');
+  assert.equal(squadRoleForSlot(clean, 7), 'rifleman');
+  const session = { ...clean, upgradeTiers: { damage: 3, fireRate: 1 } };
+  // 4 total tier weight: heavy claims 3 slots, gunner 1, repeating.
+  assert.equal(squadRoleForSlot(session, 0), 'heavy');
+  assert.equal(squadRoleForSlot(session, 1), 'heavy');
+  assert.equal(squadRoleForSlot(session, 2), 'heavy');
+  assert.equal(squadRoleForSlot(session, 3), 'gunner');
+  assert.equal(squadRoleForSlot(session, 4), 'heavy');
 });
 
 test('boss reward choices are unique, tiered, and contain synergy information', () => {

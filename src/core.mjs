@@ -279,6 +279,37 @@ export function applyUpgrade(player, id) {
   return next;
 }
 
+// Friendly unit roles: each build line fields a visually distinct soldier type in
+// the squad (Bryan/Aston playtest, Sep 20). Roles are not cosmetic clones - a role
+// only exists in the army when its build line is owned, and slot assignment is
+// proportional to line tiers, so the squad's composition IS the build made visible.
+export const SQUAD_ROLES = Object.freeze([
+  { id: 'rifleman', line: null, label: 'Rifleman' },
+  { id: 'heavy', line: 'damage', label: 'Heavy' },
+  { id: 'gunner', line: 'fireRate', label: 'Gunner' },
+  { id: 'scatter', line: 'multishot', label: 'Scatter' },
+  { id: 'bulwark', line: 'armor', label: 'Bulwark' },
+  { id: 'lancer', line: 'piercing', label: 'Lancer' },
+  { id: 'marksman', line: 'criticalChance', label: 'Marksman' },
+  { id: 'runner', line: 'projectileSpeed', label: 'Runner' },
+  { id: 'trick', line: 'ricochet', label: 'Trick' },
+]);
+export const ROLE_BY_LINE = Object.freeze(Object.fromEntries(SQUAD_ROLES.filter(role => role.line).map(role => [role.line, role.id])));
+
+export function squadRoleForSlot(session, slotIndex) {
+  const lines = buildLines(session)
+    .map(id => ({ id, tier: upgradeTier(session, id) }))
+    .filter(entry => ROLE_BY_LINE[entry.id] && entry.tier > 0);
+  if (!lines.length) return 'rifleman';
+  const total = lines.reduce((sum, entry) => sum + entry.tier, 0);
+  let pick = Math.abs(Math.floor(slotIndex)) % total;
+  for (const entry of lines) {
+    if (pick < entry.tier) return ROLE_BY_LINE[entry.id];
+    pick -= entry.tier;
+  }
+  return 'rifleman';
+}
+
 export function purchaseUpgrade(session, id) {
   const item = SHOP_BY_ID[id];
   if (!item) return { session, ok: false, reason: 'unknown' };

@@ -16,6 +16,7 @@ import {
   isUpgradeCapped,
   isLineLocked,
   buildLines,
+  squadRoleForSlot,
   MAX_BUILD_LINES,
   MAX_PICKS_PER_VISIT,
   UNCAPPED_UPGRADES,
@@ -90,6 +91,8 @@ const RUNTIME_ASSET_PATHS = Object.freeze({
   enemySpecial3: 'assets/blastline/characters/enemy-special-3.webp',
   enemySpecial4: 'assets/blastline/characters/enemy-special-4.webp',
   boss: 'assets/blastline/characters/boss.webp',
+  ...Object.fromEntries(['heavy', 'gunner', 'scatter', 'bulwark', 'lancer', 'marksman', 'runner', 'trick']
+    .flatMap(role => [1, 2, 3, 4].map(frame => [`playerRun${role[0].toUpperCase()}${role.slice(1)}${frame}`, `assets/blastline/characters/player-run-${role}-${frame}.webp`]))),
 });
 
 const canvas = document.querySelector('#game');
@@ -3151,7 +3154,12 @@ function drawPlayer() {
     const screen = projectToScreen(worldX, slot.y, projectionScratchA);
     const height = soldierHeightAt(slot.y);
     const frame = ((Math.floor((run.waveTime + run.bossTime + ambientTime * .1) * 10.5 + slot.phase) % 4) + 4) % 4;
-    const imageName = `playerRun${frame + 1}`;
+    // Squad composition renders the build: each slot fields the soldier type of an
+    // owned line, weighted by tier. Falls back to the rifleman sprite if a role
+    // asset failed to load.
+    const role = squadRoleForSlot(run, slot.index);
+    let imageName = `${role === 'rifleman' ? 'playerRun' : `playerRun${role[0].toUpperCase()}${role.slice(1)}`}${frame + 1}`;
+    if (!runtimeAssets[imageName]) imageName = `playerRun${frame + 1}`;
     const image = height < 42
       ? litMicroLodAssets[imageName] || microLodAssets[imageName] || runtimeAssets[imageName]
       : height < 95 ? litLodAssets[imageName] || lodAssets[imageName] || runtimeAssets[imageName]
@@ -3535,6 +3543,7 @@ if (qaMode) {
     setPoints(value) { run.points = Math.max(0, Math.round(Number(value) || 0)); updateHud(true); return run.points; },
     setLives(value) { run.lives = clamp(Math.round(Number(value) || 0), 0, 2); updateHud(true); return run.lives; },
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
+    setUpgradeTiers(tiers = {}) { run.upgradeTiers = { ...(run.upgradeTiers || {}), ...tiers }; updateHud(true); return this.getState(); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
     spawnEnemyAt(type = 'grunt', lane = 1, y = .82, ready = false) { const enemy = spawnEnemy(type, { lane, x: laneCenter(lane), y }); if (enemy && ready) enemy.shotTimer = 0; return enemy ? { type: enemy.type, lane: enemy.lane, x: enemy.x, y: enemy.y, hp: enemy.hp, shield: enemy.shield } : null; },
