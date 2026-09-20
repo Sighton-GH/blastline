@@ -5,7 +5,6 @@ import {
   LANE_CENTERS,
   LANE_HALF_WIDTH,
   LANE_LIMIT,
-  BOSS_ENGAGEMENT_Y,
   ENGAGEMENT_Y,
   MAX_ACTIVE_ENEMIES,
   MAX_TROOPS,
@@ -696,6 +695,27 @@ function updateHud(force = false) {
 function addFloater(x, y, text, color = '#fff', size = 22, life = 1) {
   if (run.floaters.length >= 35) return;
   run.floaters.push(pools.floaters.take({ x, y, text, color, size, life, dead: false }));
+}
+
+// Impact detonation for telegraph missiles: bigger, faster, longer-lived
+// particles than the generic hit burst, biased outward so the boom reads as
+// an explosion, not sparks.
+function explosionBurst(x, y) {
+  const room = Math.max(0, (stressMode ? 100 : 210) - run.particles.length);
+  const parts = [
+    ...Array.from({ length: 14 }, () => ({ color: '#ff8a3d', size: 4.5 + rng() * 6.5, speed: .3 })),
+    ...Array.from({ length: 7 }, () => ({ color: '#fff2c1', size: 3 + rng() * 4, speed: .42 })),
+    ...Array.from({ length: 5 }, () => ({ color: '#c33a2a', size: 5 + rng() * 6, speed: .18 })),
+  ];
+  for (const part of parts.slice(0, room)) {
+    const angle = rng() * Math.PI * 2;
+    const speed = part.speed * (.5 + rng());
+    run.particles.push(pools.particles.take({
+      x, y, previousX: x, previousY: y,
+      vx: Math.cos(angle) * speed * .5, vy: Math.sin(angle) * speed * .62,
+      life: .34 + rng() * .3, size: part.size, color: part.color, dead: false,
+    }));
+  }
 }
 
 function burst(x, y, color, count = 8) {
@@ -1404,7 +1424,10 @@ function collidePlayerBullets() {
     if (!bullet.dead && run.boss) {
       const boss = run.boss;
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
-      if (boss.y >= BOSS_ENGAGEMENT_Y && crossed && Math.abs(bullet.x - boss.x) < .13) {
+      // Bryan: the boss takes damage from the moment it is on the field, not
+      // only once it is close. The only remaining gate is bullet range itself
+      // (shots are culled at y=-.14), so the whole walk-in is hittable.
+      if (crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
         const gate = boss.dmgGate ?? 1;
         boss.hp -= bullet.power * gate; // v2: no invuln window; archetype gate resists uncountered builds
@@ -1449,6 +1472,18 @@ function updateTelegraphs(dt) {
       vy: warning.speed, radius: warning.kind === 'demolition' ? .17 : .13,
       damage: warning.damage, color: '#ff543f',
     });
+    // Escort bolts fanning off the main missile: pure visual wave language
+    // (radius 0, damage 0) so the volley reads as a burst of fire while the
+    // hit math stays exactly the calibrated single-missile tuning.
+    for (const side of [-1, 1]) {
+      spawnEnemyProjectile(source, {
+        kind: 'flak', lane: warning.lane,
+        x: muzzleX + side * .045, y: Math.max(.14, source.y + .03),
+        vx: converge + side * .03,
+        vy: warning.speed * (side < 0 ? .94 : 1.05), radius: 0,
+        damage: 0, color: '#ff8a3d',
+      });
+    }
   }
 }
 
@@ -1658,8 +1693,12 @@ function update(dt) {
     if (bullet.dead || bullet.y < .855) continue;
     if (Math.abs(bullet.x - run.player.x) < bullet.radius) {
       bullet.dead = true;
+      if (bullet.kind === 'lane' || bullet.kind === 'hazard') explosionBurst(bullet.x, Math.min(bullet.y, 1.02));
       if (damageSquad(bullet.damage, bullet.x)) return;
-    } else if (bullet.y > 1.04) bullet.dead = true;
+    } else if (bullet.y > 1.04) {
+      bullet.dead = true;
+      if (bullet.kind === 'lane' || bullet.kind === 'hazard') explosionBurst(bullet.x, 1.0);
+    }
   }
 
   compactEntities(run.bullets, pools.bullets, bullet => !bullet.dead && bullet.y > -.14 && Math.abs(bullet.x) < 1.1);
@@ -2898,18 +2937,18 @@ function drawEnemyBullets() {
     const screen = projectToScreen(x, y, projectionScratchA);
     const previous = projectToScreen(bullet.previousX, bullet.previousY, projectionScratchB);
     if (!screen.visible) continue;
-    if (bullet.kind === 'lane' || bullet.kind === 'hazard') {
+    if (bullet.kind === 'lane' || bullet.kind === 'hazard' || bullet.kind === 'flak') {
       // Telegraph missile: a layered capsule with a flame tail and a pulsing
       // halo, sized well past its collision radius so the threat is readable
       // from the moment it leaves the launcher (Bryan: 'big and dramatic').
-      const scale = bullet.kind === 'hazard' ? 1.45 : 1;
-      const size = projectedPixels(sceneProjection, y, 11) * scale;
+      const scale = bullet.kind === 'hazard' ? 1.5 : bullet.kind === 'flak' ? .48 : 1;
+      const size = projectedPixels(sceneProjection, y, 21) * scale;
       let dx = screen.x - previous.x;
       let dy = screen.y - previous.y;
       const len = Math.hypot(dx, dy);
       if (len < .01) { dx = 0; dy = 1; } else { dx /= len; dy /= len; }
-      const tailX = screen.x - dx * size * 3.1;
-      const tailY = screen.y - dy * size * 3.1;
+      const tailX = screen.x - dx * size * 4.4;
+      const tailY = screen.y - dy * size * 4.4;
       const pulse = .8 + .2 * Math.sin(ambientTime * 16 + bullet.y * 40);
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = .32;
@@ -3398,6 +3437,7 @@ if (qaMode) {
     setGateEncounter(options, y = .52, neutralLane = 1) { const encounter = setDebugGateEncounter(options, y, neutralLane); return encounter.gates.map(gate => ({ id: gate.id, lane: gate.lane, x: gate.x, text: gateText(gate), tone: gate.tone })); },
     setGatePair(left, right, y = .52) { return this.setGateEncounter([left, right], y, 1); },
     forceBoss() { if (!ACTIVE_STATES.includes(state)) setState(GAME_STATE.PLAYING); spawnBoss(); run.boss.y = run.boss.previousY = .75; updateHud(true); return this.getState(); },
+    setBossY(value) { if (run.boss) { run.boss.y = run.boss.previousY = clamp(Number(value) || 0, -.2, .8); } return run.boss?.y ?? null; },
     setBossPhase(value) { if (!run.boss) this.forceBoss(); const phase = clamp(Math.round(value), 1, 3); run.boss.hp = run.boss.maxHp * (phase === 1 ? .9 : phase === 2 ? .55 : .2); updateBossPhase(); updateHud(true); return run.boss.phase; },
     setBossHp(value) { if (run.boss) { run.boss.hp = clamp(Number(value) || 0, 0, run.boss.maxHp); updateBossPhase(); updateHud(true); } return run.boss?.hp ?? null; },
     defeatBoss() { if (!run.boss) this.forceBoss(); run.boss.hp = 0; finishBoss(); return state; },

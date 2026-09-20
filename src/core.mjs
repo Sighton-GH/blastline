@@ -85,7 +85,8 @@ export const MAX_VISIBLE_SQUAD = 24;
 export const MAX_PROJECTILES = 6;
 export const MAX_FIRE_RATE = 40; // safety rail, not a design cap (v2: +0.4/tier additive)
 export const ENGAGEMENT_Y = 0.04; // horizon gate: enemies take no bullet damage until this far onto the visible field - kills must be seen (Bryan 2026-09-19)
-export const BOSS_ENGAGEMENT_Y = 0.5; // bosses must be fully visible below the HUD (both viewports) before they can take damage
+// Bosses are hittable from spawn (Bryan ruling): no engagement-distance gate;
+// bullet range (culled at y=-.14) is the only limit on boss hit registration.
 export const MAX_PIERCE = 4;
 export const MAX_LIVES = 2;
 export const MAX_ACTIVE_ENEMIES = 220;
