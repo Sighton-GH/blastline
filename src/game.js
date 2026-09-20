@@ -3112,7 +3112,11 @@ function pointerMove(clientX) {
   run.player.targetX = clamp((clientX - W / 2) / Math.max(1, laneHalfWidth(.9)), -LANE_LIMIT, LANE_LIMIT);
 }
 
+const STEER_KEYS = ['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D'];
+const steerKeyHeld = () => STEER_KEYS.some(key => keys[key]);
 addEventListener('keydown', event => {
+  const typingTarget = event.target;
+  if (typingTarget && (typingTarget.tagName === 'INPUT' || typingTarget.tagName === 'TEXTAREA' || typingTarget.isContentEditable)) return;
   if (event.key === 'Escape' && dom.upgradeInfo && !dom.upgradeInfo.classList.contains('hidden')) { closeUpgradeInfo(); event.stopPropagation(); return; }
   keys[event.key] = true;
   const isSpace = event.code === 'Space' || event.key === ' ';
@@ -3140,10 +3144,14 @@ canvas.addEventListener('pointerdown', event => {
 });
 canvas.addEventListener('pointermove', event => {
   if (pointerActive && Math.abs(event.clientX - pointerDownClientX) > 14) pointerMovedFar = true;
-  if (pointerActive || (event.pointerType === 'mouse' && ACTIVE_STATES.includes(state))) pointerMove(event.clientX);
+  if (pointerActive) { pointerMove(event.clientX); return; }
+  // Passive mouse-hover steering yields while A/D or an arrow key is held,
+  // so a resting cursor cannot fight keyboard steering. It resumes on key release.
+  if (event.pointerType === 'mouse' && ACTIVE_STATES.includes(state) && !steerKeyHeld()) pointerMove(event.clientX);
 });
 addEventListener('pointerup', () => { pointerActive = false; });
 addEventListener('pointercancel', () => { pointerActive = false; });
+addEventListener('blur', () => { for (const key in keys) keys[key] = false; });
 document.addEventListener('visibilitychange', () => { if (document.hidden && ACTIVE_STATES.includes(state)) pauseGame(); });
 
 dom.difficultyPicker.addEventListener('click', event => {
