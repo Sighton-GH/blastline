@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T20:01:18.991Z",
+  "generatedAt": "2026-09-20T20:12:45.268Z",
   "fullSoak": false,
   "durations": {
     "normalMs": 3000,
@@ -422,64 +422,64 @@
     "mobile": {
       "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.700000000000273,
+      "p95": 16.799999999999272,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
     },
     "desktop": {
-      "samples": 175,
+      "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.700000000000728,
-      "max": 33.30000000000018,
+      "p95": 16.800000000000182,
+      "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
     },
     "stressBenchmarks1x": {
-      "drawMs": 0.525,
-      "updateMs": 0.748333333308498
+      "drawMs": 0.5949999999254942,
+      "updateMs": 1.1649999999751648
     },
     "stressBenchmarks4x": {
-      "drawMs": 3.6333333334575095,
-      "updateMs": 1.2233333334326744,
+      "drawMs": 2.6083333333954215,
+      "updateMs": 2.280000000074506,
       "layers": {
-        "foregroundClear": 0.012500000186264515,
-        "environmentMotion": 0.27499999990686774,
-        "telegraphs": 0.0625,
-        "enemiesAndBoss": 1.4250000002793968,
-        "hostileProjectiles": 0.11249999981373549,
-        "squadProjectiles": 0.0625,
-        "squad": 0.6375000001862645,
-        "effects": 0
+        "foregroundClear": 0.13750000018626451,
+        "environmentMotion": 0.375,
+        "telegraphs": 0.14999999990686774,
+        "enemiesAndBoss": 2.9249999998137355,
+        "hostileProjectiles": 0.024999999906867743,
+        "squadProjectiles": 0.23750000027939677,
+        "squad": 0.8125,
+        "effects": 0.024999999906867743
       }
     },
     "stress4x": {
-      "samples": 468,
+      "samples": 443,
       "p50": 16.69999999999891,
-      "p95": 16.700000000000728,
+      "p95": 33.19999999999891,
       "max": 133.3000000000011,
-      "over50": 0.002136752136752137,
-      "refreshNormalizedP95": 16.700000000000728
+      "over50": 0.002257336343115124,
+      "refreshNormalizedP95": 33.333333333333336
     },
     "soak": {
       "durationMs": 15000,
-      "initialHeap": 3390900,
-      "finalHeap": 3473792,
-      "heapGrowth": 0.02444542746763396,
+      "initialHeap": 3512308,
+      "finalHeap": 3708188,
+      "heapGrowth": 0.05576959651602308,
       "entitySamples": [
         {
           "enemies": 180,
-          "bullets": 149,
+          "bullets": 205,
           "enemyBullets": 9,
-          "particles": 4,
+          "particles": 26,
           "created": {
             "enemies": {
-              "created": 202,
-              "free": 21
+              "created": 206,
+              "free": 26
             },
             "bullets": {
-              "created": 457,
-              "free": 308
+              "created": 810,
+              "free": 605
             },
             "enemyBullets": {
               "created": 12,
@@ -487,11 +487,11 @@
             },
             "particles": {
               "created": 100,
-              "free": 96
+              "free": 74
             },
             "floaters": {
               "created": 19,
-              "free": 18
+              "free": 16
             },
             "telegraphs": {
               "created": 2,
@@ -501,29 +501,29 @@
         },
         {
           "enemies": 180,
-          "bullets": 210,
-          "enemyBullets": 3,
-          "particles": 20,
+          "bullets": 357,
+          "enemyBullets": 6,
+          "particles": 5,
           "created": {
             "enemies": {
-              "created": 202,
-              "free": 13
+              "created": 206,
+              "free": 18
             },
             "bullets": {
-              "created": 457,
-              "free": 247
+              "created": 810,
+              "free": 453
             },
             "enemyBullets": {
               "created": 12,
-              "free": 9
+              "free": 6
             },
             "particles": {
               "created": 100,
-              "free": 80
+              "free": 95
             },
             "floaters": {
               "created": 19,
-              "free": 15
+              "free": 14
             },
             "telegraphs": {
               "created": 2,
@@ -533,21 +533,21 @@
         },
         {
           "enemies": 180,
-          "bullets": 158,
-          "enemyBullets": 3,
+          "bullets": 242,
+          "enemyBullets": 11,
           "particles": 26,
           "created": {
             "enemies": {
-              "created": 202,
-              "free": 22
+              "created": 206,
+              "free": 25
             },
             "bullets": {
-              "created": 457,
-              "free": 299
+              "created": 810,
+              "free": 568
             },
             "enemyBullets": {
               "created": 12,
-              "free": 9
+              "free": 1
             },
             "particles": {
               "created": 100,
@@ -587,7 +587,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.10000000004139212
+        "synchronousDrawMeanMs": 0.1222222222843104
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -599,51 +599,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -654,7 +654,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 0,
           "groundedEntityCount": 0,
           "entityGroundingError": 0
@@ -698,7 +698,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3722222221808301
+        "synchronousDrawMeanMs": 0.4055555554934674
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -750,51 +750,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -805,7 +805,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 36,
           "groundedEntityCount": 36,
           "entityGroundingError": 0
@@ -849,7 +849,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.511111111069719
+        "synchronousDrawMeanMs": 0.7111111110490229
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -901,51 +901,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -956,7 +956,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 17,
           "groundedEntityCount": 17,
           "entityGroundingError": 0
@@ -992,15 +992,15 @@
       "difficulty": "veteran",
       "phase": "playing",
       "entityCounts": {
-        "squad": 24,
+        "squad": 48,
         "enemies": 96,
-        "playerBullets": 24,
+        "playerBullets": 48,
         "enemyBullets": 0,
         "particles": 0,
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.7166666666873627
+        "synchronousDrawMeanMs": 0.7083333333333334
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1052,51 +1052,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1107,7 +1107,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 32,
           "groundedEntityCount": 32,
           "entityGroundingError": 0
@@ -1151,7 +1151,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5833333333333334
+        "synchronousDrawMeanMs": 0.46666666668736273
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1211,56 +1211,56 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 54.70833333333333,
+        "maxWaterJump": 54.61111111111112,
         "projection": {
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1271,7 +1271,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 36,
           "groundedEntityCount": 36,
           "entityGroundingError": 0
@@ -1307,7 +1307,7 @@
       "difficulty": "veteran",
       "phase": "paused",
       "entityCounts": {
-        "squad": 24,
+        "squad": 37,
         "enemies": 0,
         "playerBullets": 0,
         "enemyBullets": 0,
@@ -1315,7 +1315,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3305555556176437
+        "synchronousDrawMeanMs": 0.238888888930281
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1367,51 +1367,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1422,7 +1422,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 0,
           "groundedEntityCount": 0,
           "entityGroundingError": 0
@@ -1466,7 +1466,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2777777777777778
+        "synchronousDrawMeanMs": 0.34166666668736273
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1478,51 +1478,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1533,7 +1533,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 0,
           "groundedEntityCount": 0,
           "entityGroundingError": 0
@@ -1577,7 +1577,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2416666667494509
+        "synchronousDrawMeanMs": 0.2555555555348595
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1629,51 +1629,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1684,7 +1684,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 0,
           "groundedEntityCount": 0,
           "entityGroundingError": 0
@@ -1720,15 +1720,15 @@
       "difficulty": "veteran",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 36,
         "enemies": 0,
-        "playerBullets": 24,
+        "playerBullets": 36,
         "enemyBullets": 0,
         "particles": 0,
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2666666667080588
+        "synchronousDrawMeanMs": 0.3583333333954215
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1793,51 +1793,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -1848,7 +1848,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 1,
           "groundedEntityCount": 1,
           "entityGroundingError": 0
@@ -1884,15 +1884,15 @@
       "difficulty": "veteran",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 42,
         "enemies": 0,
-        "playerBullets": 24,
+        "playerBullets": 42,
         "enemyBullets": 0,
         "particles": 24,
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3499999999379118
+        "synchronousDrawMeanMs": 0.42500000002069604
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1957,51 +1957,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -2012,7 +2012,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 1,
           "groundedEntityCount": 1,
           "entityGroundingError": 0
@@ -2048,15 +2048,15 @@
       "difficulty": "elite",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 48,
         "enemies": 180,
-        "playerBullets": 360,
+        "playerBullets": 720,
         "enemyBullets": 0,
         "particles": 80,
         "telegraphs": 2
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5249999999586079
+        "synchronousDrawMeanMs": 0.6055555555762516
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2121,51 +2121,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -2176,7 +2176,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 181,
           "groundedEntityCount": 181,
           "entityGroundingError": 0
@@ -2220,7 +2220,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.08611111115250322
+        "synchronousDrawMeanMs": 0.16388888884749678
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2232,51 +2232,51 @@
           "horizon": -16.88,
           "deckBottom": 865.0999999999999,
           "vanishingX": 195,
-          "vanishingRoadWidth": 97.5,
-          "vanishingBridgeWidth": 103.35000000000001,
+          "vanishingRoadWidth": 125.35714285714286,
+          "vanishingBridgeWidth": 132.87857142857143,
           "roadWidthRatio": 0.9,
-          "minProjectedStep": 9.178466218379754,
-          "maxProjectedStep": 101.46672566371706,
-          "projectedSpeedRatio": 11.054867256637205,
+          "minProjectedStep": 10.461017395888234,
+          "maxProjectedStep": 72.82403669724772,
+          "projectedSpeedRatio": 6.961467889908265,
           "cableAnchorError": 0,
           "hangerAnchorError": 0,
-          "towerClearance": 3.792629958960312,
+          "towerClearance": 4.755424528301887,
           "towerHeightScaleError": 0,
           "profile": "portrait",
-          "leftMaxDeviation": 1.4210854715202004e-14,
+          "leftMaxDeviation": 2.842170943040401e-14,
           "rightMaxDeviation": 5.684341886080802e-14,
           "sharedScaleSamples": [
             {
               "y": 0.08,
-              "scale": 0.294811320754717,
-              "roadScale": 0.294811320754717,
-              "enemyScale": 0.294811320754717,
-              "gateScale": 0.294811320754717,
-              "shadowScale": 0.294811320754717
+              "scale": 0.37650602409638556,
+              "roadScale": 0.37650602409638556,
+              "enemyScale": 0.37650602409638556,
+              "gateScale": 0.37650602409638556,
+              "shadowScale": 0.37650602409638556
             },
             {
               "y": 0.24,
-              "scale": 0.33602150537634407,
-              "roadScale": 0.33602150537634407,
-              "enemyScale": 0.33602150537634407,
-              "gateScale": 0.33602150537634407,
-              "shadowScale": 0.33602150537634407
+              "scale": 0.4222972972972973,
+              "roadScale": 0.4222972972972973,
+              "enemyScale": 0.4222972972972973,
+              "gateScale": 0.4222972972972973,
+              "shadowScale": 0.4222972972972973
             },
             {
               "y": 0.5,
-              "scale": 0.4347826086956522,
-              "roadScale": 0.4347826086956522,
-              "enemyScale": 0.4347826086956522,
-              "gateScale": 0.4347826086956522,
-              "shadowScale": 0.4347826086956523
+              "scale": 0.5263157894736842,
+              "roadScale": 0.5263157894736842,
+              "enemyScale": 0.5263157894736842,
+              "gateScale": 0.5263157894736842,
+              "shadowScale": 0.5263157894736842
             },
             {
               "y": 0.76,
-              "scale": 0.6157635467980296,
-              "roadScale": 0.6157635467980296,
-              "enemyScale": 0.6157635467980296,
-              "gateScale": 0.6157635467980296,
-              "shadowScale": 0.6157635467980296
+              "scale": 0.6983240223463687,
+              "roadScale": 0.6983240223463687,
+              "enemyScale": 0.6983240223463687,
+              "gateScale": 0.6983240223463687,
+              "shadowScale": 0.6983240223463687
             },
             {
               "y": 1,
@@ -2287,7 +2287,7 @@
               "shadowScale": 1
             }
           ],
-          "sharedScaleError": 5.551115123125783e-17,
+          "sharedScaleError": 0,
           "visibleEntityCount": 0,
           "groundedEntityCount": 0,
           "entityGroundingError": 0
@@ -2331,7 +2331,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.16111111113180718
+        "synchronousDrawMeanMs": 0.125
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2442,7 +2442,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.33055555551416343
+        "synchronousDrawMeanMs": 0.5916666666873627
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2593,7 +2593,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.75
+        "synchronousDrawMeanMs": 1.0916666665838823
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2736,15 +2736,15 @@
       "difficulty": "veteran",
       "phase": "playing",
       "entityCounts": {
-        "squad": 24,
+        "squad": 48,
         "enemies": 96,
-        "playerBullets": 24,
+        "playerBullets": 48,
         "enemyBullets": 0,
         "particles": 0,
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5555555555555556
+        "synchronousDrawMeanMs": 0.7472222222843103
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2895,7 +2895,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.43611111109041506
+        "synchronousDrawMeanMs": 0.45277777779847383
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2955,7 +2955,7 @@
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 71.40277777777779,
+        "maxWaterJump": 72.02777777777777,
         "projection": {
           "horizon": -122.88,
           "deckBottom": 787.1999999999999,
@@ -3051,7 +3051,7 @@
       "difficulty": "veteran",
       "phase": "paused",
       "entityCounts": {
-        "squad": 24,
+        "squad": 37,
         "enemies": 0,
         "playerBullets": 0,
         "enemyBullets": 0,
@@ -3059,7 +3059,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3777777778191699
+        "synchronousDrawMeanMs": 0.3888888888888889
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3210,7 +3210,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.28888888884749675
+        "synchronousDrawMeanMs": 0.6694444443823563
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3321,7 +3321,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2638888888888889
+        "synchronousDrawMeanMs": 0.5694444444444444
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3464,15 +3464,15 @@
       "difficulty": "veteran",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 36,
         "enemies": 0,
-        "playerBullets": 24,
+        "playerBullets": 36,
         "enemyBullets": 0,
         "particles": 0,
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.375
+        "synchronousDrawMeanMs": 0.397222222139438
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3628,15 +3628,15 @@
       "difficulty": "veteran",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 42,
         "enemies": 0,
-        "playerBullets": 24,
+        "playerBullets": 42,
         "enemyBullets": 0,
         "particles": 24,
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.31388888890958494
+        "synchronousDrawMeanMs": 0.3944444444237484
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3792,15 +3792,15 @@
       "difficulty": "elite",
       "phase": "boss",
       "entityCounts": {
-        "squad": 24,
+        "squad": 48,
         "enemies": 180,
-        "playerBullets": 360,
+        "playerBullets": 720,
         "enemyBullets": 0,
         "particles": 80,
         "telegraphs": 2
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5250000000620881
+        "synchronousDrawMeanMs": 0.6611111110283269
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3964,7 +3964,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2222222222222222
+        "synchronousDrawMeanMs": 0.15555555559694767
       },
       "runtimeAssetCount": 21,
       "audit": {
