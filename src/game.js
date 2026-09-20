@@ -2103,54 +2103,13 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
 function drawBridgeStructure(target, geometry) {
-  // Physical bridge furniture: a two-rail safety fence on tapered posts with base
-  // plates and contact shadows, plus lamp posts with arms, housings and pooled
-  // light. Everything scales through the shared depth curve so it converges with
-  // the deck, and it is all pre-rendered once per resize.
+  // Rails only. Discrete furniture (posts, pickets, lamps) lives in
+  // drawBridgeFurniture so it can scroll with the world; a continuous rail is
+  // featureless along its length, so baking it once carries no treadmill cue.
   const railHeight = y => projectedPixels(sceneProjection, y, 60);
   const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
   const railSegments = 120;
   for (const side of [-1, 1]) {
-    // Fence posts first, so the rails lay over their tops.
-    for (let y = -1.1; y < 1; y += .024) {
-      const p = edgePoint(side, y);
-      const rh = railHeight(y);
-      const pw = Math.max(.9, projectedPixels(sceneProjection, y, 5.4));
-      // Contact shadow anchoring the post to the deck.
-      target.fillStyle = 'rgba(16,26,33,.3)';
-      target.beginPath();
-      target.ellipse(p.x + pw * .3, p.y + pw * .28, pw * 1.6, Math.max(.5, pw * .42), 0, 0, Math.PI * 2);
-      target.fill();
-      // Base plate.
-      target.fillStyle = '#767f85';
-      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(1.4, rh * .13));
-      target.fillStyle = 'rgba(255,255,255,.25)';
-      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(.6, rh * .03));
-      // Tapered post, lit from the sky side.
-      const topW = pw * .58;
-      const grad = target.createLinearGradient(p.x - pw / 2, 0, p.x + pw / 2, 0);
-      grad.addColorStop(0, '#8c3a32');
-      grad.addColorStop(.45, '#c14a3e');
-      grad.addColorStop(1, '#4c1f1c');
-      target.fillStyle = grad;
-      target.beginPath();
-      target.moveTo(p.x - pw / 2, p.y);
-      target.lineTo(p.x - topW / 2, p.y - rh);
-      target.lineTo(p.x + topW / 2, p.y - rh);
-      target.lineTo(p.x + pw / 2, p.y);
-      target.closePath();
-      target.fill();
-    }
-    // Vertical pickets between the posts, matching the bridge-kit railing.
-    target.lineCap = 'round';
-    for (let y = -1.1; y < .99; y += .011) {
-      const p = edgePoint(side, y);
-      const rh = railHeight(y);
-      const w = Math.max(.4, projectedPixels(sceneProjection, y, 1.1));
-      target.strokeStyle = 'rgba(52,60,66,.85)';
-      target.lineWidth = w;
-      target.beginPath(); target.moveTo(p.x, p.y - rh * .1); target.lineTo(p.x, p.y - rh * .92); target.stroke();
-    }
     // Rails: stacked strokes read as a beveled steel beam -- dark underside,
     // body, sky highlight.
     target.lineCap = 'round';
@@ -2176,9 +2135,84 @@ function drawBridgeStructure(target, geometry) {
         }
       }
     }
+  }
+}
+
+function drawBridgeFurniture(target) {
+  // Discrete furniture scrolls with the world (same phase as the road dashes) so
+  // the bridge reads as ground being covered. When posts and lamps were baked
+  // into the static environment while the road scrolled, playtesters read the
+  // deck as a treadmill. Solid fills instead of per-frame gradients keep the
+  // per-frame cost flat.
+  const railHeight = y => projectedPixels(sceneProjection, y, 60);
+  const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
+  const disp = roadScroll / 720;
+  const postSpacing = .024;
+  const postOffset = disp % postSpacing;
+  const picketSpacing = .011;
+  const picketOffset = disp % picketSpacing;
+  const lampSpan = 1.24;
+  const lampOffset = disp % lampSpan;
+  for (const side of [-1, 1]) {
+    // Fence posts, wrapped through [-1.1, 1) so one exits near as one enters far.
+    for (let y = -1.1 + postOffset; y < 1; y += postSpacing) {
+      const p = edgePoint(side, y);
+      const rh = railHeight(y);
+      const pw = Math.max(.9, projectedPixels(sceneProjection, y, 5.4));
+      // Contact shadow anchoring the post to the deck.
+      target.fillStyle = 'rgba(16,26,33,.3)';
+      target.beginPath();
+      target.ellipse(p.x + pw * .3, p.y + pw * .28, pw * 1.6, Math.max(.5, pw * .42), 0, 0, Math.PI * 2);
+      target.fill();
+      // Base plate.
+      target.fillStyle = '#767f85';
+      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(1.4, rh * .13));
+      target.fillStyle = 'rgba(255,255,255,.25)';
+      target.fillRect(p.x - pw * .9, p.y - Math.max(1, rh * .07), pw * 1.8, Math.max(.6, rh * .03));
+      // Tapered post, sky-side highlight over a body fill (baked gradient look
+      // without a per-frame gradient allocation).
+      const topW = pw * .58;
+      target.fillStyle = '#a8463c';
+      target.beginPath();
+      target.moveTo(p.x - pw / 2, p.y);
+      target.lineTo(p.x - topW / 2, p.y - rh);
+      target.lineTo(p.x + topW / 2, p.y - rh);
+      target.lineTo(p.x + pw / 2, p.y);
+      target.closePath();
+      target.fill();
+      target.fillStyle = 'rgba(255,151,114,.5)';
+      target.beginPath();
+      target.moveTo(p.x - pw / 2, p.y);
+      target.lineTo(p.x - topW / 2, p.y - rh);
+      target.lineTo(p.x - topW * .1, p.y - rh);
+      target.lineTo(p.x - pw * .2, p.y);
+      target.closePath();
+      target.fill();
+      target.fillStyle = 'rgba(40,14,12,.45)';
+      target.beginPath();
+      target.moveTo(p.x + pw / 2, p.y);
+      target.lineTo(p.x + topW / 2, p.y - rh);
+      target.lineTo(p.x + topW * .3, p.y - rh);
+      target.lineTo(p.x + pw * .25, p.y);
+      target.closePath();
+      target.fill();
+    }
+    // Vertical pickets between the posts, matching the bridge-kit railing.
+    target.lineCap = 'round';
+    target.strokeStyle = 'rgba(52,60,66,.85)';
+    for (let y = -1.1 + picketOffset; y < .99; y += picketSpacing) {
+      const p = edgePoint(side, y);
+      const rh = railHeight(y);
+      const w = Math.max(.4, projectedPixels(sceneProjection, y, 1.1));
+      target.lineWidth = w;
+      target.beginPath(); target.moveTo(p.x, p.y - rh * .1); target.lineTo(p.x, p.y - rh * .92); target.stroke();
+    }
     // Lamp posts: flanged base, tapered pole, arm reaching over the walkway,
-    // housed head with a warm glow and a pool of light on the deck.
-    for (const y of [-.34, -.08, .2, .44, .68, .9]) {
+    // housed head with a warm glow and a pool of light on the deck. Wrapped
+    // through one full lamp span so far lamps enter at the horizon.
+    for (const base of [-.34, -.08, .2, .44, .68, .9]) {
+      let y = base + lampOffset;
+      if (y >= 1.04) y -= lampSpan;
       const p = edgePoint(side, y, .985);
       const h = projectedPixels(sceneProjection, y, 168);
       const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 8.5));
@@ -2191,17 +2225,21 @@ function drawBridgeStructure(target, geometry) {
       // Base flange.
       target.fillStyle = '#141d21';
       target.fillRect(p.x - pw * .85, p.y - Math.max(1.2, h * .02), pw * 1.7, Math.max(1.6, h * .05));
-      // Tapered pole.
-      const pole = target.createLinearGradient(p.x - pw / 2, 0, p.x + pw / 2, 0);
-      pole.addColorStop(0, '#24333a');
-      pole.addColorStop(.45, '#4f626b');
-      pole.addColorStop(1, '#19242a');
-      target.fillStyle = pole;
+      // Tapered pole with a sky-side highlight stripe.
+      target.fillStyle = '#31434b';
       target.beginPath();
       target.moveTo(p.x - pw / 2, p.y);
       target.lineTo(p.x - pw * .28, p.y - h);
       target.lineTo(p.x + pw * .28, p.y - h);
       target.lineTo(p.x + pw / 2, p.y);
+      target.closePath();
+      target.fill();
+      target.fillStyle = 'rgba(148,176,190,.4)';
+      target.beginPath();
+      target.moveTo(p.x - pw / 2, p.y);
+      target.lineTo(p.x - pw * .28, p.y - h);
+      target.lineTo(p.x - pw * .12, p.y - h);
+      target.lineTo(p.x - pw * .3, p.y);
       target.closePath();
       target.fill();
       // Arm + head.
@@ -2394,6 +2432,8 @@ function drawDynamicEnvironment() {
     }
   }
   ctx.restore();
+
+  drawBridgeFurniture(ctx);
 
   const phase = (roadScroll / 720) % .12;
   for (const separator of [-.29, .29]) {
