@@ -27,6 +27,10 @@ import {
   mulberry32,
   pickBossRewards,
   purchaseUpgrade,
+  buildLines,
+  SHOP_BY_ID,
+  MAX_BUILD_LINES,
+  UTILITY_UPGRADES,
   resolveGateEncounter,
   reviveSession,
   shopPrice,
@@ -155,17 +159,39 @@ test('shop prices rise, spending is atomic, and insufficient points do nothing',
 
 test('v2 shop: polynomial stats are uncapped, design caps hold for multishot/crit/lives', () => {
   let session = { ...createCleanRun(3), points: 100_000_000 };
-  for (const item of SHOP_CATALOG) {
+  // Build caps allow at most MAX_BUILD_LINES distinct build lines; utility lines
+  // (reinforcements, extraLife) are exempt. Each armory visit grants
+  // MAX_PICKS_PER_VISIT purchases, so the loop resets armoryPicks to simulate
+  // successive visits.
+  const buildItems = ['damage', 'fireRate', 'multishot', 'piercing'].map(id => SHOP_BY_ID[id]);
+  const utilityItems = SHOP_CATALOG.filter(item => UTILITY_UPGRADES.includes(item.id));
+  for (const item of [...buildItems, ...utilityItems]) {
     const limit = item.id === 'extraLife' ? MAX_LIVES : 12;
-    for (let count = 0; count < limit; count += 1) session = purchaseUpgrade(session, item.id).session;
+    for (let count = 0; count < limit; count += 1) {
+      session.armoryPicks = 0;
+      session = purchaseUpgrade(session, item.id).session;
+    }
   }
+  assert.equal(buildLines(session).length, MAX_BUILD_LINES);
+  // A fifth distinct build line is line-capped until an existing line is dropped.
+  const fifth = SHOP_CATALOG.find(item => !UTILITY_UPGRADES.includes(item.id) && !buildItems.some(owned => owned.id === item.id));
+  session.armoryPicks = 0;
+  const blocked = purchaseUpgrade(session, fifth.id);
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.reason, 'line-capped');
+  // Per-visit pick cap: two purchases succeed, the third is visit-capped.
+  let visit = { ...createCleanRun(3), points: 100_000_000 };
+  assert.equal(purchaseUpgrade(visit, 'damage').ok, true);
+  visit = purchaseUpgrade(visit, 'damage').session;
+  visit = purchaseUpgrade(visit, 'damage').session;
+  const third = purchaseUpgrade(visit, 'damage');
+  assert.equal(third.ok, false);
+  assert.equal(third.reason, 'visit-capped');
   assert.equal(session.player.projectiles, MAX_PROJECTILES);
   assert.ok(session.player.fireRate <= MAX_FIRE_RATE);
   // fireRate is uncapped in v2: all 12 purchases apply (+0.4 each)
   assert.equal(session.upgradeTiers.fireRate, 12);
   assert.equal(session.lives, MAX_LIVES);
-  assert.ok(session.player.criticalChance <= .5);
-  assert.equal(Math.round(session.player.criticalChance * 100), 36); // 12 tiers x +0.03
   let critPlayer = createCleanRun().player;
   for (let i = 0; i < 20; i += 1) critPlayer = applyUpgrade(critPlayer, 'criticalChance');
   assert.ok(critPlayer.criticalChance > .35, 'crit exceeds the old v1 cap');

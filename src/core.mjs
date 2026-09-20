@@ -187,6 +187,27 @@ export const SHOP_CATALOG = Object.freeze([
 
 export const UNCAPPED_UPGRADES = Object.freeze(['reinforcements', 'damage', 'fireRate', 'piercing', 'projectileSpeed']);
 
+// Build-structure caps (Aston playtest, Sep 20): unlimited breadth flattens runs -
+// when every line is buyable every visit, builds converge instead of differing.
+// A run may hold at most MAX_BUILD_LINES distinct upgrade lines (utility lines -
+// squad reinforcements and reserves - are exempt), and each armory visit grants
+// MAX_PICKS_PER_VISIT purchases. Caps force real build identity and make later
+// runs play differently.
+export const MAX_BUILD_LINES = 4;
+export const MAX_PICKS_PER_VISIT = 2;
+export const UTILITY_UPGRADES = Object.freeze(['reinforcements', 'extraLife']);
+
+export function buildLines(session) {
+  const tiers = session?.upgradeTiers || session?.purchaseCounts || {};
+  return Object.keys(tiers).filter(id => (tiers[id] || 0) > 0 && SHOP_BY_ID[id] && !UTILITY_UPGRADES.includes(id));
+}
+
+export function isLineLocked(session, id) {
+  if (UTILITY_UPGRADES.includes(id)) return false;
+  if (upgradeTier(session, id) > 0) return false;
+  return buildLines(session).length >= MAX_BUILD_LINES;
+}
+
 export const SHOP_BY_ID = Object.freeze(Object.fromEntries(SHOP_CATALOG.map(item => [item.id, item])));
 
 export function initialPlayer() {
@@ -262,6 +283,8 @@ export function purchaseUpgrade(session, id) {
   const item = SHOP_BY_ID[id];
   if (!item) return { session, ok: false, reason: 'unknown' };
   if (isUpgradeCapped(session, id)) return { session, ok: false, reason: 'capped' };
+  if (isLineLocked(session, id)) return { session, ok: false, reason: 'line-capped' };
+  if ((session.armoryPicks || 0) >= MAX_PICKS_PER_VISIT) return { session, ok: false, reason: 'visit-capped' };
   const count = Math.max(0, session.purchaseCounts?.[id] || 0);
   const availablePoints = Number.isFinite(session.points) ? session.points : (session.skillPoints || 0);
   const cost = shopPrice(id, count);
@@ -273,6 +296,7 @@ export function purchaseUpgrade(session, id) {
     points: availablePoints - cost,
     purchaseCounts,
     upgradeTiers,
+    armoryPicks: (session.armoryPicks || 0) + 1,
   };
   if (id === 'extraLife') next.lives = Math.min(MAX_LIVES, (session.lives || 0) + 1);
   else next.player = applyUpgrade(session.player, id);
@@ -359,7 +383,8 @@ export function gateText(gate) {
 }
 
 export function pickBossRewards(rng, session) {
-  const available = SHOP_CATALOG.filter(item => !isUpgradeCapped(session, item.id));
+  // Line-locked lines are dead picks, so they never enter the reward pool.
+  const available = SHOP_CATALOG.filter(item => !isUpgradeCapped(session, item.id) && !isLineLocked(session, item.id));
   const source = available.length >= 3 ? available : SHOP_CATALOG.filter(item => item.id !== 'extraLife' || (session?.lives || 0) < MAX_LIVES);
   const choices = [];
   const pool = [...source];
@@ -375,7 +400,7 @@ export const pickUpgradeSet = (rng, session = createCleanRun(0)) => pickBossRewa
 
 export function applyBossReward(session, id) {
   const item = SHOP_BY_ID[id];
-  if (!item || isUpgradeCapped(session, id)) return session;
+  if (!item || isUpgradeCapped(session, id) || isLineLocked(session, id)) return session;
   const next = {
     ...session,
     upgradeTiers: { ...(session.upgradeTiers || {}), [id]: upgradeTier(session, id) + 1 },

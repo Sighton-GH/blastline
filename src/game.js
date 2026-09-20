@@ -14,6 +14,10 @@ import {
   applyGate,
   applyTroopDamage,
   isUpgradeCapped,
+  isLineLocked,
+  buildLines,
+  MAX_BUILD_LINES,
+  MAX_PICKS_PER_VISIT,
   UNCAPPED_UPGRADES,
   enemyHitPoints,
   enemyContactDamage,
@@ -1092,6 +1096,7 @@ let armoryRewardPicked = false;
 function openArmory() {
   armoryMode = 'shop';
   armoryRewardPicked = false;
+  run.armoryPicks = 0;
   run.rewardChoices = null;
   setState(GAME_STATE.BOSS_REWARD);
   showBossRewards();
@@ -1140,7 +1145,7 @@ function showBossRewards() {
     ? 'Spend Points while the run is frozen. Your build carries through the run.'
     : armoryMode === 'reward'
       ? 'Pick a free upgrade. Your build carries through the run.'
-      : 'Spend Points or continue. Your build carries through the run.');
+      : `Build ${buildLines(run).length}/${MAX_BUILD_LINES} lines - ${Math.max(0, MAX_PICKS_PER_VISIT - (run.armoryPicks || 0))}/${MAX_PICKS_PER_VISIT} picks left. Your build carries through the run.`);
   const shopOpen = armoryMode !== 'reward';
   dom.rewardBalance.hidden = !shopOpen;
   if (shopOpen) setText(dom.rewardBalanceValue, format(run.points));
@@ -1175,11 +1180,13 @@ function showBossRewards() {
     const tier = upgradeTier(run, item.id);
     const cost = shopPrice(item.id, run.purchaseCounts[item.id] || 0);
     const capped = isUpgradeCapped(run, item.id);
+    const lineLocked = isLineLocked(run, item.id);
+    const visitCapped = (run.armoryPicks || 0) >= MAX_PICKS_PER_VISIT;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-card tone-${item.tone}`;
     button.dataset.upgrade = item.id;
-    button.disabled = capped || run.points < cost;
+    button.disabled = capped || lineLocked || visitCapped || run.points < cost;
     const image = document.createElement('img'); image.src = item.asset; image.alt = '';
     const title = document.createElement('b'); title.textContent = item.title;
     const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
@@ -1187,6 +1194,8 @@ function showBossRewards() {
     const synergy = document.createElement('span');
     synergy.className = 'synergy';
     if (capped) synergy.textContent = 'Fully upgraded';
+    else if (lineLocked) { synergy.textContent = `BUILD FULL - ${MAX_BUILD_LINES}/${MAX_BUILD_LINES} LINES`; synergy.classList.add('short'); }
+    else if (visitCapped) { synergy.textContent = 'PICKS USED - NEXT WAVE'; synergy.classList.add('short'); }
     else if (run.points < cost) { synergy.textContent = `${format(cost)} POINTS · NEED ${format(cost - run.points)} MORE`; synergy.classList.add('short'); }
     else synergy.textContent = `${format(cost)} POINTS · ${format(run.points - cost)} LEFT`;
     button.append(image, title, rank, description, synergy);
@@ -1910,6 +1919,7 @@ function buyFromShop(id) {
   setText(dom.shopMessage, `${SHOP_CATALOG.find(item => item.id === id).title} acquired`);
   audio.purchase();
   updateHud(true);
+  showBossRewards(); // re-render so pick counters, lock states and prices refresh after the buy
   return true;
 }
 
