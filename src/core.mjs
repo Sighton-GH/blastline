@@ -31,7 +31,7 @@ export const ACTIVE_STATES = Object.freeze([
 export const DIFFICULTIES = Object.freeze({
   recruit: Object.freeze({
     id: 'recruit', label: 'Recruit', tagline: 'Room to recover',
-    density: 0.72, pressure: 0.78, cadence: 0.76, recoveryTroops: 16,
+    density: 0.5, pressure: 0.78, cadence: 0.76, recoveryTroops: 16,
   }),
   veteran: Object.freeze({
     id: 'veteran', label: 'Veteran', tagline: 'The intended fight',
@@ -94,10 +94,10 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const duration = Math.min(38, 26 + (wave - 1) * 0.65);
   const activeTarget = Math.min(
     MAX_ACTIVE_ENEMIES,
-    Math.round((38 + (wave - 1) * 9.5) * mode.density),
+    Math.round((64 + (wave - 1) * 17) * mode.density),
   );
-  const hordeSize = Math.min(58, Math.max(26, Math.round((30 + wave * 1.45) * mode.density)));
-  const spawnInterval = Math.max(0.65, (2.5 - logScale * 0.3) / mode.cadence);
+  const hordeSize = Math.min(84, Math.max(36, Math.round((44 + wave * 2.2) * mode.density)));
+  const spawnInterval = Math.max(0.5, (2.3 - logScale * 0.28) / mode.cadence);
   const enemySpeed = Math.min(0.071, 0.048 + logScale * 0.0034) * (0.97 + (mode.pressure - 1) * 0.12);
   const bossEscalation = wave >= 3 ? 1 + (wave - 3) * 0.08 : 1;
   const bossHp = Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + mode.pressure * 0.08) * bossEscalation));
