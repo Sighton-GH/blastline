@@ -53,7 +53,7 @@ export const MECHANICS_V2 = Object.freeze({
     return Math.min(1, .5 + player.plating * .04);
   },
   price: (item, count) => {
-    const exp = { damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, logistics: 1.35 }[item.id] || 1.7;
+    const exp = { damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, logistics: 1.35, taming: 1.9 }[item.id] || 1.7;
     return Math.max(1, Math.round(item.baseCost * Math.pow(count + 1, exp)));
   },
   caps: { power: Infinity, fireRate: Infinity, projectiles: 6, troops: Infinity, crit: .5, pierce: Infinity, armor: Infinity },

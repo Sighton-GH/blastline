@@ -28,6 +28,7 @@ import {
   GENERIC_HP_GROWTH,
   exclusiveLockFor,
   ECO_INTEREST_PER_TIER,
+  TAME_DURATION_SECONDS,
   enemyContactDamage,
   projectileDamageFactor,
   PLATE_REGEN_SECONDS,
@@ -862,9 +863,9 @@ function fireBurst() {
           x: origin.x + barrel, y: origin.y, previousX: origin.x + barrel, previousY: origin.y, originX: origin.x + barrel, originY: origin.y,
           vx: offset * .72 + barrel * .4, vy: -1.02 * run.player.bulletSpeed * (frenzy ? 1.18 : 1),
           power: frenzyPower * (veteran ? 1.05 : 1) * (bonus ? .55 : 1) * (critical ? 2 : 1)
-            * (1 - .07 * (run.player.shock || 0)) * (1 - .05 * (run.player.frost || 0)), critical,
+            * (1 - .07 * (run.player.shock || 0)) * (1 - .05 * (run.player.frost || 0)) * (1 - .06 * (run.player.taming || 0)), critical,
           hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
-          shock: run.player.shock || 0, frost: run.player.frost || 0,
+          shock: run.player.shock || 0, frost: run.player.frost || 0, taming: run.player.taming || 0,
         }));
         emitted += 1;
       }
@@ -1582,7 +1583,7 @@ function collidePlayerBullets() {
       if (bucketIndex < 0 || bucketIndex >= Y_BUCKETS) continue;
       const bucket = enemyBuckets[lane * Y_BUCKETS + bucketIndex];
       for (const enemy of bucket) {
-        if (enemy.dead || enemy.id === bullet.lastHitId) continue;
+        if (enemy.dead || enemy.charmed || enemy.id === bullet.lastHitId) continue;
         if (enemy.y < engageWorldY) continue; // horizon gate: no off-screen melts
         const hitRadius = .038 * enemy.scale;
         const crossed = bullet.previousY >= enemy.y && bullet.y <= enemy.y;
@@ -1604,12 +1605,26 @@ function collidePlayerBullets() {
           enemy.chillFactor = Math.min(enemy.chillFactor ?? 1, 1 - .11 * bullet.frost);
           enemy.chillUntil = ambientTime + 1.6;
         }
+        // Taming rounds: the first hit on an enemy can turn it. It holds its
+        // ground and fires for the squad - a visible on-field ally, never an
+        // off-screen removal. Bosses and elites resist; cap scales with tier.
+        if (bullet.taming > 0 && !enemy.tameRolled && !enemy.charmed && !enemy.elite && enemy.hp > 0) {
+          enemy.tameRolled = true;
+          const allies = run.enemies.reduce((n, e) => n + (!e.dead && e.charmed ? 1 : 0), 0);
+          if (allies < 1 + bullet.taming && rng() < .06 * bullet.taming) {
+            enemy.charmed = true;
+            enemy.charmedUntil = ambientTime + TAME_DURATION_SECONDS;
+            enemy.charmedShot = .4;
+            enemy.hitFlash = .12;
+            if (!stressMode) burst(enemy.x, enemy.y, '#7dff8a', 8);
+          }
+        }
         // Shock rounds arc: lightning jumps to the nearest other visible enemy
         // and halts its march. The arc is drawn as a flash so the chain READS.
         if (bullet.shock > 0 && rng() < .12 * bullet.shock) {
           let arc = null; let arcBest = .42;
           for (const other of run.enemies) {
-            if (other.dead || other.id === enemy.id || other.y < engageWorldY) continue;
+            if (other.dead || other.charmed || other.id === enemy.id || other.y < engageWorldY) continue;
             const d = Math.abs(other.x - enemy.x) + Math.abs(other.y - enemy.y) * .6;
             if (d < arcBest) { arcBest = d; arc = other; }
           }
@@ -1633,7 +1648,7 @@ function collidePlayerBullets() {
         if (bullet.hitsLeft <= 0 && bullet.bouncesLeft > 0) {
           let target = null; let best = .35;
           for (const other of run.enemies) {
-            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId || other.y < engageWorldY) continue;
+            if (other.dead || other.charmed || other.id === enemy.id || other.id === bullet.lastHitId || other.y < engageWorldY) continue;
             const d = Math.abs(other.x - bullet.x) + Math.abs(other.y - bullet.y) * .6;
             if (d < best) { best = d; target = other; }
           }
@@ -1870,6 +1885,42 @@ function update(dt) {
       enemy.deathLife -= dt;
       enemy.y -= dt * .012;
       continue;
+    }
+    // Charmed allies hold their ground and fight for the squad until they
+    // burn out - the burnout is a visible collapse on the field (no reward:
+    // a tamed enemy was never killed), never an off-screen cleanup.
+    if (enemy.charmed) {
+      if (ambientTime >= (enemy.charmedUntil || 0)) {
+        enemy.dead = true;
+        enemy.deathLife = 0;
+        if (!stressMode) burst(enemy.x, enemy.y, '#7dff8a', 10);
+        continue;
+      }
+      enemy.charmedShot = (enemy.charmedShot || 0) - dt;
+      if (enemy.charmedShot <= 0 && run.bullets.length < MAX_PLAYER_BULLETS) {
+        let target = null; let best = 1e9;
+        for (const other of run.enemies) {
+          if (other.dead || other.charmed || other.y < engageWorldY || other.y >= enemy.y - .02) continue;
+          const d = Math.abs(other.x - enemy.x) + Math.abs(other.y - enemy.y) * .6;
+          if (d < best) { best = d; target = other; }
+        }
+        if (target) {
+          enemy.charmedShot = .8;
+          const speed = 1.02 * run.player.bulletSpeed;
+          const flight = Math.max(.05, (enemy.y - target.y) / speed);
+          run.bullets.push(pools.bullets.take({
+            x: enemy.x, y: enemy.y - .03, previousX: enemy.x, previousY: enemy.y - .03,
+            originX: enemy.x, originY: enemy.y - .03,
+            vx: clamp((target.x - enemy.x) / flight, -.6, .6), vy: -speed,
+            power: 1 + (run.player.taming || 0), critical: false,
+            hitsLeft: 1, bouncesLeft: 0, lastHitId: -1, shooter: -2, dead: false,
+            shock: 0, frost: 0, taming: 0,
+          }));
+          enemy.shotFlash = .12;
+          if (!stressMode) burst(enemy.x, enemy.y - .03, '#7dff8a', 2);
+        }
+      }
+      continue; // charmed allies never march, shoot back, or breach
     }
     // Gunners weave laterally and demolition units alternate a charge/lurch rhythm --
     // both stay strictly inside their lane via clampToLaneLocal, same containment the
@@ -3236,6 +3287,26 @@ function drawEnemy(enemy) {
       ctx.ellipse(screen.x, baseline - height * .4, rx, height * .46, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    if (enemy.charmed) {
+      // Ally marker: a green shimmer plus an upward chevron so a turned unit
+      // reads at a glance as fighting for the squad.
+      const pulse = .5 + .5 * Math.sin(clock * 4.1 + enemy.bob);
+      ctx.save();
+      ctx.globalAlpha = .3 + .12 * pulse;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = '#7dff8a';
+      ctx.beginPath();
+      ctx.ellipse(screen.x, baseline - height * .44, height * .26, height * .46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#8aff9b';
+      ctx.lineWidth = Math.max(1.2, height * .022);
+      ctx.beginPath();
+      ctx.moveTo(screen.x - height * .11, baseline - height * 1.02);
+      ctx.lineTo(screen.x, baseline - height * 1.14);
+      ctx.lineTo(screen.x + height * .11, baseline - height * 1.02);
+      ctx.stroke();
+    }
     if ((enemy.chillUntil || 0) > ambientTime || (enemy.haltUntil || 0) > ambientTime) {
       ctx.save();
       ctx.globalAlpha = (enemy.haltUntil || 0) > ambientTime ? .5 : .34;
@@ -4018,10 +4089,12 @@ if (qaMode) {
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
     setVeterans(value = 0) { run.player.veterans = clamp(Math.round(Number(value) || 0), 0, run.player.troops); return run.player.veterans; },
     setUpgradeTiers(tiers = {}) { run.upgradeTiers = { ...(run.upgradeTiers || {}), ...tiers }; updateHud(true); return this.getState(); },
-    debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, y: +(enemy.y).toFixed(2), chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
+    debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, y: +(enemy.y).toFixed(2), chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1, charmed: !!enemy.charmed, charmedUntil: +((enemy.charmedUntil || 0).toFixed(2)) })); },
     arcFlashCount() { return (run.arcFlashes || []).length; },
     spillCount() { return run.debugSpills || 0; },
     ecoTotal() { return run.debugEco || 0; },
+    charmedCount() { return run.enemies.filter(e => !e.dead && e.charmed).length; },
+    ambient() { return ambientTime; },
     enemyBulletList() { return run.enemyBullets.filter(b => !b.dead).map(b => ({ x: +b.x.toFixed(3), y: +b.y.toFixed(3), lane: b.lane, kind: b.kind, damage: b.damage })); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },

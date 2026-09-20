@@ -300,6 +300,19 @@ test('heavy ordnance sidegrade: burst form of the damage line, mutually exclusiv
   assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { heavyOrdnance: 8 } }, 'heavyOrdnance'), true);
 });
 
+test('taming line: tiers to 3, softer rounds, build-line identity', () => {
+  let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
+  const buy = purchaseUpgrade(session, 'taming');
+  assert.equal(buy.ok, true);
+  session = buy.session;
+  assert.equal(session.player.taming, 1);
+  assert.ok(buildLines(session).includes('taming'));
+  assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { taming: 3 } }, 'taming'), true);
+  // Reward pools can offer it.
+  const pools = Array.from({ length: 40 }, (_, i) => pickBossRewards(mulberry32(i + 1), { ...createCleanRun(5), points: 0 }).map(p => p.id));
+  assert.ok(pools.some(ids => ids.includes('taming')), 'taming appears in seeded reward pools');
+});
+
 test('logistics eco line: tiers to 5, takes a build line, no combat stats', () => {
   let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
   const before = session.player;
