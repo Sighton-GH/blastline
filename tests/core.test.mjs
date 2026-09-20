@@ -156,22 +156,22 @@ test('shop prices rise, spending is atomic, and insufficient points do nothing',
 test('v2 shop: polynomial stats are uncapped, design caps hold for multishot/crit/lives', () => {
   let session = { ...createCleanRun(3), points: 100_000_000 };
   for (const item of SHOP_CATALOG) {
-    const limit = item.id === 'extraLife' ? MAX_LIVES : item.maxTier + 2;
+    const limit = item.id === 'extraLife' ? MAX_LIVES : 12;
     for (let count = 0; count < limit; count += 1) session = purchaseUpgrade(session, item.id).session;
   }
   assert.equal(session.player.projectiles, MAX_PROJECTILES);
   assert.ok(session.player.fireRate <= MAX_FIRE_RATE);
-  // fireRate is uncapped in v2: all maxTier + 2 purchases apply (+0.4 each)
-  assert.equal(session.upgradeTiers.fireRate, SHOP_CATALOG.find(item => item.id === 'fireRate').maxTier + 2);
+  // fireRate is uncapped in v2: all 12 purchases apply (+0.4 each)
+  assert.equal(session.upgradeTiers.fireRate, 12);
   assert.equal(session.lives, MAX_LIVES);
   assert.ok(session.player.criticalChance <= .5);
-  assert.equal(Math.round(session.player.criticalChance * 100), 30); // 10 tiers x +0.03
+  assert.equal(Math.round(session.player.criticalChance * 100), 36); // 12 tiers x +0.03
   let critPlayer = createCleanRun().player;
   for (let i = 0; i < 20; i += 1) critPlayer = applyUpgrade(critPlayer, 'criticalChance');
   assert.ok(critPlayer.criticalChance > .35, 'crit exceeds the old v1 cap');
   assert.ok(critPlayer.criticalChance <= .5, 'crit respects the v2 cap');
   assert.ok(session.player.pierce > 4, 'pierce exceeds the old v1 cap');
-  assert.equal(session.player.power, 15); // 14 uncapped purchases
+  assert.equal(session.player.power, 13); // 12 uncapped purchases
   let powerPlayer = createCleanRun().player;
   for (let i = 0; i < 20; i += 1) powerPlayer = applyUpgrade(powerPlayer, 'damage');
   assert.equal(powerPlayer.power, 21); // v2: power grows past the old 16 cap

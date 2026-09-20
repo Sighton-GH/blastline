@@ -169,17 +169,19 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
 }
 
 export const SHOP_CATALOG = Object.freeze([
-  { id: 'reinforcements', title: 'Squad', short: '+8 squad', baseCost: 240, maxTier: 14, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'More rifles on the line' },
-  { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 320, maxTier: 12, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Breaks armored targets' },
-  { id: 'fireRate', title: 'Fire Rate', short: '+12% cadence', baseCost: 300, maxTier: 9, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds pressure faster' },
-  { id: 'multishot', title: 'Multishot', short: '+1 round', baseCost: 720, maxTier: 4, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes' },
+  { id: 'reinforcements', title: 'Squad', short: '+8 squad', baseCost: 240, maxTier: 99, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'More rifles on the line' },
+  { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 320, maxTier: 98, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Breaks armored targets' },
+  { id: 'fireRate', title: 'Fire Rate', short: '+0.4 cadence', baseCost: 300, maxTier: 9, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds pressure faster' },
+  { id: 'multishot', title: 'Multishot', short: '+1 round, softer hits', baseCost: 720, maxTier: 5, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes; each extra round trades 12% damage' },
   { id: 'armor', title: 'Plating', short: '+2 plates', baseCost: 260, maxTier: 19, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Each plate absorbs one hit, then regenerates' },
   { id: 'extraLife', title: 'Reserve', short: '+1 reserve', baseCost: 950, maxTier: MAX_LIVES, tone: 'red', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Redeploys the squad' },
-  { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: MAX_PIERCE, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations' },
-  { id: 'criticalChance', title: 'Critical', short: '+5% crit', baseCost: 380, maxTier: 8, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder' },
+  { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: 24, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations' },
+  { id: 'criticalChance', title: 'Critical', short: '+3% crit', baseCost: 380, maxTier: 8, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder' },
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner' },
   { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own' },
 ]);
+
+export const UNCAPPED_UPGRADES = Object.freeze(['reinforcements', 'damage', 'fireRate', 'piercing', 'projectileSpeed']);
 
 export const SHOP_BY_ID = Object.freeze(Object.fromEntries(SHOP_CATALOG.map(item => [item.id, item])));
 

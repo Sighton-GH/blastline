@@ -11,6 +11,7 @@ import {
   applyBossReward,
   applyGate,
   applyTroopDamage,
+  UNCAPPED_UPGRADES,
   enemyHitPoints,
   enemyContactDamage,
   projectileDamageFactor,
@@ -1560,7 +1561,7 @@ function renderShop() {
     const detail = document.createElement('span');
     detail.textContent = item.short;
     const rank = document.createElement('small');
-    rank.textContent = capped ? 'MAXIMUM' : `TIER ${tier}/${item.maxTier}`;
+    rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
     copy.append(title, detail, rank);
     const price = document.createElement('span');
     price.className = 'shop-cost';
