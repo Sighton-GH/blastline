@@ -15,8 +15,8 @@ export const CAMERA_PROFILES = Object.freeze({
   portrait: Object.freeze({
     name: 'portrait',
     horizon: -.10,
-    nearRoadHalf: .355,
-    shoulderRatio: 1.16,
+    nearRoadHalf: .45,
+    shoulderRatio: 1.06,
     depthRatio: 5.6,
     towerDepths: Object.freeze([.26, 1.00]),
     towerWorldHeight: .95,

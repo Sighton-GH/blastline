@@ -95,7 +95,7 @@ const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
-  'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
+  'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
@@ -539,7 +539,7 @@ function setState(next) {
   run.phase = next;
   run.state = next;
   canvas.dataset.state = next;
-  const hudVisible = ACTIVE_STATES.includes(next) || next === GAME_STATE.PAUSED;
+  const hudVisible = ACTIVE_STATES.includes(next) || next === GAME_STATE.PAUSED || next === GAME_STATE.PAUSED_SHOP;
   const bossVisible = Boolean(run.boss) && (
     next === GAME_STATE.BOSS || next === GAME_STATE.RECOVERY ||
     (next === GAME_STATE.PAUSED && resumeState === GAME_STATE.BOSS)
@@ -556,7 +556,7 @@ function setState(next) {
     returningCache.salvage = 0;
   }
   dom.pausePanel.classList.toggle('visible', next === GAME_STATE.PAUSED);
-  dom.rewardPanel.classList.toggle('visible', next === GAME_STATE.BOSS_REWARD);
+  dom.rewardPanel.classList.toggle('visible', next === GAME_STATE.BOSS_REWARD || next === GAME_STATE.PAUSED_SHOP);
   dom.gameOverPanel.classList.toggle('visible', next === GAME_STATE.GAME_OVER);
   dom.recoveryPanel.classList.toggle('hidden', next !== GAME_STATE.RECOVERY);
   dom.hud.classList.toggle('hidden', !hudVisible);
@@ -575,7 +575,7 @@ function focusPanelForState(next) {
     const target =
       next === GAME_STATE.PAUSED ? dom.resumeBtn :
       next === GAME_STATE.GAME_OVER ? dom.retryBtn :
-      next === GAME_STATE.BOSS_REWARD ? (dom.rewardCards.querySelector('.reward-card:not([disabled])') || dom.rewardPanel.querySelector('.armory-continue')) :
+      (next === GAME_STATE.BOSS_REWARD || next === GAME_STATE.PAUSED_SHOP) ? (dom.rewardCards.querySelector('.reward-card:not([disabled])') || dom.rewardPanel.querySelector('.armory-continue')) :
       next === GAME_STATE.HOME ? dom.playBtn : null;
     if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
   });
@@ -699,11 +699,9 @@ function fireBurst() {
   const remaining = MAX_PLAYER_BULLETS - run.bullets.length;
   if (remaining < slots.length) return 0;
   const origins = slots.map(slot => {
-    const height = soldierHeightAt(slot.y);
-    const halfWidth = laneHalfWidth(slot.y);
     return {
       slot: slot.index,
-      x: clamp(squadSlotWorldX(slot) - height * .22 / Math.max(1, halfWidth), -1, 1),
+      x: clamp(squadSlotWorldX(slot), -1, 1),
       y: slot.y - .05,
     };
   });
@@ -988,7 +986,7 @@ function openArmory() {
 
 function showBossRewards() {
   setText(dom.rewardWave, run.wave);
-  setText(dom.rewardKind, armoryMode === 'reward' ? 'BOSS DOWN' : 'WAVE CLEARED');
+  setText(dom.rewardKind, state === GAME_STATE.PAUSED_SHOP ? 'PAUSED' : armoryMode === 'reward' ? 'BOSS DOWN' : 'WAVE CLEARED');
   dom.rewardCards.replaceChildren();
   if (armoryMode === 'reward' && Array.isArray(run.rewardChoices) && run.rewardChoices.length) {
     for (const item of run.rewardChoices) {
@@ -1032,13 +1030,18 @@ function showBossRewards() {
   }
   const continueButton = document.createElement('button');
   continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
-  continueButton.textContent = run.wave % 3 === 0 ? 'START NEXT CHAPTER' : 'START NEXT WAVE';
-  continueButton.onclick = continueFromArmory;
+  if (state === GAME_STATE.PAUSED_SHOP) {
+    continueButton.textContent = 'BACK TO PAUSE';
+    continueButton.onclick = closePauseShop;
+  } else {
+    continueButton.textContent = run.wave % 3 === 0 ? 'START NEXT CHAPTER' : 'START NEXT WAVE';
+    continueButton.onclick = continueFromArmory;
+  }
   dom.rewardFooter.replaceChildren(continueButton);
 }
 
 function chooseBossReward(id) {
-  if (state !== GAME_STATE.BOSS_REWARD) return false;
+  if (state !== GAME_STATE.BOSS_REWARD && state !== GAME_STATE.PAUSED_SHOP) return false;
   const result = purchaseUpgrade(run, id);
   if (!result.ok) return false;
   run = result.session;
@@ -1211,7 +1214,7 @@ function collidePlayerBullets() {
       for (const enemy of bucket) {
         if (enemy.dead || enemy.id === bullet.lastHitId) continue;
         if (enemy.y < engageWorldY) continue; // horizon gate: no off-screen melts
-        const hitRadius = .029 * enemy.scale;
+        const hitRadius = .038 * enemy.scale;
         const crossed = bullet.previousY >= enemy.y && bullet.y <= enemy.y;
         if (!crossed && (bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2 >= hitRadius ** 2) continue;
         if (crossed && Math.min(Math.abs(bullet.previousX - enemy.x), Math.abs(bullet.x - enemy.x)) >= hitRadius) continue;
@@ -1439,6 +1442,25 @@ function update(dt) {
 
   updateTelegraphs(dt);
   for (const bullet of run.bullets) {
+    // Gentle aim assist: fresh shots curve toward the nearest enemy ahead in a
+    // narrow corridor, so lane-edge columns stay hittable at every depth.
+    if (!bullet.dead && bullet.lastHitId === -1 && bullet.vy < 0) {
+      let target = null; let bestDy = Infinity;
+      for (const enemy of run.enemies) {
+        if (enemy.dead || enemy.y < engageWorldY) continue;
+        const dx = enemy.x - bullet.x;
+        const dy = bullet.y - enemy.y;
+        if (dy <= 0 || Math.abs(dx) > .10) continue;
+        if (dy < bestDy) { bestDy = dy; target = enemy; }
+      }
+      if (target) {
+        const speed = Math.hypot(bullet.vx, bullet.vy) || 1;
+        const desired = clamp((target.x - bullet.x) * 6, -speed * .42, speed * .42);
+        bullet.vx += clamp(desired - bullet.vx, -3.2 * dt, 3.2 * dt);
+        bullet.vx = clamp(bullet.vx, -speed * .95, speed * .95);
+        bullet.vy = -Math.sqrt(Math.max(speed * speed - bullet.vx * bullet.vx, speed * speed * .05));
+      }
+    }
     bullet.previousX = bullet.x;
     bullet.previousY = bullet.y;
     bullet.x += bullet.vx * dt;
@@ -1549,6 +1571,21 @@ function compactPlain(array, keep) {
 function pauseGame() {
   if (!ACTIVE_STATES.includes(state)) return;
   resumeState = state;
+  setState(GAME_STATE.PAUSED);
+  renderPauseDashboard();
+}
+
+function openPauseShop() {
+  if (state !== GAME_STATE.PAUSED) return;
+  armoryMode = 'shop';
+  armoryRewardPicked = false;
+  run.rewardChoices = null;
+  setState(GAME_STATE.PAUSED_SHOP);
+  showBossRewards();
+}
+
+function closePauseShop() {
+  if (state !== GAME_STATE.PAUSED_SHOP) return;
   setState(GAME_STATE.PAUSED);
   renderPauseDashboard();
 }
@@ -2659,7 +2696,10 @@ addEventListener('keydown', event => {
     else if (state === GAME_STATE.PAUSED) resumeGame();
     else if (ACTIVE_STATES.includes(state)) pauseGame();
   } else if (event.key === 'Enter' && state === GAME_STATE.HOME) startRun();
-  else if (event.key.toLowerCase() === 'p' && !event.repeat) state === GAME_STATE.PAUSED ? resumeGame() : pauseGame();
+  else if (event.key.toLowerCase() === 'p' && !event.repeat) {
+    if (state === GAME_STATE.PAUSED_SHOP) closePauseShop();
+    else state === GAME_STATE.PAUSED ? resumeGame() : pauseGame();
+  }
 });
 addEventListener('keyup', event => { keys[event.key] = false; });
 canvas.addEventListener('pointerdown', event => {
@@ -2680,7 +2720,8 @@ dom.difficultyPicker.addEventListener('click', event => {
   if (option) { audio.uiClick(); selectDifficulty(option.dataset.difficulty); }
 });
 dom.playBtn.onclick = () => { audio.unlock(); startRun(Date.now() >>> 0, selectedDifficulty); };
-dom.pauseBtn.onclick = () => { audio.uiClick(); state === GAME_STATE.PAUSED ? resumeGame() : pauseGame(); };
+dom.pauseBtn.onclick = () => { audio.uiClick(); if (state === GAME_STATE.PAUSED_SHOP) closePauseShop(); else state === GAME_STATE.PAUSED ? resumeGame() : pauseGame(); };
+dom.pauseShopBtn.onclick = () => { audio.uiClick(); openPauseShop(); };
 dom.resumeBtn.onclick = () => { audio.uiClick(); resumeGame(); };
 dom.restartBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
 dom.retryBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
@@ -2826,6 +2867,8 @@ if (qaMode) {
     forceGameOver() { run.lives = 0; run.player.troops = 1; damageSquad(99, run.player.x); return state; },
     stressScene() { return setupStressScene(); },
     pause() { pauseGame(); return state; },
+    openPauseShop() { openPauseShop(); return state; },
+    closePauseShop() { closePauseShop(); return state; },
     resume() { resumeGame(); return state; },
     freeze(value = true) { qaFrozen = Boolean(value); return qaFrozen; },
     projectionAudit() { return bridgeProjectionAudit(); },
@@ -2850,6 +2893,8 @@ if (qaMode) {
         effects: measure(drawEffects),
       };
     },
+    shoveEnemiesToEdge(type = null) { let n = 0; for (const e of run.enemies) { if (e.dead || (type && e.type !== type)) continue; if (e.lane === 0) { e.x = e.lineX = -.835; n += 1; } else if (e.lane === 2) { e.x = e.lineX = .835; n += 1; } } return n; },
+    typeAudit(type) { return run.enemies.filter(e => !e.dead && e.type === type).map(e => ({ x: +e.x.toFixed(3), y: +e.y.toFixed(3), hp: e.hp })); },
     getWaveConfig(wave = run.wave, difficulty = run.difficulty) { return getWaveConfig(wave, difficulty); },
     getState() { return getStateSnapshot(); },
   };

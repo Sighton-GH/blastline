@@ -18,6 +18,7 @@ export const GAME_STATE = Object.freeze({
   ARMORY: 'armory',
   BOSS_REWARD: 'armory',
   PAUSED: 'paused',
+  PAUSED_SHOP: 'paused-shop',
   RECOVERY: 'recovery',
   GAME_OVER: 'game-over',
 });

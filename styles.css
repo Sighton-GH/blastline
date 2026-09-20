@@ -239,7 +239,7 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .primary:active { transform: translateY(3px); box-shadow: 0 2px 0 #06437d, 0 6px 14px rgba(0,92,168,.3); }
 .secondary { border: 1px solid rgba(188,229,250,.38); color: #d9edf7; background: linear-gradient(180deg, #244b64, #102e43); box-shadow: 0 4px 0 #071c2b, inset 0 1px rgba(255,255,255,.12); }
-.button-row { display: flex; justify-content: center; gap: 10px; }
+.button-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
 .home-overlay { place-items: center end; padding-right: clamp(24px, 7vw, 118px); background: linear-gradient(90deg, rgba(0,18,31,0) 0 40%, rgba(1,17,30,.2) 64%, rgba(1,12,22,.62)); }
 .home-shell { width: min(610px, 48vw); text-align: center; pointer-events: auto; }
