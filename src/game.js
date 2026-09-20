@@ -118,6 +118,9 @@ const TYPE_STATS = Object.freeze({
   shield: { hp: 1, shield: 2, speed: .78, scale: 1.18, contact: 2 },
   heavy: { hp: 4, speed: .62, scale: 1.34, contact: 3 },
   demolition: { hp: 2, speed: .72, scale: 1.2, contact: 2 },
+  sprinter: { hp: 1, speed: 1.9, scale: .9, contact: 1 },
+  reflector: { hp: 3, speed: .8, scale: 1.12, contact: 2 },
+  swarmer: { hp: 2, speed: .82, scale: 1.02, contact: 1 },
 });
 
 class Pool {
@@ -655,7 +658,7 @@ function fireBurst() {
         x: origin.x, y: origin.y, previousX: origin.x, previousY: origin.y, originX: origin.x, originY: origin.y,
         vx: offset * .72, vy: -1.02 * run.player.bulletSpeed * (run.frenzyTimer > 0 ? 1.18 : 1),
         power: run.player.power * projectileDamageFactor(run.player.projectiles) * (critical ? 2 : 1), critical,
-        hitsLeft: 1 + run.player.pierce, lastHitId: -1, shooter: origin.slot, dead: false,
+        hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
       }));
       emitted += 1;
     }
@@ -986,6 +989,12 @@ function continueFromArmory() {
 function defeatEnemy(enemy) {
   if (enemy.dead) return;
   enemy.dead = true;
+  if (enemy.type === 'swarmer' && !enemy.noSplit) {
+    for (let i = 0; i < 2; i += 1) {
+      const child = spawnEnemy('grunt', { lane: enemy.lane, x: clamp(enemy.x + (i ? .05 : -.05), -LANE_LIMIT, LANE_LIMIT), y: enemy.y, marchPhase: rng() * 1000 });
+      if (child) child.noSplit = true;
+    }
+  }
   enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .18 : .28;
   if (!stressMode && (enemy.type === 'heavy' || enemy.type === 'demolition')) {
     addTrauma(.12);
@@ -1116,8 +1125,33 @@ function collidePlayerBullets() {
         enemy.hp -= damage;
         enemy.hitFlash = .08;
         bullet.lastHitId = enemy.id;
+        if (enemy.type === 'reflector' && !enemy.reflectedOnce) {
+          enemy.reflectedOnce = true;
+          bullet.dead = true;
+          spawnEnemyProjectile(enemy, { kind: 'reflect', lane: nearestLane(run.player.x), x: enemy.x, y: enemy.y + .02, damage: 1, color: '#ffd56a', vy: .5 * config.pressure });
+          if (!stressMode) burst(enemy.x, enemy.y, '#ffd56a', 5);
+          break;
+        }
         bullet.hitsLeft -= 1;
-        if (bullet.hitsLeft <= 0) bullet.dead = true;
+        if (bullet.hitsLeft <= 0 && bullet.bouncesLeft > 0) {
+          let target = null; let best = .35;
+          for (const other of run.enemies) {
+            if (other.dead || other.id === enemy.id || other.id === bullet.lastHitId) continue;
+            const d = Math.abs(other.x - bullet.x) + Math.abs(other.y - bullet.y) * .6;
+            if (d < best) { best = d; target = other; }
+          }
+          if (target) {
+            bullet.bouncesLeft -= 1;
+            bullet.power *= .6;
+            bullet.hitsLeft = 1;
+            bullet.lastHitId = -1;
+            const dx = target.x - bullet.x; const dy = target.y - bullet.y;
+            const len = Math.max(.001, Math.hypot(dx, dy));
+            const speed = Math.hypot(bullet.vx, bullet.vy) || 1;
+            bullet.vx = dx / len * speed; bullet.vy = dy / len * speed;
+            if (!stressMode) burst(bullet.x, bullet.y, '#9fd8ff', 3);
+          } else bullet.dead = true;
+        } else if (bullet.hitsLeft <= 0) bullet.dead = true;
         if (!stressMode) { burst(enemy.x, enemy.y, bullet.critical ? '#ffe75d' : '#ff685e', bullet.critical ? 5 : 2); audio.hit(); }
         if (enemy.hp <= 0) defeatEnemy(enemy);
         if (bullet.dead) break;

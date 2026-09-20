@@ -144,6 +144,9 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
     shield: Math.min(0.18, Math.max(0, (wave - 2) * 0.012)),
     heavy: Math.min(0.16, Math.max(0, (wave - 3) * 0.011)),
     demolition: Math.min(0.12, Math.max(0, (wave - 4) * 0.009)),
+    sprinter: Math.min(0.16, Math.max(0, (wave - 1) * 0.016)),
+    reflector: Math.min(0.1, Math.max(0, (wave - 5) * 0.008)),
+    swarmer: Math.min(0.12, Math.max(0, (wave - 7) * 0.01)),
   };
   const total = Object.values(composition).reduce((sum, value) => sum + value, 0);
   for (const key of Object.keys(composition)) composition[key] /= total;
@@ -170,11 +173,12 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'damage', title: 'Damage', short: '+1 power', baseCost: 320, maxTier: 12, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Breaks armored targets' },
   { id: 'fireRate', title: 'Fire Rate', short: '+12% cadence', baseCost: 300, maxTier: 9, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Builds pressure faster' },
   { id: 'multishot', title: 'Multishot', short: '+1 round', baseCost: 720, maxTier: 4, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes' },
-  { id: 'armor', title: 'Armor', short: '+4 plates', baseCost: 260, maxTier: 14, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Absorbs incoming fire' },
+  { id: 'armor', title: 'Plating', short: '+2 plates', baseCost: 260, maxTier: 19, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Each plate absorbs one hit, then regenerates' },
   { id: 'extraLife', title: 'Reserve', short: '+1 reserve', baseCost: 950, maxTier: MAX_LIVES, tone: 'red', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Redeploys the squad' },
   { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: MAX_PIERCE, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations' },
   { id: 'criticalChance', title: 'Critical', short: '+5% crit', baseCost: 380, maxTier: 8, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder' },
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner' },
+  { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own' },
 ]);
 
 export const SHOP_BY_ID = Object.freeze(Object.fromEntries(SHOP_CATALOG.map(item => [item.id, item])));
@@ -192,6 +196,8 @@ export function initialPlayer() {
     criticalChance: 0,
     armor: 0,
     plates: 2,
+    platesMax: 2,
+    ricochet: 0,
     formationDensity: 0,
     frenzyDuration: 4.2,
     recovery: 0,
@@ -210,7 +216,8 @@ export function isUpgradeCapped(session, id) {
   if (id === 'extraLife') return (session?.lives || 0) >= MAX_LIVES;
   if (id === 'multishot') return upgradeTier(session, id) >= MAX_PROJECTILES - 1;
   if (id === 'criticalChance') return upgradeTier(session, id) >= 17; // 0.03 x 17 = 0.51 > 0.5 cap
-  if (id === 'armor') return (session?.player?.plates ?? 0) >= MAX_PLATES;
+  if (id === 'armor') return (session?.player?.platesMax ?? 0) >= MAX_PLATES;
+  if (id === 'ricochet') return upgradeTier(session, id) >= 3;
   return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
 
@@ -234,7 +241,11 @@ export function applyUpgrade(player, id) {
   else if (id === 'multishot') next.projectiles = Math.min(MAX_PROJECTILES, next.projectiles + 1);
   else if (id === 'piercing') next.pierce = Math.min(24, next.pierce + 1); // rail only
   else if (id === 'criticalChance') next.criticalChance = Math.min(0.5, next.criticalChance + 0.03);
-  else if (id === 'armor') next.plates = Math.min(MAX_PLATES, (next.plates ?? next.armor ?? 0) + 2);
+  else if (id === 'armor') {
+    next.plates = Math.min(MAX_PLATES, (next.plates ?? next.armor ?? 0) + 2);
+    next.platesMax = Math.min(MAX_PLATES, (next.platesMax ?? 2) + 2);
+  }
+  else if (id === 'ricochet') next.ricochet = Math.min(3, (next.ricochet || 0) + 1);
   else if (id === 'formationDensity') next.formationDensity = Math.min(6, next.formationDensity + 1);
   else if (id === 'frenzyDuration') next.frenzyDuration = Math.min(10, next.frenzyDuration + 0.8);
   else if (id === 'recovery') next.recovery = Math.min(6, next.recovery + 1);

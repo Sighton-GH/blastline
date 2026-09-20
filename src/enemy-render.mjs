@@ -4,8 +4,14 @@ function panel(ctx,x,y,w,h,r,stops){
 }
 function limb(ctx,x0,y0,x1,y1,w,c){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}
 
+const TYPE_PALETTE={
+  sprinter:{hi:'#ffb04c',mid:'#d97f2e',low:'#6e3d1a',shell:'#4a2e17'},
+  reflector:{hi:'#ffd96a',mid:'#c9a23a',low:'#5f4c1d',shell:'#453a18'},
+  swarmer:{hi:'#7ddc6a',mid:'#4ea844',low:'#26502a',shell:'#1f3d24'},
+};
 export function drawEnemyCombatant(ctx,e,s,h,t){
-  const shielded=e.type==='shield',elite=e.type==='elite'||shielded,u=h/60,phase=t*(elite?8.1:10.0)+(e.bob||0)*.017;
+  const pal=TYPE_PALETTE[e.type]||null;
+  const shielded=e.type==='shield'||e.type==='reflector',elite=e.type==='elite'||shielded,u=h/60,phase=t*(elite?8.1:10.0)+(e.bob||0)*.017;
   const bob=Math.sin(phase)*u,stride=Math.sin(phase)*4.2*u;
   const bodyW=(elite?29:19)*u,flash=Math.max(0,e.hitFlash||0);
   ctx.save();ctx.translate(s.x,s.y+bob);ctx.lineCap='round';
@@ -20,11 +26,11 @@ export function drawEnemyCombatant(ctx,e,s,h,t){
   panel(ctx,(1.4-stride*.09)*u,-5*u,7.7*u,4.5*u,1.5*u,[[0,'#302629'],[1,'#141416']]);
 
   // Torso depth: dark side shell plus saturated faction face.
-  ctx.fillStyle='#452329';ctx.beginPath();ctx.moveTo(-bodyW*.60,-33*u);ctx.lineTo(bodyW*.58,-33*u);ctx.lineTo(bodyW*.48,-13*u);ctx.lineTo(-bodyW*.50,-13*u);ctx.closePath();ctx.fill();
+  ctx.fillStyle=pal?pal.shell:'#452329';ctx.beginPath();ctx.moveTo(-bodyW*.60,-33*u);ctx.lineTo(bodyW*.58,-33*u);ctx.lineTo(bodyW*.48,-13*u);ctx.lineTo(-bodyW*.50,-13*u);ctx.closePath();ctx.fill();
   const torso=ctx.createLinearGradient(-bodyW*.45,-33*u,bodyW*.45,-14*u);
-  torso.addColorStop(0,flash?'#ff8f75':(elite?'#b94339':'#f05b4c'));
-  torso.addColorStop(.45,flash?'#ef755e':(elite?'#8c2f31':'#cf3d39'));
-  torso.addColorStop(1,elite?'#4a252a':'#70282e');
+  torso.addColorStop(0,flash?'#ff8f75':(pal?pal.hi:(elite?'#b94339':'#f05b4c')));
+  torso.addColorStop(.45,flash?'#ef755e':(pal?pal.mid:(elite?'#8c2f31':'#cf3d39')));
+  torso.addColorStop(1,pal?pal.low:(elite?'#4a252a':'#70282e'));
   ctx.fillStyle=torso;ctx.beginPath();ctx.roundRect(-bodyW*.48,-32*u,bodyW*.96,(elite?20:18)*u,4*u);ctx.fill();
 
   if(elite){

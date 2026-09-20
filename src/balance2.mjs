@@ -11,6 +11,9 @@ export const ENEMY_BASE = Object.freeze({
   shield: { hp: 3, contact: 2, reward: 36 },   // 1hp + 2 shield folded in
   heavy: { hp: 4, contact: 3, reward: 54 },
   demolition: { hp: 2, contact: 2, reward: 68 },
+  sprinter: { hp: 1, contact: 1, reward: 15 },
+  reflector: { hp: 3, contact: 2, reward: 30 },
+  swarmer: { hp: 2, contact: 1, reward: 16 },
 });
 
 export const MECHANICS_V1 = Object.freeze({
