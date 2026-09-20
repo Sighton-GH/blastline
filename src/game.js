@@ -240,6 +240,11 @@ function triggerHitStop(holdSeconds = .08) {
   hitStopEase = Math.max(hitStopEase, HIT_STOP_EASE_SECONDS);
 }
 let pointerActive = false;
+let pointerDownAt = 0;
+let pointerDownClientX = 0;
+let pointerTypeName = 'mouse';
+let pointerMovedFar = false;
+let compactHintShown = false;
 let enemySerial = 0;
 let hordeSerial = 0;
 let gateSerial = 0;
@@ -569,6 +574,10 @@ function startWave() {
   run.player.targetX = 0;
   run.player._shot = .08;
   run.player.protectedFor = Math.max(0, run.player.protectedFor || 0);
+  if (run.wave === 3 && !compactHintShown) {
+    compactHintShown = true;
+    addFloater(0, .62, 'HOLD to tighten your formation', '#91ebff', 19);
+  }
   setState(GAME_STATE.PLAYING);
   updateHud(true);
 }
@@ -730,7 +739,7 @@ function soldierHeightAt(y) {
 
 function squadSlotWorldX(slot) {
   const height = soldierHeightAt(slot.y);
-  const density = lerp(1.08, .78, run.player.formationDensity / 6);
+  const density = lerp(1.08, .78, run.player.formationDensity / 6) * lerp(1, .55, run.compact || 0);
   const stepPixels = height * .33 * density * clamp(.87 + W / H * .24, .96, 1.24);
   return clamp(run.player.x + slot.colOffset * stepPixels / Math.max(1, laneHalfWidth(slot.y)), -LANE_LIMIT, LANE_LIMIT);
 }
@@ -1473,6 +1482,11 @@ function update(dt) {
   if (direction) run.player.targetX = clamp(run.player.targetX + direction * dt * run.player.speed, -LANE_LIMIT, LANE_LIMIT);
   const previousX = run.player.x;
   run.player.x = lerp(run.player.x, run.player.targetX, Math.min(1, dt * 9));
+  // Hold-to-compact: mouse compacts while the button is held (drag still steers);
+  // touch compacts on a press-and-hold that stays roughly still, so ordinary
+  // drag-steering on phones never triggers it. Release eases the formation back.
+  const compactHold = pointerActive && (pointerTypeName === 'mouse' || (!pointerMovedFar && performance.now() - pointerDownAt > 160));
+  run.compact = (run.compact || 0) + ((compactHold ? 1 : 0) - (run.compact || 0)) * Math.min(1, dt * 7);
   const velocity = dt ? (run.player.x - previousX) / dt : 0;
   run.player._visualLean = lerp(run.player._visualLean || 0, clamp(velocity * .04, -.075, .075), Math.min(1, dt * 12));
 
@@ -3102,10 +3116,15 @@ addEventListener('keyup', event => { keys[event.key] = false; });
 canvas.addEventListener('pointerdown', event => {
   if (!ACTIVE_STATES.includes(state)) return;
   pointerActive = true;
+  pointerDownAt = performance.now();
+  pointerDownClientX = event.clientX;
+  pointerTypeName = event.pointerType || 'mouse';
+  pointerMovedFar = false;
   canvas.setPointerCapture?.(event.pointerId);
   pointerMove(event.clientX);
 });
 canvas.addEventListener('pointermove', event => {
+  if (pointerActive && Math.abs(event.clientX - pointerDownClientX) > 14) pointerMovedFar = true;
   if (pointerActive || (event.pointerType === 'mouse' && ACTIVE_STATES.includes(state))) pointerMove(event.clientX);
 });
 addEventListener('pointerup', () => { pointerActive = false; });
@@ -3148,7 +3167,7 @@ function getStateSnapshot() {
     troops: run.player.troops, armor: run.player.armor, power: run.player.power,
     fireRate: run.player.fireRate, bulletSpeed: run.player.bulletSpeed,
     projectiles: run.player.projectiles, pierce: run.player.pierce,
-    criticalChance: run.player.criticalChance, formationDensity: run.player.formationDensity,
+    criticalChance: run.player.criticalChance, formationDensity: run.player.formationDensity, compact: run.compact || 0,
     recovery: run.player.recovery, protectedFor: run.player.protectedFor,
     frenzyTimer: run.frenzyTimer,
     visibleSquad: visibleSquadCount(Math.max(1, run.player.troops), run.player.formationDensity),

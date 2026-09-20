@@ -486,6 +486,7 @@ export function createCleanRun(seed = 0, difficulty = 'veteran') {
     recoveryTime: 0,
     frenzy: 0,
     frenzyTimer: 0,
+    compact: 0,
     waveTime: 0,
     bossTime: 0,
     spawnTimer: 0.4,
