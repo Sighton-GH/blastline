@@ -1996,6 +1996,15 @@ function update(dt) {
         if (dy <= 0 || Math.abs(dx) > .10) continue;
         if (dy < bestDy) { bestDy = dy; target = enemy; }
       }
+      // Boss fallback: with no field enemy ahead, curve toward the boss in a
+      // wider corridor. The boss is the wave's objective the moment it walks
+      // on; a player parked at a lane edge should still watch it melt instead
+      // of soft-locking the fight with shots that stream past the hull.
+      if (!target && run.boss) {
+        const bdx = run.boss.x - bullet.x;
+        const bdy = bullet.y - run.boss.y;
+        if (bdy > 0 && Math.abs(bdx) <= .34) target = { x: run.boss.x };
+      }
       if (target) {
         const speed = Math.hypot(bullet.vx, bullet.vy) || 1;
         const desired = clamp((target.x - bullet.x) * 6, -speed * .42, speed * .42);
@@ -3981,7 +3990,7 @@ function getStateSnapshot() {
   const activeEnemies = run.enemies.filter(enemy => !enemy.dead);
   return {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
-    bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null,
+    bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null, bossX: run.boss ? run.boss.x : null, bossHp: run.boss ? Math.round(run.boss.hp) : null,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
     score: run.score, skillPoints: run.points, ecoUnspent: run.ecoUnspent || 0, lives: run.lives, kills: run.kills, killViz: run.killViz || null,

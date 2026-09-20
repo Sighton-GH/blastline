@@ -14,11 +14,19 @@ async function playRun(name, priority, maxWave = Number(process.env.MAXWAVE || 9
   await q.evaluate(() => { const b = document.querySelectorAll('#difficultyPicker button'); if (b[1]) b[1].click(); });
   await q.click('#playBtn'); await q.waitForTimeout(300);
   const log = [];
-  let lastWave = 0, guard = 0;
+  let lastWave = 0, guard = 0, lastSt = null, prevKey = '', frozen = 0;
   const t0 = Date.now();
   let end = null;
   while (guard++ < 20000 && Date.now() - t0 < 600000) {
-    const st = await q.evaluate(() => { const s = __blastlineTest.getState(); return { state: s.state, wave: s.wave, troops: s.troops, points: Math.round(s.skillPoints), score: s.score, eco: __blastlineTest.ecoTotal(), charmed: __blastlineTest.charmedCount(), tiers: s.upgradeTiers }; });
+    const st = await Promise.race([
+      q.evaluate(() => { const s = __blastlineTest.getState(); return { state: s.state, wave: s.wave, wt: +(s.waveTime||0).toFixed(1), boss: s.bossArchetype||null, bossX: s.bossX??null, gate: s.bossDmgGate===null||s.bossDmgGate===undefined?null:+s.bossDmgGate.toFixed(2), troops: s.troops, points: Math.round(s.skillPoints), score: s.score, eco: __blastlineTest.ecoTotal(), charmed: __blastlineTest.charmedCount(), tiers: s.upgradeTiers }; }),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('PAGE-UNRESPONSIVE')),15000))
+    ]).catch(e=>{ console.log(name, String(e.message||e), JSON.stringify(lastSt||{})); process.exit(4); });
+    lastSt = st;
+    { const key = st.state+'|'+st.wave+'|'+st.wt+'|'+st.score;
+      frozen = (key===prevKey && (st.state==='playing'||st.state==='boss')) ? frozen+1 : 0; prevKey = key;
+      if (guard%4===0 || st.state!=='playing') console.log(name, 'tick', JSON.stringify({g:guard,st:st.state,w:st.wave,wt:st.wt,boss:st.boss,gate:st.gate,troops:st.troops,score:st.score,frozen}));
+      if (frozen>=12) { console.log(name, 'FREEZE-SUSPECT', JSON.stringify(st)); process.exit(3); } }
     if (st.state === 'game-over') { end = { end: 'game-over', ...st }; break; }
     if (st.state === 'armory') {
       const bought = await q.evaluate((prio) => {
@@ -56,7 +64,8 @@ async function playRun(name, priority, maxWave = Number(process.env.MAXWAVE || 9
     await q.evaluate(() => {
       const st = __blastlineTest.getState();
       const es = (st.sampleEnemies || []).filter(e => e.y > .12 && e.y < .88);
-      if (es.length) {
+      if (st.bossX != null) { __blastlineTest.setPlayerX(st.bossX); }
+      else if (es.length) {
         const lanes = [0, 1, 2].map(l => es.filter(e => e.lane === l));
         const score = lanes.map(list => list.reduce((a, e) => a + e.y, 0));
         const best = score.indexOf(Math.max(...score));
