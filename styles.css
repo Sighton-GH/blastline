@@ -304,7 +304,7 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .reward-shell h2 { font-size: clamp(24px, 3.4vw, 34px); }
 .reward-shell .eyebrow { margin-bottom: 4px; }
 .reward-sub { margin: 5px auto 10px; font-size: 12px; }
-.reward-grid { display: grid; flex: 1 1 auto; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; overflow-y: auto; }
+.reward-grid { display: grid; flex: 1 1 auto; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; overflow-y: auto; padding-bottom: 12px; }
 .reward-card { --tone: #45d9ff; position: relative; min-height: 148px; padding: 10px 10px 30px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--tone) 74%, white); border-radius: 16px; color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 66%, #17415d) 0 44%, color-mix(in srgb, var(--tone) 25%, #071b2a) 44%); box-shadow: 0 5px 0 color-mix(in srgb, var(--tone) 32%, #03111c), 0 13px 24px rgba(0,9,16,.35), inset 0 2px rgba(255,255,255,.25); cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
 .reward-card::before { position: absolute; inset: 0; content: ""; background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.27), transparent 37%), repeating-linear-gradient(115deg, transparent 0 25px, rgba(255,255,255,.045) 26px 27px); }
 .reward-card:hover { z-index: 2; filter: brightness(1.1); transform: translateY(-5px) scale(1.014); }
@@ -481,6 +481,22 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .stat { min-width: 45px; padding: 3px 5px; }
   #bossHud { top: 91px; width: 92vw; }
   .reward-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .reward-shell { padding: 10px 16px 8px; }
+  .reward-shell h2 { font-size: 22px; }
+  .reward-shell .eyebrow { font-size: 9px; margin-bottom: 2px; }
+  .reward-sub { margin: 3px auto 6px; font-size: 10px; }
+  .reward-grid { gap: 7px; }
+  .reward-card { min-height: 108px; padding: 7px 8px 22px; border-radius: 12px; }
+  .reward-card img { width: 34px; height: 34px; margin-bottom: 2px; }
+  .reward-card b { font-size: 12px; }
+  .reward-card .tier { margin-bottom: 3px; font-size: 6px; }
+  .reward-card .description { font-size: 8px; }
+  .reward-card .synergy { bottom: 5px; padding-top: 3px; font-size: 6px; }
+  .reward-footer { padding-top: 7px; }
+  .armory-continue { min-height: 40px; font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
