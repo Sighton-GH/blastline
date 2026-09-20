@@ -159,6 +159,10 @@ const TYPE_STATS = Object.freeze({
   warden: { hp: 2, speed: .74, scale: 1.16, contact: 1 },
   bulwark: { hp: 6, speed: .5, scale: 1.45, contact: 3 },
   sapper: { hp: 1, speed: 1.55, scale: .95, contact: 4 },
+  // Vehicles: armored carrier (slow, spills its squad when melted) and gun
+  // truck (fast, fires from the road). Wide silhouettes, lane-centered.
+  transport: { hp: 14, speed: .58, scale: 1.9, contact: 6 },
+  technical: { hp: 6, speed: 1.45, scale: 1.35, contact: 3 },
 });
 
 class Pool {
@@ -896,7 +900,7 @@ function spawnEnemy(type = 'grunt', options = {}) {
     bob: options.marchPhase ?? rng() * 1000,
     hordeId: options.hordeId ?? null, hordeRow: options.hordeRow ?? 0,
     formation: options.formation ?? 'wall', shotTimer: options.shotTimer ?? (.9 + rng() * 1.5),
-    canShoot: type === 'gunner' || type === 'demolition',
+    canShoot: type === 'gunner' || type === 'demolition' || type === 'technical',
     rewarded: false, dead: false, deathLife: 0, hitFlash: 0, shotFlash: 0,
   });
   run.enemies.push(enemy);
@@ -1375,6 +1379,16 @@ function defeatEnemy(enemy) {
       const child = spawnEnemy('grunt', { lane: enemy.lane, x: clamp(enemy.x + (i ? .05 : -.05), -LANE_LIMIT, LANE_LIMIT), y: enemy.y, marchPhase: rng() * 1000 });
       if (child) child.noSplit = true;
     }
+  }
+  // Armored transport: melting it spills the squad riding inside. They step
+  // out where the hull died and keep marching - the kill stays visible.
+  if (enemy.type === 'transport') {
+    run.debugSpills = (run.debugSpills || 0) + 4;
+    for (let i = 0; i < 4; i += 1) {
+      const offset = [-.055, -.018, .018, .055][i];
+      spawnEnemy('grunt', { lane: enemy.lane, x: clamp(enemy.x + offset, -LANE_LIMIT, LANE_LIMIT), y: enemy.y + (i % 2) * .012, marchPhase: rng() * 1000 });
+    }
+    if (!stressMode) burst(enemy.x, enemy.y, '#ffa23c', 14);
   }
   // Sapper detonation: shot down, it explodes into the surrounding ranks
   // (chains included). Breaching sappers never get here - they ram the line
@@ -3039,6 +3053,82 @@ function enemySpriteName(enemy) {
   return `enemyGrunt${frame}`;
 }
 
+// Vehicles are drawn procedurally (like the reinforcement boats): no sprite
+// set, a wide armored silhouette that reads as a machine on the road, with
+// smoke and fire damage states so the melt stays visible.
+function drawVehicle(enemy, screen, baseline, height, clock) {
+  const isCarrier = enemy.type === 'transport';
+  const w = height * (isCarrier ? .62 : .5);
+  const h = height * (isCarrier ? .5 : .4);
+  const x = screen.x;
+  const yb = baseline;
+  const health = clamp(enemy.hp / Math.max(1, enemy.maxHp), 0, 1);
+  const dead = enemy.dead;
+  if (dead) {
+    ctx.save();
+    ctx.globalAlpha *= clamp(enemy.deathLife / .28, 0, 1);
+  }
+  // footprint shadow
+  ctx.fillStyle = 'rgba(14,18,22,.4)';
+  ctx.beginPath();
+  ctx.ellipse(x, yb + 2, w * .6, height * .048, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // wheels: four dark drums, slightly squashed, hint of rotation from the bob
+  ctx.fillStyle = '#14191d';
+  const roll = Math.sin(clock * 10 + enemy.bob) * h * .02;
+  for (const side of [-1, 1]) {
+    ctx.beginPath(); ctx.ellipse(x + side * w * .4, yb - h * .05 + roll * side, w * .13, h * .17, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + side * w * .17, yb - h * .03 - roll * side, w * .11, h * .15, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  // hull + front plate facing the line
+  const hullTop = yb - h;
+  ctx.fillStyle = dead ? '#2c2c28' : isCarrier ? '#49523f' : '#5c5040';
+  ctx.fillRect(x - w / 2, hullTop, w, h * .86);
+  ctx.fillStyle = dead ? '#33332e' : isCarrier ? '#566048' : '#6b5d48';
+  ctx.fillRect(x - w / 2, yb - h * .3, w, h * .28);
+  // slab seams on the carrier's armor
+  if (isCarrier && height > 16) {
+    ctx.strokeStyle = 'rgba(18,22,18,.55)';
+    ctx.lineWidth = 1;
+    for (const fx of [-.25, 0, .25]) {
+      ctx.beginPath(); ctx.moveTo(x + fx * w, hullTop + h * .04); ctx.lineTo(x + fx * w, yb - h * .32); ctx.stroke();
+    }
+  }
+  // cab window band (far edge)
+  ctx.fillStyle = dead ? '#101315' : '#1f262c';
+  ctx.fillRect(x - w * .32, hullTop + h * .07, w * .64, h * .15);
+  // headlamps glaring down-lane at the squad
+  if (!dead) {
+    ctx.fillStyle = '#ffb03c';
+    for (const side of [-1, 1]) {
+      ctx.beginPath(); ctx.arc(x + side * w * .33, yb - h * .13, Math.max(1.2, height * .02), 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // technical's mounted gun, muzzle flash while it fires
+  if (!isCarrier) {
+    ctx.strokeStyle = '#20262b';
+    ctx.lineWidth = Math.max(1.6, height * .032);
+    ctx.beginPath(); ctx.moveTo(x, hullTop + h * .12); ctx.lineTo(x, yb + h * .1); ctx.stroke();
+    if (!dead && enemy.shotFlash > 0) {
+      ctx.fillStyle = `rgba(255,190,67,${clamp(enemy.shotFlash / .1, 0, 1)})`;
+      ctx.beginPath(); ctx.arc(x, yb + h * .1, height * .05, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // damage states: smoke past half, flame past quarter - the melt reads.
+  if (!stressMode && (health < .5 || dead)) {
+    const pulse = .5 + .5 * Math.sin(clock * 6 + enemy.bob);
+    ctx.fillStyle = `rgba(60,64,68,${.3 + .2 * pulse})`;
+    ctx.beginPath(); ctx.arc(x + w * .18, hullTop - h * (.12 + .1 * pulse), h * (.16 + .06 * pulse), 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x - w * .12, hullTop - h * (.22 + .12 * pulse), h * (.12 + .05 * pulse), 0, Math.PI * 2); ctx.fill();
+  }
+  if (!stressMode && (health < .25 || dead)) {
+    const flick = .6 + .4 * Math.sin(clock * 17 + enemy.bob * 2);
+    ctx.fillStyle = `rgba(255,${Math.round(120 + 60 * flick)},40,${.5 + .3 * flick})`;
+    ctx.beginPath(); ctx.arc(x, hullTop + h * .1, h * .16 * flick, 0, Math.PI * 2); ctx.fill();
+  }
+  if (dead) ctx.restore();
+}
+
 function drawEnemy(enemy) {
   const y = lerp(enemy.previousY ?? enemy.y, enemy.y, renderAlpha);
   const screen = projectToScreen(enemy.x, y, projectionScratchA);
@@ -3059,7 +3149,9 @@ function drawEnemy(enemy) {
     ctx.save();
     ctx.globalAlpha *= horizonAlpha;
   }
-  if (!enemy.dead && image) {
+  if (enemy.type === 'transport' || enemy.type === 'technical') {
+    drawVehicle(enemy, screen, baseline, height, clock);
+  } else if (!enemy.dead && image) {
     if (!stressMode && height > 23) {
       ctx.fillStyle = 'rgba(14,18,22,.34)';
       ctx.beginPath();
@@ -3886,8 +3978,9 @@ if (qaMode) {
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
     setVeterans(value = 0) { run.player.veterans = clamp(Math.round(Number(value) || 0), 0, run.player.troops); return run.player.veterans; },
     setUpgradeTiers(tiers = {}) { run.upgradeTiers = { ...(run.upgradeTiers || {}), ...tiers }; updateHud(true); return this.getState(); },
-    debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
+    debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, y: +(enemy.y).toFixed(2), chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
     arcFlashCount() { return (run.arcFlashes || []).length; },
+    spillCount() { return run.debugSpills || 0; },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
     spawnEnemyAt(type = 'grunt', lane = 1, y = .82, ready = false) { const enemy = spawnEnemy(type, { lane, x: laneCenter(lane), y }); if (enemy && ready) enemy.shotTimer = 0; return enemy ? { type: enemy.type, lane: enemy.lane, x: enemy.x, y: enemy.y, hp: enemy.hp, shield: enemy.shield } : null; },

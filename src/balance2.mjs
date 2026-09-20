@@ -17,6 +17,8 @@ export const ENEMY_BASE = Object.freeze({
   warden: { hp: 2, contact: 1, reward: 34 },
   bulwark: { hp: 6, contact: 3, reward: 44 },
   sapper: { hp: 1, contact: 4, reward: 22 },
+  transport: { hp: 14, contact: 6, reward: 80 },  // armored carrier; also spills 4 grunts when melted
+  technical: { hp: 6, contact: 3, reward: 46 },  // fast gun truck
 });
 
 export const MECHANICS_V1 = Object.freeze({

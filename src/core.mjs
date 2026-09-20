@@ -105,6 +105,12 @@ export const ENEMY_BASE_STATS = Object.freeze({
   warden: Object.freeze({ hp: 2, contact: 1 }),
   bulwark: Object.freeze({ hp: 6, contact: 3 }),
   sapper: Object.freeze({ hp: 1, contact: 4 }),
+  // Vehicles (E layer): the road counterpart to the waterborne reinforcement
+  // boats. An armored troop carrier that spills its squad when melted, and a
+  // fast gun truck that fires while driving. Both read as vehicles on the road
+  // and both melt on the field - no off-screen deaths.
+  transport: Object.freeze({ hp: 14, contact: 6 }),
+  technical: Object.freeze({ hp: 6, contact: 3 }),
 });
 
 // v2: exponential enemy scaling (owner directive 2026-09-19) - enemies always
@@ -159,6 +165,8 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
     warden: Math.min(0.08, Math.max(0, (wave - 5) * 0.008)),
     bulwark: Math.min(0.09, Math.max(0, (wave - 4) * 0.009)),
     sapper: Math.min(0.1, Math.max(0, (wave - 3) * 0.012)),
+    technical: Math.min(0.07, Math.max(0, (wave - 6) * 0.008)),
+    transport: Math.min(0.05, Math.max(0, (wave - 8) * 0.006)),
   };
   const total = Object.values(composition).reduce((sum, value) => sum + value, 0);
   for (const key of Object.keys(composition)) composition[key] /= total;

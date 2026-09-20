@@ -38,6 +38,8 @@ import {
   isItemCapped,
   isUpgradeCapped,
   upgradeTier,
+  enemyHitPoints,
+  enemyContactDamage,
   UTILITY_UPGRADES,
   resolveGateEncounter,
   reviveSession,
@@ -252,6 +254,20 @@ test('item cap: base six items, bosses raise it, utility and free boss tiers exe
   // The free boss-reward tier is exempt from the item cap.
   const rewarded = applyBossReward(full, 'piercing');
   assert.equal(rewarded.upgradeTiers.piercing, 1);
+});
+
+test('vehicles join the wave table on schedule and scale like enemies', () => {
+  const early = getWaveConfig(5, 'veteran');
+  assert.equal(early.composition.technical, 0);
+  assert.equal(early.composition.transport, 0);
+  const mid = getWaveConfig(10, 'veteran');
+  assert.ok(mid.composition.technical > 0, 'gun trucks appear from wave 6');
+  assert.ok(mid.composition.transport > 0, 'carriers appear from wave 8');
+  const sum = Object.values(mid.composition).reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(sum - 1) < 1e-9, 'composition stays normalized');
+  assert.ok(enemyHitPoints('transport', 1) > enemyHitPoints('heavy', 1));
+  assert.ok(enemyContactDamage('transport', 1) > enemyContactDamage('heavy', 1));
+  assert.ok(enemyHitPoints('transport', 10) > enemyHitPoints('transport', 1));
 });
 
 test('elemental lines: shock and frost tier to three with real tradeoffs', () => {
