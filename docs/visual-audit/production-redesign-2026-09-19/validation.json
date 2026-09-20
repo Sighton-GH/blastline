@@ -1,0 +1,4096 @@
+{
+  "generatedAt": "2026-09-20T00:51:39.118Z",
+  "fullSoak": false,
+  "durations": {
+    "normalMs": 3000,
+    "stressMs": 8000,
+    "soakMs": 15000
+  },
+  "thresholds": {
+    "normalP95Ms": 16.7,
+    "stress4xP95Ms": 33.3,
+    "framesOver50Fraction": 0.01,
+    "heapGrowthFraction": 0.15,
+    "entityCaps": {
+      "enemies": 220,
+      "playerBullets": 720,
+      "enemyBullets": 150,
+      "stressParticles": 100
+    }
+  },
+  "targetViewports": {
+    "portrait": {
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 1,
+      "touch": true
+    },
+    "landscape": {
+      "width": 1365,
+      "height": 768,
+      "deviceScaleFactor": 1
+    }
+  },
+  "pass": true,
+  "checks": {
+    "portrait-home:safeArea": true,
+    "portrait-home:hudOverlap": true,
+    "portrait-home:planarDeck": true,
+    "portrait-home:roadCorridorWidth": true,
+    "portrait-home:towerClearance": true,
+    "portrait-home:vanishingPoint": true,
+    "portrait-home:finiteFarPlane": true,
+    "portrait-home:perspectiveSpeedRatio": true,
+    "portrait-home:sharedProjectionScale": true,
+    "portrait-home:cableAndHangerAnchors": true,
+    "portrait-home:entityGrounding": true,
+    "portrait-home:waterExcludedFromDeck": true,
+    "portrait-home:removedPresentation": true,
+    "portrait-home:waterContinuity": true,
+    "portrait-horde:safeArea": true,
+    "portrait-horde:hudOverlap": true,
+    "portrait-horde:planarDeck": true,
+    "portrait-horde:roadCorridorWidth": true,
+    "portrait-horde:towerClearance": true,
+    "portrait-horde:vanishingPoint": true,
+    "portrait-horde:finiteFarPlane": true,
+    "portrait-horde:perspectiveSpeedRatio": true,
+    "portrait-horde:sharedProjectionScale": true,
+    "portrait-horde:cableAndHangerAnchors": true,
+    "portrait-horde:entityGrounding": true,
+    "portrait-horde:waterExcludedFromDeck": true,
+    "portrait-horde:removedPresentation": true,
+    "portrait-horde:waterContinuity": true,
+    "portrait-gate:safeArea": true,
+    "portrait-gate:hudOverlap": true,
+    "portrait-gate:planarDeck": true,
+    "portrait-gate:roadCorridorWidth": true,
+    "portrait-gate:towerClearance": true,
+    "portrait-gate:vanishingPoint": true,
+    "portrait-gate:finiteFarPlane": true,
+    "portrait-gate:perspectiveSpeedRatio": true,
+    "portrait-gate:sharedProjectionScale": true,
+    "portrait-gate:cableAndHangerAnchors": true,
+    "portrait-gate:entityGrounding": true,
+    "portrait-gate:waterExcludedFromDeck": true,
+    "portrait-gate:removedPresentation": true,
+    "portrait-gate:waterContinuity": true,
+    "portrait-dense:safeArea": true,
+    "portrait-dense:hudOverlap": true,
+    "portrait-dense:planarDeck": true,
+    "portrait-dense:roadCorridorWidth": true,
+    "portrait-dense:towerClearance": true,
+    "portrait-dense:vanishingPoint": true,
+    "portrait-dense:finiteFarPlane": true,
+    "portrait-dense:perspectiveSpeedRatio": true,
+    "portrait-dense:sharedProjectionScale": true,
+    "portrait-dense:cableAndHangerAnchors": true,
+    "portrait-dense:entityGrounding": true,
+    "portrait-dense:waterExcludedFromDeck": true,
+    "portrait-dense:removedPresentation": true,
+    "portrait-dense:waterContinuity": true,
+    "portrait-frenzy:safeArea": true,
+    "portrait-frenzy:hudOverlap": true,
+    "portrait-frenzy:planarDeck": true,
+    "portrait-frenzy:roadCorridorWidth": true,
+    "portrait-frenzy:towerClearance": true,
+    "portrait-frenzy:vanishingPoint": true,
+    "portrait-frenzy:finiteFarPlane": true,
+    "portrait-frenzy:perspectiveSpeedRatio": true,
+    "portrait-frenzy:sharedProjectionScale": true,
+    "portrait-frenzy:cableAndHangerAnchors": true,
+    "portrait-frenzy:entityGrounding": true,
+    "portrait-frenzy:waterExcludedFromDeck": true,
+    "portrait-frenzy:removedPresentation": true,
+    "portrait-frenzy:waterContinuity": true,
+    "portrait-shop:safeArea": true,
+    "portrait-shop:hudOverlap": true,
+    "portrait-shop:planarDeck": true,
+    "portrait-shop:roadCorridorWidth": true,
+    "portrait-shop:towerClearance": true,
+    "portrait-shop:vanishingPoint": true,
+    "portrait-shop:finiteFarPlane": true,
+    "portrait-shop:perspectiveSpeedRatio": true,
+    "portrait-shop:sharedProjectionScale": true,
+    "portrait-shop:cableAndHangerAnchors": true,
+    "portrait-shop:entityGrounding": true,
+    "portrait-shop:waterExcludedFromDeck": true,
+    "portrait-shop:removedPresentation": true,
+    "portrait-shop:waterContinuity": true,
+    "portrait-reward:safeArea": true,
+    "portrait-reward:hudOverlap": true,
+    "portrait-reward:planarDeck": true,
+    "portrait-reward:roadCorridorWidth": true,
+    "portrait-reward:towerClearance": true,
+    "portrait-reward:vanishingPoint": true,
+    "portrait-reward:finiteFarPlane": true,
+    "portrait-reward:perspectiveSpeedRatio": true,
+    "portrait-reward:sharedProjectionScale": true,
+    "portrait-reward:cableAndHangerAnchors": true,
+    "portrait-reward:entityGrounding": true,
+    "portrait-reward:waterExcludedFromDeck": true,
+    "portrait-reward:removedPresentation": true,
+    "portrait-reward:waterContinuity": true,
+    "portrait-revive:safeArea": true,
+    "portrait-revive:hudOverlap": true,
+    "portrait-revive:planarDeck": true,
+    "portrait-revive:roadCorridorWidth": true,
+    "portrait-revive:towerClearance": true,
+    "portrait-revive:vanishingPoint": true,
+    "portrait-revive:finiteFarPlane": true,
+    "portrait-revive:perspectiveSpeedRatio": true,
+    "portrait-revive:sharedProjectionScale": true,
+    "portrait-revive:cableAndHangerAnchors": true,
+    "portrait-revive:entityGrounding": true,
+    "portrait-revive:waterExcludedFromDeck": true,
+    "portrait-revive:removedPresentation": true,
+    "portrait-revive:waterContinuity": true,
+    "portrait-boss-phase-1:safeArea": true,
+    "portrait-boss-phase-1:hudOverlap": true,
+    "portrait-boss-phase-1:planarDeck": true,
+    "portrait-boss-phase-1:roadCorridorWidth": true,
+    "portrait-boss-phase-1:towerClearance": true,
+    "portrait-boss-phase-1:vanishingPoint": true,
+    "portrait-boss-phase-1:finiteFarPlane": true,
+    "portrait-boss-phase-1:perspectiveSpeedRatio": true,
+    "portrait-boss-phase-1:sharedProjectionScale": true,
+    "portrait-boss-phase-1:cableAndHangerAnchors": true,
+    "portrait-boss-phase-1:entityGrounding": true,
+    "portrait-boss-phase-1:waterExcludedFromDeck": true,
+    "portrait-boss-phase-1:removedPresentation": true,
+    "portrait-boss-phase-1:waterContinuity": true,
+    "portrait-boss-phase-3:safeArea": true,
+    "portrait-boss-phase-3:hudOverlap": true,
+    "portrait-boss-phase-3:planarDeck": true,
+    "portrait-boss-phase-3:roadCorridorWidth": true,
+    "portrait-boss-phase-3:towerClearance": true,
+    "portrait-boss-phase-3:vanishingPoint": true,
+    "portrait-boss-phase-3:finiteFarPlane": true,
+    "portrait-boss-phase-3:perspectiveSpeedRatio": true,
+    "portrait-boss-phase-3:sharedProjectionScale": true,
+    "portrait-boss-phase-3:cableAndHangerAnchors": true,
+    "portrait-boss-phase-3:entityGrounding": true,
+    "portrait-boss-phase-3:waterExcludedFromDeck": true,
+    "portrait-boss-phase-3:removedPresentation": true,
+    "portrait-boss-phase-3:waterContinuity": true,
+    "portrait-chaos:safeArea": true,
+    "portrait-chaos:hudOverlap": true,
+    "portrait-chaos:planarDeck": true,
+    "portrait-chaos:roadCorridorWidth": true,
+    "portrait-chaos:towerClearance": true,
+    "portrait-chaos:vanishingPoint": true,
+    "portrait-chaos:finiteFarPlane": true,
+    "portrait-chaos:perspectiveSpeedRatio": true,
+    "portrait-chaos:sharedProjectionScale": true,
+    "portrait-chaos:cableAndHangerAnchors": true,
+    "portrait-chaos:entityGrounding": true,
+    "portrait-chaos:waterExcludedFromDeck": true,
+    "portrait-chaos:removedPresentation": true,
+    "portrait-chaos:waterContinuity": true,
+    "portrait-gameover:safeArea": true,
+    "portrait-gameover:hudOverlap": true,
+    "portrait-gameover:planarDeck": true,
+    "portrait-gameover:roadCorridorWidth": true,
+    "portrait-gameover:towerClearance": true,
+    "portrait-gameover:vanishingPoint": true,
+    "portrait-gameover:finiteFarPlane": true,
+    "portrait-gameover:perspectiveSpeedRatio": true,
+    "portrait-gameover:sharedProjectionScale": true,
+    "portrait-gameover:cableAndHangerAnchors": true,
+    "portrait-gameover:entityGrounding": true,
+    "portrait-gameover:waterExcludedFromDeck": true,
+    "portrait-gameover:removedPresentation": true,
+    "portrait-gameover:waterContinuity": true,
+    "landscape-home:safeArea": true,
+    "landscape-home:hudOverlap": true,
+    "landscape-home:planarDeck": true,
+    "landscape-home:roadCorridorWidth": true,
+    "landscape-home:towerClearance": true,
+    "landscape-home:vanishingPoint": true,
+    "landscape-home:finiteFarPlane": true,
+    "landscape-home:perspectiveSpeedRatio": true,
+    "landscape-home:sharedProjectionScale": true,
+    "landscape-home:cableAndHangerAnchors": true,
+    "landscape-home:entityGrounding": true,
+    "landscape-home:waterExcludedFromDeck": true,
+    "landscape-home:removedPresentation": true,
+    "landscape-home:waterContinuity": true,
+    "landscape-horde:safeArea": true,
+    "landscape-horde:hudOverlap": true,
+    "landscape-horde:planarDeck": true,
+    "landscape-horde:roadCorridorWidth": true,
+    "landscape-horde:towerClearance": true,
+    "landscape-horde:vanishingPoint": true,
+    "landscape-horde:finiteFarPlane": true,
+    "landscape-horde:perspectiveSpeedRatio": true,
+    "landscape-horde:sharedProjectionScale": true,
+    "landscape-horde:cableAndHangerAnchors": true,
+    "landscape-horde:entityGrounding": true,
+    "landscape-horde:waterExcludedFromDeck": true,
+    "landscape-horde:removedPresentation": true,
+    "landscape-horde:waterContinuity": true,
+    "landscape-gate:safeArea": true,
+    "landscape-gate:hudOverlap": true,
+    "landscape-gate:planarDeck": true,
+    "landscape-gate:roadCorridorWidth": true,
+    "landscape-gate:towerClearance": true,
+    "landscape-gate:vanishingPoint": true,
+    "landscape-gate:finiteFarPlane": true,
+    "landscape-gate:perspectiveSpeedRatio": true,
+    "landscape-gate:sharedProjectionScale": true,
+    "landscape-gate:cableAndHangerAnchors": true,
+    "landscape-gate:entityGrounding": true,
+    "landscape-gate:waterExcludedFromDeck": true,
+    "landscape-gate:removedPresentation": true,
+    "landscape-gate:waterContinuity": true,
+    "landscape-dense:safeArea": true,
+    "landscape-dense:hudOverlap": true,
+    "landscape-dense:planarDeck": true,
+    "landscape-dense:roadCorridorWidth": true,
+    "landscape-dense:towerClearance": true,
+    "landscape-dense:vanishingPoint": true,
+    "landscape-dense:finiteFarPlane": true,
+    "landscape-dense:perspectiveSpeedRatio": true,
+    "landscape-dense:sharedProjectionScale": true,
+    "landscape-dense:cableAndHangerAnchors": true,
+    "landscape-dense:entityGrounding": true,
+    "landscape-dense:waterExcludedFromDeck": true,
+    "landscape-dense:removedPresentation": true,
+    "landscape-dense:waterContinuity": true,
+    "landscape-frenzy:safeArea": true,
+    "landscape-frenzy:hudOverlap": true,
+    "landscape-frenzy:planarDeck": true,
+    "landscape-frenzy:roadCorridorWidth": true,
+    "landscape-frenzy:towerClearance": true,
+    "landscape-frenzy:vanishingPoint": true,
+    "landscape-frenzy:finiteFarPlane": true,
+    "landscape-frenzy:perspectiveSpeedRatio": true,
+    "landscape-frenzy:sharedProjectionScale": true,
+    "landscape-frenzy:cableAndHangerAnchors": true,
+    "landscape-frenzy:entityGrounding": true,
+    "landscape-frenzy:waterExcludedFromDeck": true,
+    "landscape-frenzy:removedPresentation": true,
+    "landscape-frenzy:waterContinuity": true,
+    "landscape-shop:safeArea": true,
+    "landscape-shop:hudOverlap": true,
+    "landscape-shop:planarDeck": true,
+    "landscape-shop:roadCorridorWidth": true,
+    "landscape-shop:towerClearance": true,
+    "landscape-shop:vanishingPoint": true,
+    "landscape-shop:finiteFarPlane": true,
+    "landscape-shop:perspectiveSpeedRatio": true,
+    "landscape-shop:sharedProjectionScale": true,
+    "landscape-shop:cableAndHangerAnchors": true,
+    "landscape-shop:entityGrounding": true,
+    "landscape-shop:waterExcludedFromDeck": true,
+    "landscape-shop:removedPresentation": true,
+    "landscape-shop:waterContinuity": true,
+    "landscape-reward:safeArea": true,
+    "landscape-reward:hudOverlap": true,
+    "landscape-reward:planarDeck": true,
+    "landscape-reward:roadCorridorWidth": true,
+    "landscape-reward:towerClearance": true,
+    "landscape-reward:vanishingPoint": true,
+    "landscape-reward:finiteFarPlane": true,
+    "landscape-reward:perspectiveSpeedRatio": true,
+    "landscape-reward:sharedProjectionScale": true,
+    "landscape-reward:cableAndHangerAnchors": true,
+    "landscape-reward:entityGrounding": true,
+    "landscape-reward:waterExcludedFromDeck": true,
+    "landscape-reward:removedPresentation": true,
+    "landscape-reward:waterContinuity": true,
+    "landscape-revive:safeArea": true,
+    "landscape-revive:hudOverlap": true,
+    "landscape-revive:planarDeck": true,
+    "landscape-revive:roadCorridorWidth": true,
+    "landscape-revive:towerClearance": true,
+    "landscape-revive:vanishingPoint": true,
+    "landscape-revive:finiteFarPlane": true,
+    "landscape-revive:perspectiveSpeedRatio": true,
+    "landscape-revive:sharedProjectionScale": true,
+    "landscape-revive:cableAndHangerAnchors": true,
+    "landscape-revive:entityGrounding": true,
+    "landscape-revive:waterExcludedFromDeck": true,
+    "landscape-revive:removedPresentation": true,
+    "landscape-revive:waterContinuity": true,
+    "landscape-boss-phase-1:safeArea": true,
+    "landscape-boss-phase-1:hudOverlap": true,
+    "landscape-boss-phase-1:planarDeck": true,
+    "landscape-boss-phase-1:roadCorridorWidth": true,
+    "landscape-boss-phase-1:towerClearance": true,
+    "landscape-boss-phase-1:vanishingPoint": true,
+    "landscape-boss-phase-1:finiteFarPlane": true,
+    "landscape-boss-phase-1:perspectiveSpeedRatio": true,
+    "landscape-boss-phase-1:sharedProjectionScale": true,
+    "landscape-boss-phase-1:cableAndHangerAnchors": true,
+    "landscape-boss-phase-1:entityGrounding": true,
+    "landscape-boss-phase-1:waterExcludedFromDeck": true,
+    "landscape-boss-phase-1:removedPresentation": true,
+    "landscape-boss-phase-1:waterContinuity": true,
+    "landscape-boss-phase-3:safeArea": true,
+    "landscape-boss-phase-3:hudOverlap": true,
+    "landscape-boss-phase-3:planarDeck": true,
+    "landscape-boss-phase-3:roadCorridorWidth": true,
+    "landscape-boss-phase-3:towerClearance": true,
+    "landscape-boss-phase-3:vanishingPoint": true,
+    "landscape-boss-phase-3:finiteFarPlane": true,
+    "landscape-boss-phase-3:perspectiveSpeedRatio": true,
+    "landscape-boss-phase-3:sharedProjectionScale": true,
+    "landscape-boss-phase-3:cableAndHangerAnchors": true,
+    "landscape-boss-phase-3:entityGrounding": true,
+    "landscape-boss-phase-3:waterExcludedFromDeck": true,
+    "landscape-boss-phase-3:removedPresentation": true,
+    "landscape-boss-phase-3:waterContinuity": true,
+    "landscape-chaos:safeArea": true,
+    "landscape-chaos:hudOverlap": true,
+    "landscape-chaos:planarDeck": true,
+    "landscape-chaos:roadCorridorWidth": true,
+    "landscape-chaos:towerClearance": true,
+    "landscape-chaos:vanishingPoint": true,
+    "landscape-chaos:finiteFarPlane": true,
+    "landscape-chaos:perspectiveSpeedRatio": true,
+    "landscape-chaos:sharedProjectionScale": true,
+    "landscape-chaos:cableAndHangerAnchors": true,
+    "landscape-chaos:entityGrounding": true,
+    "landscape-chaos:waterExcludedFromDeck": true,
+    "landscape-chaos:removedPresentation": true,
+    "landscape-chaos:waterContinuity": true,
+    "landscape-gameover:safeArea": true,
+    "landscape-gameover:hudOverlap": true,
+    "landscape-gameover:planarDeck": true,
+    "landscape-gameover:roadCorridorWidth": true,
+    "landscape-gameover:towerClearance": true,
+    "landscape-gameover:vanishingPoint": true,
+    "landscape-gameover:finiteFarPlane": true,
+    "landscape-gameover:perspectiveSpeedRatio": true,
+    "landscape-gameover:sharedProjectionScale": true,
+    "landscape-gameover:cableAndHangerAnchors": true,
+    "landscape-gameover:entityGrounding": true,
+    "landscape-gameover:waterExcludedFromDeck": true,
+    "landscape-gameover:removedPresentation": true,
+    "landscape-gameover:waterContinuity": true,
+    "portraitDenseCrowd": true,
+    "landscapeDenseCrowd": true,
+    "portraitAndLandscapeProfiles": true,
+    "portraitFrenzyPresentation": true,
+    "landscapeFrenzyPresentation": true,
+    "homeRecordLabels": true,
+    "difficultySelectionVisual": true,
+    "difficultySelectionRuntime": true,
+    "keyboardSteeringAcrossLanes": true,
+    "touchSteeringAcrossLanes": true,
+    "pauseFreezesSimulation": true,
+    "pauseHasNoShop": true,
+    "resumeFromDashboard": true,
+    "armoryPurchaseSpendsPoints": true,
+    "armoryContinuesRun": true,
+    "laneLockedTradeoffGate": true,
+    "enemyFormationLaneOwnership": true,
+    "laneTelegraphedEnemyFire": true,
+    "comboScoringAndBadge": true,
+    "comboExpiresCleanly": true,
+    "bossPhasesAndDamage": true,
+    "sixArmoryChoices": true,
+    "bossArmoryTransition": true,
+    "extraLifeStartsProtectedRecovery": true,
+    "recoveryReturnsToRun": true,
+    "gameOverOnlyWithoutReserve": true,
+    "cleanRetry": true,
+    "twentyWaveEndlessProgression": true,
+    "noVictoryLoop": true,
+    "reloadStartsFresh": true,
+    "onlyPersonalRecordPersistence": true,
+    "recordsDoNotLeakIntoFreshRun": true,
+    "mobileP95AtMost16_7ms": true,
+    "desktopP95AtMost16_7ms": true,
+    "stressSceneEntityMinimums": true,
+    "stress4xP95AtMost33_3ms": true,
+    "stressFramesOver50Below1Percent": true,
+    "soakHeapGrowthAtMost15Percent": true,
+    "soakEntitiesRemainBounded": true,
+    "noConsoleErrors": true,
+    "noFailedRequests": true,
+    "noSourceMastersAtRuntime": true,
+    "generatedOceanRuntimeAsset": true
+  },
+  "failures": [],
+  "performance": {
+    "mobile": {
+      "samples": 176,
+      "p50": 16.699999999999818,
+      "p95": 16.799999999999727,
+      "max": 16.800000000000182,
+      "over50": 0,
+      "refreshNormalizedP95": 16.666666666666668
+    },
+    "desktop": {
+      "samples": 176,
+      "p50": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182,
+      "over50": 0,
+      "refreshNormalizedP95": 16.666666666666668
+    },
+    "stressBenchmarks1x": {
+      "drawMs": 0.504999999993015,
+      "updateMs": 0.25666666666511445
+    },
+    "stressBenchmarks4x": {
+      "drawMs": 1.7249999999961194,
+      "updateMs": 1.05,
+      "layers": {
+        "foregroundClear": 0.10000000000582077,
+        "environmentMotion": 0.28750000000582077,
+        "telegraphs": 0.1374999999825377,
+        "enemiesAndBoss": 1.3249999999825377,
+        "hostileProjectiles": 0.0625,
+        "squadProjectiles": 0.27499999999417923,
+        "squad": 0.9000000000232831,
+        "effects": 0.36249999998835847
+      }
+    },
+    "stress4x": {
+      "samples": 429,
+      "p50": 16.699999999999818,
+      "p95": 33.30000000000109,
+      "max": 50,
+      "over50": 0,
+      "refreshNormalizedP95": 33.333333333333336
+    },
+    "soak": {
+      "durationMs": 15000,
+      "initialHeap": 3329156,
+      "finalHeap": 3291420,
+      "heapGrowth": -0.011335005028301468,
+      "entitySamples": [
+        {
+          "enemies": 180,
+          "bullets": 696,
+          "enemyBullets": 4,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 189,
+              "free": 4
+            },
+            "bullets": {
+              "created": 720,
+              "free": 24
+            },
+            "enemyBullets": {
+              "created": 11,
+              "free": 7
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 35,
+              "free": 19
+            },
+            "telegraphs": {
+              "created": 9,
+              "free": 6
+            }
+          }
+        },
+        {
+          "enemies": 180,
+          "bullets": 648,
+          "enemyBullets": 8,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 189,
+              "free": 8
+            },
+            "bullets": {
+              "created": 720,
+              "free": 72
+            },
+            "enemyBullets": {
+              "created": 11,
+              "free": 3
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 35,
+              "free": 18
+            },
+            "telegraphs": {
+              "created": 10,
+              "free": 5
+            }
+          }
+        },
+        {
+          "enemies": 180,
+          "bullets": 696,
+          "enemyBullets": 11,
+          "particles": 0,
+          "created": {
+            "enemies": {
+              "created": 189,
+              "free": 8
+            },
+            "bullets": {
+              "created": 720,
+              "free": 24
+            },
+            "enemyBullets": {
+              "created": 11,
+              "free": 0
+            },
+            "particles": {
+              "created": 80,
+              "free": 80
+            },
+            "floaters": {
+              "created": 35,
+              "free": 14
+            },
+            "telegraphs": {
+              "created": 10,
+              "free": 5
+            }
+          }
+        }
+      ]
+    }
+  },
+  "captures": {
+    "portrait-home": {
+      "filename": "portrait-home.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 0,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "home",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.07777777777907129
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-horde": {
+      "filename": "portrait-horde.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.3111111111098176
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 36,
+          "groundedEntityCount": 36,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-gate": {
+      "filename": "portrait-gate.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 20,
+        "enemies": 18,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.4000000000006467
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 17,
+          "groundedEntityCount": 17,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-dense": {
+      "filename": "portrait-dense.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 12,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 96,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.5444444444437977
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 32,
+          "groundedEntityCount": 32,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-frenzy": {
+      "filename": "portrait-frenzy.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.3444444444450912
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          },
+          {
+            "id": "frenzyBadge",
+            "rect": {
+              "x": 147.2890625,
+              "y": 91,
+              "width": 95.421875,
+              "height": 32,
+              "top": 91,
+              "right": 242.7109375,
+              "bottom": 123,
+              "left": 147.2890625
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 36,
+          "groundedEntityCount": 36,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": true,
+          "text": "FRENZY6.4s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-shop": {
+      "filename": "portrait-shop.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 7,
+      "difficulty": "veteran",
+      "phase": "paused",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.24722222222286896
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-reward": {
+      "filename": "portrait-reward.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 5,
+      "difficulty": "veteran",
+      "phase": "armory",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.20000000000194026
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-revive": {
+      "filename": "portrait-revive.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 9,
+      "difficulty": "veteran",
+      "phase": "recovery",
+      "entityCounts": {
+        "squad": 13,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 9,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.20833333333333334
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-boss-phase-1": {
+      "filename": "portrait-boss-p1.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 8,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.20833333333333334
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 15.6015625,
+              "y": 91,
+              "width": 358.796875,
+              "height": 40,
+              "top": 91,
+              "right": 374.3984375,
+              "bottom": 131,
+              "left": 15.6015625
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 1,
+          "groundedEntityCount": 1,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-boss-phase-3": {
+      "filename": "portrait-boss-p3.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 15,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 24,
+        "telegraphs": 1
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.399999999997413
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.5,
+              "y": 56,
+              "width": 185,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.5,
+              "bottom": 85.390625,
+              "left": 102.5
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 15.6015625,
+              "y": 91,
+              "width": 358.796875,
+              "height": 40,
+              "top": 91,
+              "right": 374.3984375,
+              "bottom": 131,
+              "left": 15.6015625
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 1,
+          "groundedEntityCount": 1,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-chaos": {
+      "filename": "portrait-chaos.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 909,
+      "wave": 24,
+      "difficulty": "elite",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 180,
+        "playerBullets": 360,
+        "enemyBullets": 0,
+        "particles": 80,
+        "telegraphs": 3
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.5222222222202819
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 7,
+              "y": 7,
+              "width": 80,
+              "height": 44,
+              "top": 7,
+              "right": 87,
+              "bottom": 51,
+              "left": 7
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 205,
+              "y": 7,
+              "width": 178,
+              "height": 44,
+              "top": 7,
+              "right": 383,
+              "bottom": 51,
+              "left": 205
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 102.2265625,
+              "y": 56,
+              "width": 185.546875,
+              "height": 29.390625,
+              "top": 56,
+              "right": 287.7734375,
+              "bottom": 85.390625,
+              "left": 102.2265625
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 15.6015625,
+              "y": 91,
+              "width": 358.796875,
+              "height": 40,
+              "top": 91,
+              "right": 374.3984375,
+              "bottom": 131,
+              "left": 15.6015625
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 181,
+          "groundedEntityCount": 181,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "portrait-gameover": {
+      "filename": "portrait-gameover.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1,
+      "seed": 708,
+      "wave": 11,
+      "difficulty": "veteran",
+      "phase": "game-over",
+      "entityCounts": {
+        "squad": 1,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.07222222222157547
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 80.04166666666669,
+        "projection": {
+          "horizon": -84.4,
+          "deckBottom": 865.0999999999999,
+          "vanishingX": 195,
+          "vanishingRoadWidth": 49.44642857142857,
+          "vanishingBridgeWidth": 57.357857142857135,
+          "roadWidthRatio": 0.71,
+          "minProjectedStep": 7.262071029529153,
+          "maxProjectedStep": 177.54878048780506,
+          "projectedSpeedRatio": 24.448780487804825,
+          "cableAnchorError": 0,
+          "hangerAnchorError": 0,
+          "towerClearance": 4.839489100817445,
+          "towerHeightScaleError": 0,
+          "profile": "portrait",
+          "leftMaxDeviation": 2.842170943040401e-14,
+          "rightMaxDeviation": 2.842170943040401e-14,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.19113149847094804,
+              "roadScale": 0.19113149847094804,
+              "enemyScale": 0.19113149847094804,
+              "gateScale": 0.19113149847094807,
+              "shadowScale": 0.19113149847094804
+            },
+            {
+              "y": 0.24,
+              "scale": 0.2224199288256228,
+              "roadScale": 0.2224199288256228,
+              "enemyScale": 0.2224199288256228,
+              "gateScale": 0.2224199288256228,
+              "shadowScale": 0.2224199288256228
+            },
+            {
+              "y": 0.5,
+              "scale": 0.30303030303030304,
+              "roadScale": 0.30303030303030304,
+              "enemyScale": 0.30303030303030304,
+              "gateScale": 0.30303030303030304,
+              "shadowScale": 0.30303030303030304
+            },
+            {
+              "y": 0.76,
+              "scale": 0.47528517110266155,
+              "roadScale": 0.4752851711026615,
+              "enemyScale": 0.4752851711026615,
+              "gateScale": 0.47528517110266155,
+              "shadowScale": 0.47528517110266155
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 5.551115123125783e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-home": {
+      "filename": "landscape-home.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 0,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "home",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.11666666666860692
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-horde": {
+      "filename": "landscape-horde.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.3249999999987065
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 36,
+          "groundedEntityCount": 36,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-gate": {
+      "filename": "landscape-gate.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 20,
+        "enemies": 18,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.6305555555574958
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 17,
+          "groundedEntityCount": 17,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-dense": {
+      "filename": "landscape-dense.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 705,
+      "wave": 12,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 96,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.6027777777764842
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 32,
+          "groundedEntityCount": 32,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-frenzy": {
+      "filename": "landscape-frenzy.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 1,
+      "difficulty": "veteran",
+      "phase": "playing",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 36,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.4083333333320398
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          },
+          {
+            "id": "frenzyBadge",
+            "rect": {
+              "x": 1232.9375,
+              "y": 76,
+              "width": 114.0625,
+              "height": 38,
+              "top": 76,
+              "right": 1347,
+              "bottom": 114,
+              "left": 1232.9375
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 36,
+          "groundedEntityCount": 36,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": true,
+          "text": "FRENZY6.4s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-shop": {
+      "filename": "landscape-shop.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 704,
+      "wave": 7,
+      "difficulty": "veteran",
+      "phase": "paused",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.33888888889082913
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-reward": {
+      "filename": "landscape-reward.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 5,
+      "difficulty": "veteran",
+      "phase": "armory",
+      "entityCounts": {
+        "squad": 14,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.3111111111098176
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-revive": {
+      "filename": "landscape-revive.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 706,
+      "wave": 9,
+      "difficulty": "veteran",
+      "phase": "recovery",
+      "entityCounts": {
+        "squad": 13,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 9,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.3611111111111111
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-boss-phase-1": {
+      "filename": "landscape-boss-p1.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 8,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.34444444444832495
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 402.5,
+              "y": 82,
+              "width": 560,
+              "height": 52,
+              "top": 82,
+              "right": 962.5,
+              "bottom": 134,
+              "left": 402.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 1,
+          "groundedEntityCount": 1,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-boss-phase-3": {
+      "filename": "landscape-boss-p3.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 712,
+      "wave": 15,
+      "difficulty": "veteran",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 0,
+        "playerBullets": 24,
+        "enemyBullets": 0,
+        "particles": 24,
+        "telegraphs": 1
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.5138888888888888
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 245,
+              "height": 37.796875,
+              "top": 72,
+              "right": 263,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 402.5,
+              "y": 82,
+              "width": 560,
+              "height": 52,
+              "top": 82,
+              "right": 962.5,
+              "bottom": 134,
+              "left": 402.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 1,
+          "groundedEntityCount": 1,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-chaos": {
+      "filename": "landscape-chaos.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 909,
+      "wave": 24,
+      "difficulty": "elite",
+      "phase": "boss",
+      "entityCounts": {
+        "squad": 24,
+        "enemies": 180,
+        "playerBullets": 360,
+        "enemyBullets": 0,
+        "particles": 80,
+        "telegraphs": 3
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.7888888888927694
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [
+          {
+            "id": "hud-cluster hud-primary",
+            "rect": {
+              "x": 303.5,
+              "y": 11,
+              "width": 176,
+              "height": 54,
+              "top": 11,
+              "right": 479.5,
+              "bottom": 65,
+              "left": 303.5
+            }
+          },
+          {
+            "id": "hud-cluster hud-run",
+            "rect": {
+              "x": 748.375,
+              "y": 11,
+              "width": 313.125,
+              "height": 54,
+              "top": 11,
+              "right": 1061.5,
+              "bottom": 65,
+              "left": 748.375
+            }
+          },
+          {
+            "id": "floatingStats",
+            "rect": {
+              "x": 18,
+              "y": 72,
+              "width": 248.421875,
+              "height": 37.796875,
+              "top": 72,
+              "right": 266.421875,
+              "bottom": 109.796875,
+              "left": 18
+            }
+          },
+          {
+            "id": "bossHud",
+            "rect": {
+              "x": 402.5,
+              "y": 82,
+              "width": 560,
+              "height": 52,
+              "top": 82,
+              "right": 962.5,
+              "bottom": 134,
+              "left": 402.5
+            }
+          }
+        ],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 181,
+          "groundedEntityCount": 181,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    },
+    "landscape-gameover": {
+      "filename": "landscape-gameover.png",
+      "viewport": {
+        "width": 1365,
+        "height": 768
+      },
+      "deviceScaleFactor": 1,
+      "seed": 708,
+      "wave": 11,
+      "difficulty": "veteran",
+      "phase": "game-over",
+      "entityCounts": {
+        "squad": 1,
+        "enemies": 0,
+        "playerBullets": 0,
+        "enemyBullets": 0,
+        "particles": 0,
+        "telegraphs": 0
+      },
+      "frameTimeSummary": {
+        "synchronousDrawMeanMs": 0.2361111111111111
+      },
+      "runtimeAssetCount": 21,
+      "audit": {
+        "visibleBoxes": [],
+        "overlaps": [],
+        "safeArea": true,
+        "maxWaterJump": 87.1111111111111,
+        "projection": {
+          "horizon": -122.88,
+          "deckBottom": 787.1999999999999,
+          "vanishingX": 682.5,
+          "vanishingRoadWidth": 163.8,
+          "vanishingBridgeWidth": 193.284,
+          "roadWidthRatio": 0.6,
+          "minProjectedStep": 7.584000000000003,
+          "maxProjectedStep": 151.68000000000006,
+          "projectedSpeedRatio": 20,
+          "cableAnchorError": 1.4210854715202004e-14,
+          "hangerAnchorError": 0,
+          "towerClearance": 20.515189393939465,
+          "towerHeightScaleError": 0,
+          "profile": "landscape",
+          "leftMaxDeviation": 1.1368683772161603e-13,
+          "rightMaxDeviation": 1.1368683772161603e-13,
+          "sharedScaleSamples": [
+            {
+              "y": 0.08,
+              "scale": 0.2136752136752137,
+              "roadScale": 0.21367521367521372,
+              "enemyScale": 0.2136752136752137,
+              "gateScale": 0.21367521367521372,
+              "shadowScale": 0.21367521367521372
+            },
+            {
+              "y": 0.24,
+              "scale": 0.24752475247524752,
+              "roadScale": 0.24752475247524755,
+              "enemyScale": 0.24752475247524752,
+              "gateScale": 0.24752475247524752,
+              "shadowScale": 0.24752475247524752
+            },
+            {
+              "y": 0.5,
+              "scale": 0.3333333333333333,
+              "roadScale": 0.3333333333333333,
+              "enemyScale": 0.3333333333333333,
+              "gateScale": 0.3333333333333333,
+              "shadowScale": 0.3333333333333333
+            },
+            {
+              "y": 0.76,
+              "scale": 0.5102040816326531,
+              "roadScale": 0.5102040816326531,
+              "enemyScale": 0.5102040816326531,
+              "gateScale": 0.5102040816326531,
+              "shadowScale": 0.5102040816326531
+            },
+            {
+              "y": 1,
+              "scale": 1,
+              "roadScale": 1,
+              "enemyScale": 1,
+              "gateScale": 1,
+              "shadowScale": 1
+            }
+          ],
+          "sharedScaleError": 2.7755575615628914e-17,
+          "visibleEntityCount": 0,
+          "groundedEntityCount": 0,
+          "entityGroundingError": 0
+        },
+        "waterMask": {
+          "maxDeckAlpha": 0,
+          "minWaterAlpha": 255
+        },
+        "frenzy": {
+          "centerAlpha": 0,
+          "borderAlpha": 66,
+          "cornerAlpha": 130
+        },
+        "frenzyBadge": {
+          "visible": false,
+          "text": "FRENZY0.0s"
+        },
+        "removedPresentation": {
+          "enemyPanelAbsent": true,
+          "safeWordingAbsent": true
+        }
+      }
+    }
+  },
+  "runtimeRequests": [
+    "/",
+    "/assets/blastline/branding/logo-primary.webp",
+    "/assets/blastline/characters/boss.webp",
+    "/assets/blastline/characters/enemy-elite-1.webp",
+    "/assets/blastline/characters/enemy-elite-2.webp",
+    "/assets/blastline/characters/enemy-elite-3.webp",
+    "/assets/blastline/characters/enemy-elite-4.webp",
+    "/assets/blastline/characters/enemy-grunt-1.webp",
+    "/assets/blastline/characters/enemy-grunt-2.webp",
+    "/assets/blastline/characters/enemy-grunt-3.webp",
+    "/assets/blastline/characters/enemy-grunt-4.webp",
+    "/assets/blastline/characters/enemy-special-1.webp",
+    "/assets/blastline/characters/enemy-special-2.webp",
+    "/assets/blastline/characters/enemy-special-3.webp",
+    "/assets/blastline/characters/enemy-special-4.webp",
+    "/assets/blastline/characters/home-hero.webp",
+    "/assets/blastline/characters/player-run-1.webp",
+    "/assets/blastline/characters/player-run-2.webp",
+    "/assets/blastline/characters/player-run-3.webp",
+    "/assets/blastline/characters/player-run-4.webp",
+    "/assets/blastline/environment/asphalt.webp",
+    "/assets/blastline/environment/ocean-surface-v2.webp",
+    "/assets/blastline/environment/ocean-whitecaps.webp",
+    "/assets/blastline/ui/upgrade-armor.webp",
+    "/assets/blastline/ui/upgrade-power.webp",
+    "/assets/blastline/ui/upgrade-rate.webp",
+    "/assets/blastline/ui/upgrade-spread.webp",
+    "/assets/blastline/ui/upgrade-troops.webp",
+    "/assets/portrait.webp",
+    "/src/audio.mjs",
+    "/src/core.mjs",
+    "/src/enemy-render.mjs",
+    "/src/game.js",
+    "/src/production-render.mjs",
+    "/src/projection.mjs",
+    "/styles.css"
+  ],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "unexpectedError": null
+}

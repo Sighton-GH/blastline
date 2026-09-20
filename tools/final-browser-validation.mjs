@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT_NAME = 'environment-perspective-upgrade-2026-08-15';
+const OUTPUT_NAME = 'production-redesign-2026-09-19';
 const OUTPUT = path.join(ROOT, 'docs', 'visual-audit', OUTPUT_NAME);
 const FULL_SOAK = process.env.BLASTLINE_FULL_SOAK === '1';
 const PERF_ONLY = process.argv.includes('--perf-only');
@@ -98,8 +98,9 @@ async function visualAudit(page) {
     let maxWaterJump = 0;
     for (const x of xSamples) {
       let previous = null;
-      const endY = Math.min(innerHeight * .68, horizon + 340);
-      for (let y = Math.min(innerHeight - 3, horizon + 55); y < endY; y += 6) {
+      const startY = Math.max(2, Math.min(innerHeight - 3, horizon + 55));
+      const endY = Math.max(startY + 6, Math.min(innerHeight * .68, horizon + 340));
+      for (let y = startY; y < endY; y += 6) {
         const pixels = context.getImageData(Math.round(x * backingScale), Math.round(y * backingScale), Math.max(1, Math.round(24 * backingScale)), Math.max(1, Math.round(3 * backingScale))).data;
         const mean = [0, 0, 0];
         for (let offset = 0; offset < pixels.length; offset += 4) { mean[0] += pixels[offset]; mean[1] += pixels[offset + 1]; mean[2] += pixels[offset + 2]; }
@@ -166,7 +167,7 @@ async function captureState(context, viewportName, mode) {
   // regression toward the old near-full-width road, not the target itself.
   record(`${label}:roadCorridorWidth`, audit.projection.roadWidthRatio >= .54, audit.projection);
   record(`${label}:towerClearance`, audit.projection.towerClearance > 0, audit.projection);
-  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? .165 : .145)) < .002, audit.projection);
+  record(`${label}:vanishingPoint`, Math.abs(audit.projection.horizon / page.viewportSize().height - (viewportName === 'portrait' ? -.10 : -.16)) < .002, audit.projection);
   // Renamed from noBridgeEnd: worldY = 0 is now a real, finite-width reference plane below the
   // horizon (depthScale(0) = 1/depthRatio), not a zero-width vanishing point -- that finite far
   // plane is what fixed the cables drawing an X across the deck. Assert it stays comfortably
@@ -268,15 +269,17 @@ async function runInteractionValidation() {
   await page.waitForTimeout(400);
   const paused = await page.evaluate(() => __blastlineTest.getState());
   record('pauseFreezesSimulation', paused.state === 'paused' && paused.waveTime === pauseBefore.waveTime && paused.bullets === pauseBefore.bullets, { pauseBefore, paused });
-  await page.locator('[data-shop="damage"]').click();
-  record('shopInsufficientPoints', (await page.locator('#shopMessage').textContent()).includes('Need'));
-  await page.evaluate(() => __blastlineTest.setPoints(20));
-  const powerBefore = (await page.evaluate(() => __blastlineTest.getState())).power;
-  await page.locator('[data-shop="damage"]').click();
-  const afterPurchase = await page.evaluate(() => __blastlineTest.getState());
-  record('shopPurchaseSpendsPoints', afterPurchase.power === powerBefore + 1 && afterPurchase.skillPoints < 20, afterPurchase);
+  record('pauseHasNoShop', (await page.locator('[data-shop]').count()) === 0 && (await page.locator('#shopGrid').count()) === 0);
   await page.click('#resumeBtn');
   record('resumeFromDashboard', (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
+  await page.evaluate(() => { __blastlineTest.setPoints(2000); __blastlineTest.forceReward(); });
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
+  const powerBefore = (await page.evaluate(() => __blastlineTest.getState())).power;
+  await page.locator('.reward-card[data-upgrade="damage"]').click();
+  const afterPurchase = await page.evaluate(() => __blastlineTest.getState());
+  record('armoryPurchaseSpendsPoints', afterPurchase.power === powerBefore + 1 && afterPurchase.score < 2000, afterPurchase);
+  await page.locator('.armory-continue').click();
+  record('armoryContinuesRun', (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
 
   const gateSetup = await page.evaluate(() => {
     __blastlineTest.reset(201, 'veteran');
@@ -329,11 +332,12 @@ async function runInteractionValidation() {
   record('comboScoringAndBadge', comboResult.state.bestCombo >= 10 && comboResult.state.score > comboResult.state.kills * 12 && comboResult.badge.includes('HOT STREAK'), comboResult);
   const expiredCombo = await page.evaluate(() => {
     __blastlineTest.freeze(true);
-    __blastlineTest.setWaveTime(__blastlineTest.getState().waveDuration - 1);
+    __blastlineTest.setWaveTime(0);
+    __blastlineTest.setBuild({ fireRate: .01, projectiles: 1 });
     // Stop automatic targets from refreshing the timer while still exercising the
     // production combo countdown through deterministic simulation steps.
     __blastlineTest.setPlayerX(-.86);
-    __blastlineTest.advance(3);
+    __blastlineTest.advance(4);
     const state = __blastlineTest.getState();
     __blastlineTest.freeze(false);
     return state;
@@ -346,12 +350,13 @@ async function runInteractionValidation() {
   await page.evaluate(() => __blastlineTest.setBossPhase(3));
   const bossPhase = await page.evaluate(() => __blastlineTest.getState());
   record('bossPhasesAndDamage', bossPhase.boss.phase === 3 && bossPhase.boss.hp < bossPhase.boss.maxHp, bossPhase.boss);
-  await page.evaluate(() => __blastlineTest.defeatBoss());
-  await page.waitForFunction(() => __blastlineTest.getState().state === 'boss-reward');
+  await page.evaluate(() => { __blastlineTest.setPoints(2000); __blastlineTest.defeatBoss(); });
+  await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
   const rewards = await page.locator('.reward-card').evaluateAll(cards => cards.map(card => card.dataset.upgrade));
-  record('threeUniqueBossRewards', rewards.length === 3 && new Set(rewards).size === 3, rewards);
-  await page.locator('.reward-card').first().click();
-  record('endlessBossTransition', (await page.evaluate(() => __blastlineTest.getState())).wave === 9 && (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
+  record('sixArmoryChoices', rewards.length === 6 && new Set(rewards).size === 6, rewards);
+  await page.locator('.reward-card:not(:disabled)').first().click();
+  await page.locator('.armory-continue').click();
+  record('bossArmoryTransition', (await page.evaluate(() => __blastlineTest.getState())).wave === 9 && (await page.evaluate(() => __blastlineTest.getState())).state === 'playing');
 
   await page.evaluate(() => { __blastlineTest.reset(205, 'elite'); __blastlineTest.setLives(1); __blastlineTest.forceRevival(); });
   const recoveryStart = await page.evaluate(() => __blastlineTest.getState());
@@ -378,9 +383,9 @@ async function runEndlessProgression() {
     const bossState = await page.evaluate(() => { __blastlineTest.forceBoss(); return __blastlineTest.getState(); });
     progression.push({ wave: bossState.wave, boss: Boolean(bossState.boss) });
     await page.evaluate(() => __blastlineTest.defeatBoss());
-    await page.waitForFunction(() => __blastlineTest.getState().state === 'boss-reward');
+    await page.waitForFunction(() => __blastlineTest.getState().state === 'armory');
     await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
-    await page.locator('.reward-card').first().click();
+    await page.locator('.armory-continue').click();
     await page.waitForFunction(wave => __blastlineTest.getState().wave === wave && __blastlineTest.getState().state === 'playing', expected + 1);
   }
   const final = await page.evaluate(() => __blastlineTest.getState());
@@ -413,7 +418,7 @@ async function runPerformanceValidation() {
   const page = await newPage(context, 'performance-stress');
   const cdp = await context.newCDPSession(page);
   const stressStart = await page.evaluate(() => __blastlineTest.stressScene());
-  record('stressSceneEntityMinimums', stressStart.visibleSquad >= 60 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 3, stressStart);
+  record('stressSceneEntityMinimums', stressStart.visibleSquad === 24 && stressStart.activeEnemies >= 180 && Boolean(stressStart.boss) && stressStart.telegraphs.length >= 3, stressStart);
   await page.waitForTimeout(2000);
   performance.stressBenchmarks1x = await page.evaluate(() => ({ drawMs: __blastlineTest.benchmarkDraw(20), updateMs: __blastlineTest.benchmarkUpdate(60) }));
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -488,8 +493,8 @@ try {
   for (const mode of ['home', 'horde', 'gate', 'dense', 'frenzy', 'shop', 'reward', 'revive', 'boss-phase-1', 'boss-phase-3', 'chaos', 'gameover']) await captureState(landscape, 'landscape', mode);
   await landscape.close();
 
-  record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad >= 60 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
-  record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad >= 60 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
+  record('portraitDenseCrowd', captures['portrait-dense'].entityCounts.squad === 24 && captures['portrait-dense'].entityCounts.enemies >= 80, captures['portrait-dense'].entityCounts);
+  record('landscapeDenseCrowd', captures['landscape-dense'].entityCounts.squad === 24 && captures['landscape-dense'].entityCounts.enemies >= 80, captures['landscape-dense'].entityCounts);
   record('portraitAndLandscapeProfiles', captures['portrait-horde'].audit.projection.profile === 'portrait' && captures['landscape-horde'].audit.projection.profile === 'landscape');
   for (const viewport of ['portrait', 'landscape']) {
     const frenzy = captures[`${viewport}-frenzy`];
@@ -511,7 +516,7 @@ try {
   await makeComparisonBoard('frenzy', 'docs/art-reference/high-quality/10-endgame-chaos.png', 'landscape-frenzy');
   await makeComparisonBoard('boss', 'docs/art-reference/high-quality/06-boss-battle.png', 'landscape-boss-phase-3');
   await makeComparisonBoard('shop', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-shop');
-  await makeComparisonBoard('boss-reward', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-reward');
+  await makeComparisonBoard('armory', 'docs/art-reference/high-quality/07-between-waves-upgrades.png', 'landscape-reward');
   await makeComparisonBoard('chaos', 'docs/art-reference/high-quality/10-endgame-chaos.png', 'landscape-chaos');
   await makeComparisonBoard('game-over', 'docs/art-reference/high-quality/09-game-over.png', 'landscape-gameover');
   await makeDifferenceBoard('portrait-gameplay', 'docs/visual-audit/final-2026-08-15/mobile-gameplay.png', 'portrait-horde');
