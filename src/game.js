@@ -94,7 +94,7 @@ const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards', 'upgradeInfo', 'upgradeInfoTitle', 'upgradeInfoTier', 'upgradeInfoBody', 'upgradeInfoClose',
-  'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
+  'rewardWave', 'rewardFooter', 'rewardBalance', 'rewardBalanceValue', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints', 'runBrief',
@@ -1140,6 +1140,9 @@ function showBossRewards() {
     : armoryMode === 'reward'
       ? 'Pick a free upgrade. Your build carries through the run.'
       : 'Spend Points or continue. Your build carries through the run.');
+  const shopOpen = armoryMode !== 'reward';
+  dom.rewardBalance.hidden = !shopOpen;
+  if (shopOpen) setText(dom.rewardBalanceValue, format(run.points));
   dom.rewardCards.replaceChildren();
   if (armoryMode === 'reward' && Array.isArray(run.rewardChoices) && run.rewardChoices.length) {
     for (const item of run.rewardChoices) {
@@ -1180,7 +1183,11 @@ function showBossRewards() {
     const title = document.createElement('b'); title.textContent = item.title;
     const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
     const description = document.createElement('span'); description.className = 'description'; description.textContent = item.short;
-    const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = capped ? 'Fully upgraded' : `${cost} POINTS`;
+    const synergy = document.createElement('span');
+    synergy.className = 'synergy';
+    if (capped) synergy.textContent = 'Fully upgraded';
+    else if (run.points < cost) { synergy.textContent = `${format(cost)} POINTS · NEED ${format(cost - run.points)} MORE`; synergy.classList.add('short'); }
+    else synergy.textContent = `${format(cost)} POINTS · ${format(run.points - cost)} LEFT`;
     button.append(image, title, rank, description, synergy);
     button.onclick = () => chooseBossReward(item.id);
     const cell = document.createElement('div');
