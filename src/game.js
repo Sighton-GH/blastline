@@ -804,14 +804,14 @@ function spawnEnemy(type = 'grunt', options = {}) {
   const stats = TYPE_STATS[type] || TYPE_STATS.grunt;
   const lane = clamp(Math.round(options.lane ?? Math.floor(rng() * 3)), 0, 2);
   const lineX = clamp(options.x ?? laneCenter(lane), laneBounds(lane, .018).min, laneBounds(lane, .018).max);
-  const scaledHp = enemyHitPoints(type, run.wave);
+  const scaledHp = Math.max(1, Math.round(enemyHitPoints(type, run.wave) * (options.hpFactor || 1)));
   const enemy = pools.enemies.take({
     id: ++enemySerial, type, lane, x: lineX, lineX,
     y: options.y ?? (-.04 - rng() * .04), previousY: options.y ?? -.04, engagedAt: null,
-    hp: scaledHp, maxHp: scaledHp,
+    hp: scaledHp, maxHp: scaledHp, rewardFactor: options.rewardFactor || 1,
     shield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
     maxShield: type === 'shield' ? Math.min(3, (stats.shield || 0) + Math.floor(run.wave / 14)) : 0,
-    speed: options.speed ?? config.enemySpeed * stats.speed * (.97 + rng() * .06),
+    speed: options.speed ?? config.enemySpeed * stats.speed * (.97 + rng() * .06) * (options.speedFactor || 1),
     scale: stats.scale, contact: enemyContactDamage(type, run.wave),
     bob: options.marchPhase ?? rng() * 1000,
     hordeId: options.hordeId ?? null, hordeRow: options.hordeRow ?? 0,
@@ -837,15 +837,20 @@ function spawnFormation(forcedType, forcedCount) {
   const active = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
   const capacity = Math.min(config.activeCap - active, MAX_ACTIVE_ENEMIES - run.enemies.length);
   if (capacity <= 0) return 0;
-  const formation = forcedType || FORMATIONS[Math.floor(rng() * FORMATIONS.length)];
-  const desired = forcedCount ?? Math.min(config.hordeSize, Math.max(0, config.activeTarget - active));
+  // Early waves lean into huge low-HP melt swarms (Bryan): more bodies on the
+  // road, each dying fast, so the opening minutes are constant visible melting.
+  // Later waves keep mixed, tougher formations instead of bigger ones.
+  const swarmWave = !forcedType && run.wave <= 6 && rng() < .6;
+  const formation = forcedType || (swarmWave ? 'wall' : FORMATIONS[Math.floor(rng() * FORMATIONS.length)]);
+  const baseDesired = forcedCount ?? Math.min(config.hordeSize, Math.max(0, config.activeTarget - active));
+  const desired = swarmWave ? Math.round(baseDesired * 1.6) : baseDesired;
   const count = Math.min(capacity, Math.max(0, desired));
   if (!count) return 0;
   const lanes = formationLanes(formation);
   const hordeId = ++hordeSerial;
   const perLane = Math.ceil(count / lanes.length);
-  const columnsPerLane = formation === 'column' ? 2 : formation === 'wedge' ? 3 : 4;
-  const rowGap = formation === 'column' ? .029 : .033;
+  const columnsPerLane = swarmWave ? 5 : formation === 'column' ? 2 : formation === 'wedge' ? 3 : 4;
+  const rowGap = swarmWave ? .026 : formation === 'column' ? .029 : .033;
   let spawned = 0;
   for (let laneIndex = 0; laneIndex < lanes.length && spawned < count; laneIndex += 1) {
     const lane = lanes[laneIndex];
@@ -860,11 +865,21 @@ function spawnFormation(forcedType, forcedCount) {
       if (formation === 'wedge') offset *= 1 - Math.min(.65, row * .09);
       if (formation === 'staggered') offset += (row % 2 ? .025 : -.025);
       let type = chooseEnemyType();
-      if (formation === 'protected-core' && local % columnsPerLane === Math.floor(columnsPerLane / 2) && run.wave >= 3) type = 'shield';
+      if (swarmWave) {
+        const roll = rng();
+        type = roll < .78 ? 'grunt' : roll < .9 ? 'sprinter' : 'swarmer';
+      } else if (formation === 'protected-core' && local % columnsPerLane === Math.floor(columnsPerLane / 2) && run.wave >= 3) type = 'shield';
+      else if (run.wave >= 8 && row === 0 && formation !== 'column' && formation !== 'split-lane') {
+        // Later waves read tougher at a glance: an armored front row soaks the
+        // first volleys while the softer ranks stack up behind it.
+        type = run.wave >= 12 && local % 2 === 0 ? 'heavy' : 'shield';
+      }
       const y = -.008 - row * rowGap - laneIndex * .008;
       spawnEnemy(type, {
         lane, x: clampToLaneLocal(laneCenter(lane) + offset, lane), y,
         hordeId, hordeRow: row, formation,
+        hpFactor: swarmWave ? .62 : 1, rewardFactor: swarmWave ? .7 : 1,
+        speedFactor: swarmWave ? 1.06 : 1,
         marchPhase: hordeId * .71 + row * .32 + column * .19,
       });
       spawned += 1;

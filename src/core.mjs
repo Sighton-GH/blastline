@@ -442,7 +442,11 @@ export function enemyReward(type, killCount = 0, density = 1) {
 
 export function claimKillReward(enemy, killCount = 0, density = 1) {
   if (enemy.rewarded) return { enemy, reward: null };
-  return { enemy: { ...enemy, rewarded: true }, reward: enemyReward(enemy.type, killCount, density) };
+  const reward = enemyReward(enemy.type, killCount, density);
+  // Melt-swarm enemies spawn in larger numbers, so each pays proportionally
+  // less to keep the points economy on the calibrated curve.
+  if (enemy.rewardFactor && enemy.rewardFactor !== 1) reward.points = Math.max(1, Math.round(reward.points * enemy.rewardFactor));
+  return { enemy: { ...enemy, rewarded: true }, reward };
 }
 
 export function reviveSession(session) {
