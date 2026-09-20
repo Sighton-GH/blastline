@@ -1159,10 +1159,10 @@ function update(dt) {
 
   if (run.boss) {
     run.boss.previousY = run.boss.y;
-    run.boss.y = Math.min(.41, run.boss.y + dt * .19);
+    run.boss.y = Math.min(.57, run.boss.y + dt * .19);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
-    if (run.boss.y >= .405) {
+    if (run.boss.y >= .565) {
       run.boss.attackTimer -= dt;
       if (run.boss.attackTimer <= 0) {
         spawnBossAttack();
@@ -2511,7 +2511,7 @@ function setupStressScene() {
     spawnEnemy(type, { lane, x, y: .04 + row * .034, hordeId: 1 + Math.floor(index / 45), hordeRow: row, formation: 'stress' });
   }
   run.boss = {
-    id: ++enemySerial, type: 'boss', name: 'SCARLET ENGINE', lane: 1, x: 0, y: .29, previousY: .29,
+    id: ++enemySerial, type: 'boss', name: 'SCARLET ENGINE', lane: 1, x: 0, y: .57, previousY: .57,
     hp: 1_000_000_000, maxHp: 1_000_000_000, phase: 3, attackTimer: .1, attackSerial: 7, hitFlash: 0, shotFlash: .1, rewarded: false,
   };
   setState(GAME_STATE.BOSS);
@@ -2546,7 +2546,7 @@ if (qaMode) {
     spawnHordeNow() { return spawnFormation(); },
     setGateEncounter(options, y = .52, neutralLane = 1) { const encounter = setDebugGateEncounter(options, y, neutralLane); return encounter.gates.map(gate => ({ id: gate.id, lane: gate.lane, x: gate.x, text: gateText(gate), tone: gate.tone })); },
     setGatePair(left, right, y = .52) { return this.setGateEncounter([left, right], y, 1); },
-    forceBoss() { if (!ACTIVE_STATES.includes(state)) setState(GAME_STATE.PLAYING); spawnBoss(); run.boss.y = run.boss.previousY = .41; updateHud(true); return this.getState(); },
+    forceBoss() { if (!ACTIVE_STATES.includes(state)) setState(GAME_STATE.PLAYING); spawnBoss(); run.boss.y = run.boss.previousY = .57; updateHud(true); return this.getState(); },
     setBossPhase(value) { if (!run.boss) this.forceBoss(); const phase = clamp(Math.round(value), 1, 3); run.boss.hp = run.boss.maxHp * (phase === 1 ? .9 : phase === 2 ? .55 : .2); updateBossPhase(); updateHud(true); return run.boss.phase; },
     setBossHp(value) { if (run.boss) { run.boss.hp = clamp(Number(value) || 0, 0, run.boss.maxHp); updateBossPhase(); updateHud(true); } return run.boss?.hp ?? null; },
     defeatBoss() { if (!run.boss) this.forceBoss(); run.boss.hp = 0; finishBoss(); return state; },
@@ -2622,14 +2622,14 @@ function prepareCapture(mode) {
     config = getWaveConfig(run.wave, run.difficulty);
     run.player.troops = 36;
     spawnBoss();
-    run.boss.y = run.boss.previousY = .41;
+    run.boss.y = run.boss.previousY = .57;
     fireBurst();
   } else if (mode === 'boss-phase-3') {
     run.wave = 15;
     config = getWaveConfig(run.wave, run.difficulty);
     run.player.troops = 48;
     spawnBoss();
-    run.boss.y = run.boss.previousY = .41;
+    run.boss.y = run.boss.previousY = .57;
     run.boss.hp = run.boss.maxHp * .2;
     updateBossPhase();
     spawnBossAttack();
