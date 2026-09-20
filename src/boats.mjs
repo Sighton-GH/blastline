@@ -160,7 +160,10 @@ function drawBoat(target, boat, view) {
   const edge = view.bridgeHalfWidth(boat.y) * 1.03;
   const channel = Math.max(0, view.width / 2 - edge);
   const x = view.width / 2 + boat.side * (edge + channel * 0.5);
-  const hullWid = Math.min(view.scale(boat.y, 240), channel * 0.74);
+  // Scale anchor: a soldier is ~55-60 world units tall, so a 90-unit hull beam
+  // reads as a small landing craft (~4-5 soldier-widths) instead of a ferry.
+  // Bryan rejected the original 240-unit hull as massively out of scale.
+  const hullWid = Math.min(view.scale(boat.y, 90), channel * 0.62);
   const hullLen = hullWid * 2.4;             // along-screen (bow toward viewer)
   if (hullLen < 4) return; // still effectively at the horizon
 
