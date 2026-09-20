@@ -885,6 +885,12 @@ function spawnEnemyProjectile(enemy, options = {}) {
 
 function addTelegraph(lane, time, kind, source = null, options = {}) {
   if (run.telegraphs.length >= 24) return null;
+  // Fair-play invariant: at most two of the three lanes may be threatened at
+  // once, counting overlaps between concurrent patterns. A third-lane warning
+  // is refused so there is always a genuinely open escape lane.
+  const covered = new Set();
+  for (const active of run.telegraphs) if (!active.fired && !active.dead) covered.add(active.lane);
+  if (!covered.has(lane) && covered.size >= 2) return null;
   const warning = pools.telegraphs.take({
     lane, x: laneCenter(lane), time, maxTime: time, kind, source,
     damage: options.damage ?? 1, speed: options.speed ?? .48,
@@ -973,7 +979,8 @@ function spawnBossAttack() {
   } else if (pattern === 3 && !stressMode) {
     spawnFormation(boss.phase >= 3 ? 'protected-core' : 'split-lane', Math.min(24, 10 + run.wave));
   } else {
-    for (let lane = 0; lane < 3; lane += 1) addTelegraph(lane, .64 + lane * .1, 'cascade', boss, { damage: 1, speed: .6 });
+    const safeLane = (boss.attackSerial + run.wave * 2) % 3;
+    for (let lane = 0; lane < 3; lane += 1) if (lane !== safeLane) addTelegraph(lane, .64 + lane * .1, 'cascade', boss, { damage: 1, speed: .6 });
   }
   boss.shotFlash = .14;
 }
@@ -1389,7 +1396,7 @@ function updateTelegraphs(dt) {
       kind: warning.kind === 'demolition' ? 'hazard' : 'lane', lane: warning.lane,
       x: laneCenter(warning.lane), y: Math.max(.14, source.y + .03), vx: 0,
       vy: warning.speed, radius: warning.kind === 'demolition' ? .13 : .105,
-      damage: warning.damage, color: warning.kind === 'demolition' ? '#ffb02f' : '#ff543f',
+      damage: warning.damage, color: '#ff543f',
     });
   }
 }
@@ -1474,9 +1481,16 @@ function update(dt) {
       run.spawnTimer = 2.8;
     }
     if (run.waveTime >= config.duration) {
-      if (run.wave % 3 === 0) spawnBoss();
-      else openArmory();
-      return;
+      // A wave is cleared only when every enemy of that wave is actually down.
+      // The spawn schedule stops at duration-5; survivors must be shot down or
+      // break through the line (which removes them via the breach path) before
+      // the armory or boss may start. No off-screen cleanup, no early banner.
+      const remaining = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
+      if (remaining === 0) {
+        if (run.wave % 3 === 0) spawnBoss();
+        else openArmory();
+        return;
+      }
     }
   }
 
@@ -2033,7 +2047,7 @@ function drawBridgeStructure(target, geometry) {
     // Lamp posts: flanged base, tapered pole, arm reaching over the walkway,
     // housed head with a warm glow and a pool of light on the deck.
     for (const y of [.2, .44, .68, .9]) {
-      const p = edgePoint(side, y, 1.055);
+      const p = edgePoint(side, y, .985);
       const h = projectedPixels(sceneProjection, y, 96);
       const pw = Math.max(1.5, projectedPixels(sceneProjection, y, 7));
       const inward = -side;
@@ -2595,8 +2609,14 @@ function drawTelegraphs() {
     // summing alpha across overlaps -- at density this stops the road becoming an
     // opaque maroon wash (V6).
     ctx.globalCompositeOperation = 'lighten';
-    ctx.globalAlpha = .16 + urgency * .32 + Math.sin(ambientTime * 18) * .05;
-    ctx.fillStyle = warning.kind === 'demolition' ? '#ffb52f' : '#ff3f38';
+    // Two-beat warning rhythm: a steady slow flash while the lane arms, then a
+    // rapid strobe in the final stretch before the shots deploy.
+    const imminent = warning.time <= Math.min(.3, warning.maxTime * .34);
+    const flash = imminent
+      ? (Math.sin(ambientTime * 34) > 0 ? 1 : .18)
+      : .55 + .45 * Math.sin(ambientTime * 7);
+    ctx.globalAlpha = (.14 + urgency * .3) * flash + (imminent ? .12 : 0);
+    ctx.fillStyle = '#ff3f38';
     ctx.beginPath();
     ctx.moveTo(farLeft.x, farLeft.y);
     ctx.lineTo(farRight.x, farRight.y);
@@ -3020,7 +3040,7 @@ function setupStressScene() {
   };
   setState(GAME_STATE.BOSS);
   for (let index = 0; index < 5; index += 1) fireBurst();
-  for (let lane = 0; lane < 3; lane += 1) addTelegraph(lane, .7 + lane * .12, 'suppression', run.boss, { damage: 2, speed: .56 });
+  for (const [lane, offset] of [[0, 0], [1, .12], [0, .24]]) addTelegraph(lane, .7 + offset, 'suppression', run.boss, { damage: 2, speed: .56 });
   for (let index = 0; index < 80; index += 1) burst((index % 10 - 5) * .12, .2 + Math.floor(index / 10) * .05, index % 2 ? '#ff604f' : '#ffd04c', 1);
   stressMode = true;
   updateHud(true);
