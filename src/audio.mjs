@@ -6,7 +6,10 @@ const DISABLED = typeof navigator !== 'undefined' && navigator.webdriver;
 let ctx = null;
 let masterGain = null;
 let sfxGain = null;
-let muted = false; // in-memory only -- never persisted, every reload is a fresh run
+const MUTE_KEY = 'blastline.muted.v1';
+// Persisted mute preference: mobile sessions reload constantly, and a player who
+// mutes should stay muted across them.
+let muted = (() => { try { return globalThis.localStorage?.getItem(MUTE_KEY) === '1'; } catch { return false; } })();
 let noiseBuffer = null;
 let ambience = null;
 let lastShotAt = -Infinity;
@@ -84,6 +87,7 @@ export function isSupported() { return !DISABLED; }
 export function isMuted() { return muted; }
 export function setMuted(value) {
   muted = Boolean(value);
+  try { globalThis.localStorage?.setItem(MUTE_KEY, muted ? '1' : '0'); } catch { /* private mode: session-only mute */ }
   if (masterGain) masterGain.gain.value = muted ? 0 : 1;
 }
 export function toggleMute() { setMuted(!muted); return muted; }

@@ -2669,6 +2669,12 @@ dom.resumeBtn.onclick = () => { audio.uiClick(); resumeGame(); };
 dom.restartBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
 dom.retryBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
 dom.gameOverHomeBtn.onclick = () => { audio.uiClick(); returnHome(); };
+// Reflect the persisted mute preference on load, before any click.
+if (audio.isMuted()) {
+  dom.muteBtn.textContent = '🔇';
+  dom.muteBtn.setAttribute('aria-pressed', 'true');
+  dom.muteBtn.setAttribute('aria-label', 'Unmute sound');
+}
 dom.muteBtn.onclick = () => {
   const muted = audio.toggleMute();
   dom.muteBtn.textContent = muted ? '🔇' : '🔊';
