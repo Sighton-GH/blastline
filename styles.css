@@ -182,19 +182,24 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 #bossHud {
   position: absolute;
   z-index: 13;
-  top: max(76px, calc(env(safe-area-inset-top) + 67px));
+  top: max(62px, calc(env(safe-area-inset-top) + 54px));
   left: 50%;
-  width: min(610px, 58vw);
-  padding: 8px 11px 10px;
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  width: min(560px, 62vw);
+  padding: 5px 10px 6px;
   transform: translateX(-50%);
   border: 2px solid rgba(255, 209, 111, .82);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(61, 18, 24, .97), rgba(20, 10, 17, .99));
-  box-shadow: 0 5px 0 rgba(72,7,12,.72), 0 12px 26px rgba(27,4,7,.35), inset 0 1px rgba(255,255,255,.15);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(61, 18, 24, .94), rgba(20, 10, 17, .96));
+  box-shadow: 0 3px 0 rgba(72,7,12,.72), 0 8px 18px rgba(27,4,7,.3), inset 0 1px rgba(255,255,255,.15);
   pointer-events: none;
 }
+#bossHud .boss-hint { display: none; }
 
-.boss-heading { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; margin-bottom: 5px; font-size: 10px; font-weight: 1000; letter-spacing: .06em; }
+.boss-heading { display: grid; grid-template-columns: auto minmax(90px, 1fr) auto auto; gap: 10px; align-items: center; font-size: 10px; font-weight: 1000; letter-spacing: .06em; white-space: nowrap; }
 .boss-heading b { color: #ff9d64; }
 .boss-hint { margin-top: 5px; font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #8fd8ff; text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
 .boss-heading strong { color: #ffd97b; white-space: nowrap; }

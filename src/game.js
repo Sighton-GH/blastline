@@ -702,7 +702,7 @@ function squadLogicalSlots(troops = run.player.troops) {
   const columns = squadColumnCount(visible, run.player.formationDensity);
   const rows = Math.ceil(visible / columns);
   const rowGap = lerp(.048, .038, run.player.formationDensity / 6);
-  const nearY = .925;
+  const nearY = .955;
   const frontY = nearY - (rows - 1) * rowGap;
   const slots = [];
   const basePerRow = Math.floor(visible / rows);
@@ -919,7 +919,8 @@ function spawnBoss() {
   };
   setState(GAME_STATE.BOSS);
   addFloater(0, .42, `WAVE ${run.wave} BOSS`, '#ffd56a', 30, 2.2);
-  setText(dom.bossHint, archetype.hint);
+  setText(dom.bossHint, '');
+  addFloater(0, .3, archetype.hint, '#8fd8ff', 15, 3.2);
   updateHud(true);
 }
 
@@ -982,7 +983,7 @@ function spawnBossAttack() {
     const safeLane = (boss.attackSerial + run.wave * 2) % 3;
     for (let lane = 0; lane < 3; lane += 1) if (lane !== safeLane) addTelegraph(lane, .64 + lane * .1, 'cascade', boss, { damage: 1, speed: .6 });
   }
-  boss.shotFlash = .14;
+  boss.attackWind = .3;
 }
 
 function finishBoss() {
@@ -1218,7 +1219,7 @@ function defeatEnemy(enemy) {
   }
 }
 
-function damageSquad(amount, x, y = .86) {
+function damageSquad(amount, x, y = .885) {
   const result = applyTroopDamage(run.player, amount);
   run.player = result.player;
   if (result.protected) {
@@ -1391,10 +1392,17 @@ function updateTelegraphs(dt) {
     warning.time -= dt;
     if (warning.time > 0 || warning.fired) continue;
     warning.fired = true;
-    const source = warning.source || run.boss || { x: warning.x, y: .18, lane: warning.lane, shotFlash: 0 };
+    const source = warning.source || run.boss || { x: warning.x, y: .18, lane: warning.lane, shotFlash: 0, type: null };
+    const fromBoss = source === run.boss || source.type === 'boss';
+    // Boss fire leaves from the blasters beside the hull and converges onto the
+    // warned lane, so the projectile path visibly starts at the weapon.
+    const muzzleSide = warning.lane === 0 ? -1 : warning.lane === 2 ? 1 : ((source.attackSerial || 0) % 2 ? -1 : 1);
+    const muzzleX = fromBoss ? source.x + muzzleSide * .14 : laneCenter(warning.lane);
+    const converge = fromBoss ? clamp((laneCenter(warning.lane) - muzzleX) / .45, -.55, .55) : 0;
+    if (fromBoss) source.shotFlash = .12;
     spawnEnemyProjectile(source, {
       kind: warning.kind === 'demolition' ? 'hazard' : 'lane', lane: warning.lane,
-      x: laneCenter(warning.lane), y: Math.max(.14, source.y + .03), vx: 0,
+      x: muzzleX, y: Math.max(.14, source.y + .03), vx: converge,
       vy: warning.speed, radius: warning.kind === 'demolition' ? .13 : .105,
       damage: warning.damage, color: '#ff543f',
     });
@@ -1528,12 +1536,12 @@ function update(dt) {
   }
   if (run.boss) {
     run.boss.previousY = run.boss.y;
-    run.boss.y = Math.min(.68, run.boss.y + dt * .19);
+    run.boss.y = Math.min(.75, run.boss.y + dt * .19);
     if (run.boss.archetype === 'reaper') run.boss.x = Math.sin(run.bossTime * 1.1) * .42;
     if (run.boss.invulnTimer > 0) run.boss.invulnTimer = Math.max(0, run.boss.invulnTimer - dt);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
-    if (run.boss.y >= .675) {
+    if (run.boss.y >= .725) {
       run.boss.attackTimer -= dt;
       if (run.boss.attackTimer <= 0) {
         spawnBossAttack();
@@ -1592,14 +1600,14 @@ function update(dt) {
 
   if (collidePlayerBullets()) return;
   for (const enemy of run.enemies) {
-    if (enemy.dead || enemy.y <= .875) continue;
+    if (enemy.dead || enemy.y <= .895) continue;
     enemy.dead = true;
     enemy.deathLife = .12;
     const radius = .16 + enemy.scale * .035;
     if (Math.abs(enemy.x - run.player.x) < radius && damageSquad(enemy.contact, enemy.x)) return;
   }
   for (const bullet of run.enemyBullets) {
-    if (bullet.dead || bullet.y < .835) continue;
+    if (bullet.dead || bullet.y < .855) continue;
     if (Math.abs(bullet.x - run.player.x) < bullet.radius) {
       bullet.dead = true;
       if (damageSquad(bullet.damage, bullet.x)) return;
@@ -2582,11 +2590,41 @@ function drawBoss() {
     drawBossCombatant(ctx, screen, height, boss.hitFlash, run.bossTime);
     ctx.restore();
   }
+  const blasterYs = screen.y - height * .46;
+  const armed = run.telegraphs.some(warning => !warning.fired && !warning.dead && warning.source === boss);
+  if (armed) {
+    // Charge-up: both blasters breathe with a gathering glow while shots arm.
+    const pulse = .35 + .3 * Math.sin(ambientTime * 14);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (const sideX of [-1, 1]) {
+      const bx = screen.x + sideX * height * .29;
+      const grad = ctx.createRadialGradient(bx, blasterYs, 0, bx, blasterYs, height * .1);
+      grad.addColorStop(0, `rgba(255,196,90,${.55 + pulse * .4})`);
+      grad.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bx, blasterYs, height * .1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   if (boss.shotFlash > 0) {
-    ctx.fillStyle = '#fff0a8';
-    ctx.beginPath();
-    ctx.arc(screen.x + height * .29, screen.y - height * .46, height * .05, 0, Math.PI * 2);
-    ctx.fill();
+    // Muzzle flash at each actual blaster.
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (const sideX of [-1, 1]) {
+      const bx = screen.x + sideX * height * .29;
+      const grad = ctx.createRadialGradient(bx, blasterYs, 0, bx, blasterYs, height * .13);
+      grad.addColorStop(0, 'rgba(255,246,196,.95)');
+      grad.addColorStop(.45, 'rgba(255,196,90,.7)');
+      grad.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bx, blasterYs, height * .13, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 }
 
@@ -3035,7 +3073,7 @@ function setupStressScene() {
     spawnEnemy(type, { lane, x, y: .04 + row * .034, hordeId: 1 + Math.floor(index / 45), hordeRow: row, formation: 'stress' });
   }
   run.boss = {
-    id: ++enemySerial, type: 'boss', name: 'SCARLET ENGINE', lane: 1, x: 0, y: .68, previousY: .68,
+    id: ++enemySerial, type: 'boss', name: 'SCARLET ENGINE', lane: 1, x: 0, y: .75, previousY: .75,
     hp: 1_000_000_000, maxHp: 1_000_000_000, phase: 3, attackTimer: .1, attackSerial: 7, hitFlash: 0, shotFlash: .1, rewarded: false,
   };
   setState(GAME_STATE.BOSS);
@@ -3070,7 +3108,7 @@ if (qaMode) {
     spawnHordeNow() { return spawnFormation(); },
     setGateEncounter(options, y = .52, neutralLane = 1) { const encounter = setDebugGateEncounter(options, y, neutralLane); return encounter.gates.map(gate => ({ id: gate.id, lane: gate.lane, x: gate.x, text: gateText(gate), tone: gate.tone })); },
     setGatePair(left, right, y = .52) { return this.setGateEncounter([left, right], y, 1); },
-    forceBoss() { if (!ACTIVE_STATES.includes(state)) setState(GAME_STATE.PLAYING); spawnBoss(); run.boss.y = run.boss.previousY = .68; updateHud(true); return this.getState(); },
+    forceBoss() { if (!ACTIVE_STATES.includes(state)) setState(GAME_STATE.PLAYING); spawnBoss(); run.boss.y = run.boss.previousY = .75; updateHud(true); return this.getState(); },
     setBossPhase(value) { if (!run.boss) this.forceBoss(); const phase = clamp(Math.round(value), 1, 3); run.boss.hp = run.boss.maxHp * (phase === 1 ? .9 : phase === 2 ? .55 : .2); updateBossPhase(); updateHud(true); return run.boss.phase; },
     setBossHp(value) { if (run.boss) { run.boss.hp = clamp(Number(value) || 0, 0, run.boss.maxHp); updateBossPhase(); updateHud(true); } return run.boss?.hp ?? null; },
     defeatBoss() { if (!run.boss) this.forceBoss(); run.boss.hp = 0; finishBoss(); return state; },
