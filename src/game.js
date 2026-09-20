@@ -945,7 +945,13 @@ function finishBoss() {
   boss.rewarded = true;
   awardPoints(config.bossReward);
   run.bossesDefeated += 1;
+  // The boss kill is the run's biggest payoff: let it READ. Layered bursts +
+  // banner + shake hold on the field for a beat before the armory opens
+  // (before, the panel covered the explosion in the same frame).
   burst(boss.x, boss.y, '#ffc54a', 48);
+  burst(boss.x - .09, boss.y - .03, '#ff8a3c', 30);
+  burst(boss.x + .09, boss.y - .05, '#fff07a', 30);
+  addFloater(boss.x, boss.y - .06, 'BOSS DOWN', '#ffd56a', 34, 2.4);
   addTrauma(.85);
   audio.explosion();
   releaseAll(run.enemyBullets, pools.enemyBullets);
@@ -955,6 +961,12 @@ function finishBoss() {
   run.gates.length = 0;
   run.hazards.length = 0;
   run.boss = null;
+  run.pendingBossReward = 1.5;
+  dom.bossHud.classList.add('hidden'); // bar hides at the kill; the beat plays clear of it
+  updateHud(true);
+}
+
+function openBossRewards() {
   armoryMode = 'reward';
   armoryRewardPicked = false;
   run.rewardChoices = pickBossRewards(rng, run);
@@ -1403,6 +1415,10 @@ function update(dt) {
     updateEnemyAttacks(enemy, dt);
   }
 
+  if (state === GAME_STATE.BOSS && run.pendingBossReward > 0) {
+    run.pendingBossReward -= dt;
+    if (run.pendingBossReward <= 0) openBossRewards();
+  }
   if (run.boss) {
     run.boss.previousY = run.boss.y;
     run.boss.y = Math.min(.68, run.boss.y + dt * .19);

@@ -45,7 +45,7 @@ const m = await page.evaluate(() => { __blastlineTest.advance(4); const st = __b
 console.log('BOSS-MID', JSON.stringify(m));
 await page.waitForTimeout(400);
 await page.screenshot({ path: '/home/sandbox/c6-evidence/v2-boss-mid.png' });
-const d = await page.evaluate(() => { __blastlineTest.defeatBoss(); __blastlineTest.advance(1); const st = __blastlineTest.getState(); return { state: st.state, wave: st.wave, score: st.score }; });
+const d = await page.evaluate(() => { __blastlineTest.defeatBoss(); __blastlineTest.advance(2.2); const st = __blastlineTest.getState(); return { state: st.state, wave: st.wave, score: st.score }; });
 console.log('BOSS-DEFEAT', JSON.stringify(d));
 await page.waitForTimeout(300);
 await page.screenshot({ path: '/home/sandbox/c6-evidence/v2-boss-reward.png' });
