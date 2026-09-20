@@ -221,6 +221,26 @@ test('squad roles follow owned build lines, weighted by tier', () => {
   assert.equal(squadRoleForSlot(session, 4), 'heavy');
 });
 
+test('veteranize converts two bodies into one double-fire veteran', () => {
+  let session = { ...createCleanRun(2), points: 100_000 };
+  const startTroops = session.player.troops;
+  session.armoryPicks = 0;
+  const result = purchaseUpgrade(session, 'veteranTraining');
+  assert.equal(result.ok, true);
+  assert.equal(result.session.player.troops, startTroops - 1);
+  assert.equal(result.session.player.veterans, 1);
+  // Veterans are the last bodies lost.
+  const damaged = applyTroopDamage({ ...result.session.player, troops: 3, veterans: 2, plates: 0 }, 2);
+  assert.equal(damaged.player.troops, 1);
+  assert.equal(damaged.player.veterans, 1);
+  // Never merge below viability.
+  const thin = { ...createCleanRun(2), points: 100_000, armoryPicks: 0 };
+  thin.player = { ...thin.player, troops: 5 };
+  const blocked = purchaseUpgrade(thin, 'veteranTraining');
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.reason, 'capped');
+});
+
 test('boss reward choices are unique, tiered, and contain synergy information', () => {
   const session = createCleanRun(4);
   for (let seed = 1; seed <= 100; seed += 1) {

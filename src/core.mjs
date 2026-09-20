@@ -182,6 +182,7 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: 24, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations', info: "+1 pierce. Rounds punch through one more enemy before stopping, carving through packed formations instead of stopping at the front rank. Scales: +1 pierce per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'criticalChance', title: 'Critical', short: '+3% crit', baseCost: 380, maxTier: 17, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder', info: "+3% chance for any hit to crit. Critical hits deal double damage. Scales: +3% per tier, up to 17 tiers - crit chance is capped at 50% overall." },
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner', info: "+15% bullet velocity. Rounds cross the bridge sooner, so less fire is wasted on enemies that are already dead and hits land earlier. Scales: +15% per tier, up to 7 tiers." },
+  { id: 'veteranTraining', title: 'Veteranize', short: '2 squad -> 1 veteran', baseCost: 340, maxTier: 99, tone: 'gold', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Veterans fire double and hold the line', info: "Two soldiers combine into one veteran: a bigger unit that fires two rounds per volley at slightly higher power and is always the last to fall. Concentrates your fire into fewer bodies - you cover fewer lanes per body, so positioning matters more. Requires at least 6 squad. Scales: one conversion per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own', info: "+1 bounce. After a hit, the round jumps to a nearby enemy at 60% damage - and every Multishot round bounces on its own. Scales: +1 bounce per tier, up to 3 tiers." },
 ]);
 
@@ -226,6 +227,7 @@ export function initialPlayer() {
     platesMax: 2,
     ricochet: 0,
     formationDensity: 0,
+    veterans: 0,
     frenzyDuration: 4.2,
     recovery: 0,
     speed: 2.05,
@@ -245,11 +247,12 @@ export function isUpgradeCapped(session, id) {
   if (id === 'criticalChance') return upgradeTier(session, id) >= 17; // 0.03 x 17 = 0.51 > 0.5 cap
   if (id === 'armor') return (session?.player?.platesMax ?? 0) >= MAX_PLATES;
   if (id === 'ricochet') return upgradeTier(session, id) >= 3;
+  if (id === 'veteranTraining') return (session?.player?.troops ?? 0) < 6; // never merge the line below viability
   return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
 
 export const SHOP_PRICE_EXPONENTS = Object.freeze({
-  damage: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9,
+  damage: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, veteranTraining: 1.55,
 });
 
 export function shopPrice(id, purchaseCount = 0) {
@@ -273,6 +276,10 @@ export function applyUpgrade(player, id) {
     next.platesMax = Math.min(MAX_PLATES, (next.platesMax ?? 2) + 2);
   }
   else if (id === 'ricochet') next.ricochet = Math.min(3, (next.ricochet || 0) + 1);
+  else if (id === 'veteranTraining') {
+    // 2 bodies combine into 1 veteran: troops -1, veterans +1.
+    if (next.troops >= 6) { next.troops -= 1; next.veterans = (next.veterans || 0) + 1; }
+  }
   else if (id === 'formationDensity') next.formationDensity = Math.min(6, next.formationDensity + 1);
   else if (id === 'frenzyDuration') next.frenzyDuration = Math.min(10, next.frenzyDuration + 0.8);
   else if (id === 'recovery') next.recovery = Math.min(6, next.recovery + 1);
@@ -415,7 +422,7 @@ export function gateText(gate) {
 
 export function pickBossRewards(rng, session) {
   // Line-locked lines are dead picks, so they never enter the reward pool.
-  const available = SHOP_CATALOG.filter(item => !isUpgradeCapped(session, item.id) && !isLineLocked(session, item.id));
+  const available = SHOP_CATALOG.filter(item => item.id !== 'veteranTraining' && !isUpgradeCapped(session, item.id) && !isLineLocked(session, item.id));
   const source = available.length >= 3 ? available : SHOP_CATALOG.filter(item => item.id !== 'extraLife' || (session?.lives || 0) < MAX_LIVES);
   const choices = [];
   const pool = [...source];
@@ -472,6 +479,8 @@ export function applyTroopDamage(player, amount) {
   next.armor = next.plates; // legacy alias, removed with the render integration
   const remaining = incoming - plateAbsorb;
   next.troops = Math.max(0, next.troops - remaining);
+  // Veterans hold the line: they are always the last bodies lost.
+  next.veterans = Math.min(next.veterans || 0, next.troops);
   return { player: next, absorbed: plateAbsorb, lost: remaining, protected: false };
 }
 

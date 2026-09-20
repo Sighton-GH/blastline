@@ -777,6 +777,17 @@ function squadSlotWorldX(slot) {
   return clamp(run.player.x + slot.colOffset * stepPixels / Math.max(1, laneHalfWidth(slot.y)), -LANE_LIMIT, LANE_LIMIT);
 }
 
+// Veterans are spread evenly through the formation so the big units read across
+// the whole line instead of clustering on one flank.
+function veteranSlotSet(slots, veterans) {
+  const set = new Set();
+  const count = Math.min(veterans || 0, slots.length);
+  if (count <= 0) return set;
+  const stride = slots.length / count;
+  for (let i = 0; i < count; i += 1) set.add(slots[Math.floor(i * stride)].index);
+  return set;
+}
+
 function fireBurst() {
   const slots = squadLogicalSlots();
   const remaining = MAX_PLAYER_BULLETS - run.bullets.length;
@@ -803,17 +814,22 @@ function fireBurst() {
   }
   const frenzyPower = run.player.power * projectileDamageFactor(spreadCount) * (frenzy ? 1.25 : 1);
   let emitted = 0;
+  const veteranSlots = veteranSlotSet(slots, run.player.veterans);
   for (const { offset, bonus } of volley) {
     for (const origin of origins) {
       if (run.bullets.length >= MAX_PLAYER_BULLETS) break;
-      const critical = rng() < run.player.criticalChance;
-      run.bullets.push(pools.bullets.take({
-        x: origin.x, y: origin.y, previousX: origin.x, previousY: origin.y, originX: origin.x, originY: origin.y,
-        vx: offset * .72, vy: -1.02 * run.player.bulletSpeed * (frenzy ? 1.18 : 1),
-        power: frenzyPower * (bonus ? .55 : 1) * (critical ? 2 : 1), critical,
-        hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
-      }));
-      emitted += 1;
+      const veteran = veteranSlots.has(origin.slot);
+      for (const barrel of (veteran ? [-.012, .012] : [0])) {
+        if (run.bullets.length >= MAX_PLAYER_BULLETS) break;
+        const critical = rng() < run.player.criticalChance;
+        run.bullets.push(pools.bullets.take({
+          x: origin.x + barrel, y: origin.y, previousX: origin.x + barrel, previousY: origin.y, originX: origin.x + barrel, originY: origin.y,
+          vx: offset * .72 + barrel * .4, vy: -1.02 * run.player.bulletSpeed * (frenzy ? 1.18 : 1),
+          power: frenzyPower * (veteran ? 1.05 : 1) * (bonus ? .55 : 1) * (critical ? 2 : 1), critical,
+          hitsLeft: 1 + run.player.pierce, bouncesLeft: run.player.ricochet || 0, lastHitId: -1, shooter: origin.slot, dead: false,
+        }));
+        emitted += 1;
+      }
     }
   }
   if (emitted) audio.shot();
@@ -1196,7 +1212,7 @@ function showBossRewards() {
     const description = document.createElement('span'); description.className = 'description'; description.textContent = item.short;
     const synergy = document.createElement('span');
     synergy.className = 'synergy';
-    if (capped) synergy.textContent = 'Fully upgraded';
+    if (capped) synergy.textContent = item.id === 'veteranTraining' ? 'NEEDS 6+ SQUAD' : 'Fully upgraded';
     else if (lineLocked) { synergy.textContent = `BUILD FULL - ${MAX_BUILD_LINES}/${MAX_BUILD_LINES} LINES`; synergy.classList.add('short'); }
     else if (visitCapped) { synergy.textContent = 'PICKS USED - NEXT WAVE'; synergy.classList.add('short'); }
     else if (run.points < cost) { synergy.textContent = `${format(cost)} POINTS · NEED ${format(cost - run.points)} MORE`; synergy.classList.add('short'); }
@@ -3148,11 +3164,12 @@ function drawPlayerBullets() {
 function drawPlayer() {
   if (run.player.troops <= 0) return;
   const slots = squadLogicalSlots();
+  const veteranSlotsForDraw = veteranSlotSet(slots, run.player.veterans);
   const activeFlashes = new Set(run.muzzleFlashes.map(flash => flash.slot));
   for (const slot of slots) {
     const worldX = squadSlotWorldX(slot);
     const screen = projectToScreen(worldX, slot.y, projectionScratchA);
-    const height = soldierHeightAt(slot.y);
+    const height = soldierHeightAt(slot.y) * (veteranSlotsForDraw.has(slot.index) ? 1.38 : 1);
     const frame = ((Math.floor((run.waveTime + run.bossTime + ambientTime * .1) * 10.5 + slot.phase) % 4) + 4) % 4;
     // Squad composition renders the build: each slot fields the soldier type of an
     // owned line, weighted by tier. Falls back to the rifleman sprite if a role
@@ -3543,6 +3560,7 @@ if (qaMode) {
     setPoints(value) { run.points = Math.max(0, Math.round(Number(value) || 0)); updateHud(true); return run.points; },
     setLives(value) { run.lives = clamp(Math.round(Number(value) || 0), 0, 2); updateHud(true); return run.lives; },
     setBuild(build = {}) { Object.assign(run.player, build); updateHud(true); return this.getState(); },
+    setVeterans(value = 0) { run.player.veterans = clamp(Math.round(Number(value) || 0), 0, run.player.troops); return run.player.veterans; },
     setUpgradeTiers(tiers = {}) { run.upgradeTiers = { ...(run.upgradeTiers || {}), ...tiers }; updateHud(true); return this.getState(); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
