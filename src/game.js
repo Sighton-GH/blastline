@@ -95,7 +95,7 @@ const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
-  'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
+  'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
@@ -987,6 +987,11 @@ function openArmory() {
 function showBossRewards() {
   setText(dom.rewardWave, run.wave);
   setText(dom.rewardKind, state === GAME_STATE.PAUSED_SHOP ? 'PAUSED' : armoryMode === 'reward' ? 'BOSS DOWN' : 'WAVE CLEARED');
+  setText(dom.rewardSub, state === GAME_STATE.PAUSED_SHOP
+    ? 'Spend Points while the run is frozen. Your build carries through the run.'
+    : armoryMode === 'reward'
+      ? 'Pick a free upgrade. Your build carries through the run.'
+      : 'Spend Points or continue. Your build carries through the run.');
   dom.rewardCards.replaceChildren();
   if (armoryMode === 'reward' && Array.isArray(run.rewardChoices) && run.rewardChoices.length) {
     for (const item of run.rewardChoices) {

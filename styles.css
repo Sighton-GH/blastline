@@ -527,3 +527,8 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 @media (min-width: 900px) {
   .reward-grid:has(.reward-card:nth-child(4)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
+
+@media (max-width: 380px) {
+  .results div { padding: 8px 2px; }
+  .results b { font-size: 13px; }
+}
