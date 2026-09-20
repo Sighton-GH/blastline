@@ -771,7 +771,7 @@ function spawnBoss() {
     id: ++enemySerial, type: 'boss', name: bossNameForWave(run.wave),
     lane: 1, x: 0, y: -.12, previousY: -.12,
     hp: config.bossHp, maxHp: config.bossHp,
-    phase: 1, attackTimer: 1.05, attackSerial: 0, hitFlash: 0, shotFlash: 0,
+    phase: 1, attackTimer: 1.05, attackSerial: 0, hitFlash: 0, shotFlash: 0, invulnTimer: 0,
     rewarded: false,
   };
   setState(GAME_STATE.BOSS);
@@ -790,6 +790,7 @@ function updateBossPhase() {
   if (phase > run.boss.phase) {
     run.boss.phase = phase;
     run.boss.attackTimer = .85;
+    run.boss.invulnTimer = 1.1;
     addFloater(run.boss.x, run.boss.y + .1, `PHASE ${phase}`, '#ffb25f', 25);
     burst(run.boss.x, run.boss.y, '#ff704e', 24);
     addTrauma(.7);
@@ -1076,6 +1077,10 @@ function collidePlayerBullets() {
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
       if (crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
+        if (boss.invulnTimer > 0) {
+          if (!stressMode) burst(bullet.x, boss.y, '#9fb7c9', 2);
+          continue;
+        }
         boss.hp -= bullet.power;
         boss.hitFlash = .085;
         awardPoints(bullet.critical ? 4 : 2);
@@ -1212,6 +1217,7 @@ function update(dt) {
   if (run.boss) {
     run.boss.previousY = run.boss.y;
     run.boss.y = Math.min(.68, run.boss.y + dt * .19);
+    if (run.boss.invulnTimer > 0) run.boss.invulnTimer = Math.max(0, run.boss.invulnTimer - dt);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
     if (run.boss.y >= .675) {

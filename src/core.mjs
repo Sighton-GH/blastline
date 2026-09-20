@@ -99,7 +99,8 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const hordeSize = Math.min(54, Math.max(24, Math.round((28 + wave * 1.35) * mode.density)));
   const spawnInterval = Math.max(0.72, 2.7 - logScale * 0.32) / mode.cadence;
   const enemySpeed = Math.min(0.069, 0.047 + logScale * 0.0032) * (0.97 + (mode.pressure - 1) * 0.12);
-  const bossHp = Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + mode.pressure * 0.08)));
+  const bossEscalation = wave >= 3 ? 1 + (wave - 3) * 0.08 : 1;
+  const bossHp = Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + mode.pressure * 0.08) * bossEscalation));
   const composition = {
     grunt: Math.max(0.38, 0.82 - logScale * 0.055),
     gunner: Math.min(0.2, Math.max(0, (wave - 1) * 0.014)),
