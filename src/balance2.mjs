@@ -25,20 +25,23 @@ export const MECHANICS_V1 = Object.freeze({
 
 export const MECHANICS_V2 = Object.freeze({
   id: 'v2-redesign',
-  enemyHp: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].hp * Math.pow(1.35, wave - 1))),
-  contact: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].contact * Math.pow(1.12, wave - 1))),
-  bossHp: (bossIndex, wave, pressure) => Math.round(420 * Math.pow(1.55, bossIndex - 1) * (0.92 + pressure * 0.08)),
+  enemyHp: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].hp * Math.pow(1.5, wave - 1))),
+  contact: (type, wave) => Math.max(1, Math.round(ENEMY_BASE[type].contact * Math.pow(1.16, wave - 1))),
+  bossHp: (bossIndex, wave, pressure) => Math.round((bossIndex === 1 ? 320 : 420) * Math.pow(1.55, bossIndex - 1) * (0.92 + pressure * 0.08)),
   bossGate: (bossIndex, player) => {
     // archetype gates: 0=juggernaut(pierce/crit), 1=reaper(rate/velocity),
     // 2=marshal(multishot spread), 3=engine(plating/mobility)
     const kind = (bossIndex - 1) % 4;
-    if (kind === 0) return Math.min(1, .4 + player.pierce * .12 + player.crit * 1.2);
-    if (kind === 1) return Math.min(1, .45 + (player.fireRate / 40) + (player.bulletSpeed / 12));
+    if (kind === 0) return Math.min(1, .35 + player.pierce * .14 + player.crit * 1.4);
+    if (kind === 1) return Math.min(1, .3 + (player.fireRate / 45) + (player.bulletSpeed / 14));
     if (kind === 2) return Math.min(1, .5 + player.projectiles * .09);
     return Math.min(1, .5 + player.plating * .04);
   },
-  price: (item, count) => Math.max(1, Math.round(item.baseCost * Math.pow(count + 1, 1.6))),
-  caps: { power: Infinity, fireRate: Infinity, projectiles: 6, troops: Infinity, crit: .6, pierce: Infinity, armor: Infinity },
+  price: (item, count) => {
+    const exp = { damage: 2, fireRate: 1.8, reinforcements: 1.7, piercing: 1.9 }[item.id] || 1.7;
+    return Math.max(1, Math.round(item.baseCost * Math.pow(count + 1, exp)));
+  },
+  caps: { power: Infinity, fireRate: Infinity, projectiles: 6, troops: Infinity, crit: .5, pierce: Infinity, armor: Infinity },
 });
 
 export const BOTS = Object.freeze({
@@ -62,10 +65,10 @@ function applyTier(player, id, mech) {
   const caps = mech.caps;
   if (id === 'reinforcements') p.troops = Math.min(caps.troops, p.troops + 8);
   else if (id === 'damage') p.power = Math.min(caps.power, p.power + 1);
-  else if (id === 'fireRate') p.fireRate = mech.id === 'v2-redesign' ? p.fireRate + .45 : Math.min(caps.fireRate, p.fireRate * 1.12);
+  else if (id === 'fireRate') p.fireRate = mech.id === 'v2-redesign' ? p.fireRate + .4 : Math.min(caps.fireRate, p.fireRate * 1.12);
   else if (id === 'multishot') p.projectiles = Math.min(caps.projectiles, p.projectiles + 1);
   else if (id === 'piercing') p.pierce = Math.min(caps.pierce, p.pierce + 1);
-  else if (id === 'criticalChance') p.crit = Math.min(caps.crit, p.crit + (mech.id === 'v2-redesign' ? .04 : .05));
+  else if (id === 'criticalChance') p.crit = Math.min(caps.crit, p.crit + (mech.id === 'v2-redesign' ? .03 : .05));
   else if (id === 'armor') { if (mech.id === 'v2-redesign') p.plating += 2; else p.armor = Math.min(caps.armor, p.armor + 4); }
   else if (id === 'projectileSpeed') p.bulletSpeed = Math.min(2.4, p.bulletSpeed * 1.15);
   return p;
@@ -83,7 +86,7 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
   const mode = DIFFICULTIES[difficulty] || DIFFICULTIES.veteran;
   const policy = BOTS[bot] || BOTS.balanced;
   let player = initialSimPlayer();
-  let points = 0, score = 0, kills = 0, lives = 0, completed = 0, bossIndex = 0;
+  let points = 0, score = 0, kills = 0, lives = 0, completed = 0, bossIndex = 0, reservesBought = 0;
   const counts = {};
   const purchases = [];
   for (let wave = 1; wave <= maxWaves; wave += 1) {
@@ -93,14 +96,19 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
     const avgContact = Object.entries(config.composition).reduce((s, [t, w]) => s + w * mechanics.contact(t, wave), 0);
     const shots = player.fireRate * config.duration * player.projectiles;
     const hitEff = .55 + control * .45; // lane coverage / dodging skill
-    const pierceMult = 1 + player.pierce * Math.min(1.2, config.activeTarget / 160);
-    const critMult = 1 + player.crit * 1.5;
-    const dps = player.troops * player.power * player.fireRate * player.projectiles * hitEff * pierceMult * critMult;
+    const pierceMult = mechanics.id === 'v2-redesign'
+      ? Math.min(2, 1 + player.pierce * .5 * Math.min(.9, config.activeTarget / 200))
+      : 1 + player.pierce * Math.min(1.2, config.activeTarget / 160);
+    const critMult = 1 + player.crit * (mechanics.id === 'v2-redesign' ? 1 : 1.5);
+    const projMult = mechanics.id === 'v2-redesign'
+      ? player.projectiles * Math.pow(.88, player.projectiles - 1)
+      : player.projectiles;
+    const dps = player.troops * player.power * player.fireRate * projMult * hitEff * pierceMult * critMult;
     const waveEhp = config.activeTarget * avgHp * mode.pressure;
     const clearRatio = dps * config.duration / Math.max(1, waveEhp);
     const killsThis = Math.min(config.activeTarget, Math.round(config.activeTarget * Math.min(1.15, clearRatio)));
     kills += killsThis;
-    points += Math.round(killsThis * 20 + (killsThis / 20) * 40);
+    points += Math.round(killsThis * (mechanics.id === 'v2-redesign' ? 13 / mode.density : 20) + (killsThis / 20) * 40);
     score += killsThis * 12;
     // --- attrition: march-leak (kill throughput vs spawn rate) + ranged chip ---
     const killRate = dps / Math.max(1, avgHp); // enemies/s
@@ -134,7 +142,7 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
         points += 700 + wave * 90; score += Math.round(bossEhp * .5);
         player.troops -= Math.round(killTime * mode.pressure * (1.6 - control) * .35 + rng() * 2); // chip during fight
       } else {
-        player.troops -= Math.round((killTime - window) * 3 * mode.pressure + 18); // enrage punishes hard
+        player.troops -= Math.round((killTime - window) * (1.2 + wave * .12) * mode.pressure + 6 + wave * .8); // enrage punishes hard
       }
     }
     if (player.troops <= 0 && lives > 0) { lives -= 1; player.troops = mode.recoveryTroops; }
@@ -153,9 +161,9 @@ export function simulatePolicyRun({ seed = 1, difficulty = 'veteran', bot = 'bal
       purchases.push(id);
     }
     // reserves purchase heuristic: buy one when rich and threatened
-    if (points > 1400 && lives < 2 && wave >= 6) { points -= 950; lives += 1; }
+    if (points > 1400 && lives < 2 && reservesBought < 2 && wave >= 6) { points -= 950; lives += 1; reservesBought += 1; }
   }
-  return { seed, difficulty, bot, mechanics: mechanics.id, wavesCompleted: completed, kills, score, finalDps: Math.round(Math.max(0, player.troops) * player.power * player.fireRate * player.projectiles), troopsLeft: Math.max(0, Math.round(player.troops)), purchaseCount: purchases.length, firstPurchases: purchases.slice(0, 8) };
+  return { seed, difficulty, bot, mechanics: mechanics.id, wavesCompleted: completed, kills, score, finalDps: Math.round(Math.max(0, player.troops) * player.power * player.fireRate * player.projectiles * Math.pow(.88, Math.max(0, player.projectiles - 1))), troopsLeft: Math.max(0, Math.round(player.troops)), purchaseCount: purchases.length, firstPurchases: purchases.slice(0, 8) };
 }
 
 export function runPolicyMatrix({ seeds = 30, mechanics = MECHANICS_V1, maxWaves = 40 } = {}) {

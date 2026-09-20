@@ -172,3 +172,36 @@ Sim anchors from real play (v1): human-rate touch run died ~wave 11 (neutral
 build), superhuman probe reached 14 at the cap, Bryan's skilled play found the
 game solved by wave 9. v2 targets: median veteran 12-16 for focused builds with
 correct counters, 5-10 min wall-clock per run.
+
+## 7. LOCKED v2 sim constants (Phase B baseline, 2026-09-19 ~22:48)
+
+Sim matrix (30 seeds): veteran focused builds die median waves 11-14 (~6-8.5 min),
+recruit 12-16, elite 10-14, weak 5. No immortals, no bot >25% over field median,
+4+ archetypes viable. Difficulty ordering correct. This is the shape Bryan specified.
+(Real variance will exceed sim variance - actual dodging, gate picks, boss counters.)
+
+Locked constants for core v2 implementation:
+- enemyHp(type, w) = max(1, round(base_hp x 1.5^(w-1))); base: grunt/gunner 1,
+  shield 3 (1+2), heavy 4, demolition 2
+- contact(type, w) = max(1, round(base x 1.16^(w-1)))
+- bossHp(b) = (b==1 ? 320 : 420) x 1.55^(b-1) x (0.92 + pressure x 0.08); NO invuln windows
+- boss gates: juggernaut min(1, .35 + pierce x .14 + crit x 1.4);
+  reaper min(1, .3 + fireRate/45 + bulletSpeed/14);
+  marshal min(1, .5 + projectiles x .09); engine min(1, .5 + plating x .04)
+- shop price = baseCost x (n+1)^exp; exp: damage 2.0, fireRate 1.8,
+  reinforcements 1.7, piercing 1.9, all others 1.7
+- power +1/tier UNCAPPED; fireRate +0.4/tier additive UNCAPPED;
+  troops +8/tier uncapped (visual cap unchanged)
+- multishot: projectiles to 6; per-bullet damage x 0.88^(projectiles-1)
+- crit +3%/tier, cap 50%, crit multiplier 1 + crit x 1.0
+- pierce damage multiplier bounded at x2.0
+- kill reward: 13/density points + streak bonus every 20 (density-normalized income)
+- reserves: max 2 per run total (finite, meaningful mid-run)
+- plating: each plate absorbs one hit's contact damage, breaks, regens 1 per 20s,
+  +2 plates/tier, cap 40
+
+Key sim bugs fixed during calibration (for the record): per-troop DPS divisor
+(units), ranged chip scaling with total spawns instead of alive gunners, and a
+perpetual-reserves loophole (rebuying lives every wave) that made any solvent
+build immortal - the last one is worth a real-game audit: v1 shop also lets you
+rebuy reserves as long as points allow, capped only by MAX_LIVES=2 concurrent.
