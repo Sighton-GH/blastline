@@ -205,3 +205,13 @@ Key sim bugs fixed during calibration (for the record): per-troop DPS divisor
 perpetual-reserves loophole (rebuying lives every wave) that made any solvent
 build immortal - the last one is worth a real-game audit: v1 shop also lets you
 rebuy reserves as long as points allow, capped only by MAX_LIVES=2 concurrent.
+
+## 8. Feel constraint: the melt must be seen (Bryan, 2026-09-19 23:06)
+
+"Enjoyment comes from seeing your enemies get melted. You don't get that same enjoyment when the enemies melt before you can see them."
+
+- ENGAGEMENT_Y = 0.04 (core.mjs): bullets cannot damage enemies or bosses below this world-y. Enemies crest the horizon, form a visible mass, then die on the field. Ricochet retargeting also skips unengaged enemies.
+- Not solved by off-screen deaths, spawn deletion, or sponge hp: hp unchanged; the gate is a pipeline delay, modeled in the sim as a small DPS-uptime shadow (max 10%).
+- Kill payoff: per-archetype death bursts, corpse life .18->.24 / .28->.36s.
+- Runtime checks: run.killViz aggregates (kills, onScreen, visible-life min/mean/max, 240-sample buffer) exposed via getState; probes assert ~100% on-screen kills and readable visible lifetimes.
+- Measured (veteran natural, 2026-09-19): 100% on-screen kills through wave 6+, mean visible life ~1.5s at wave 2 and ~2.7s at wave 6; screenshots show the horde cresting and thinning on the field.
