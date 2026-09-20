@@ -173,7 +173,7 @@ export function isUpgradeCapped(session, id) {
 export function shopPrice(id, purchaseCount = 0) {
   const item = SHOP_BY_ID[id];
   if (!item) return Infinity;
-  return Math.max(1, Math.round(item.baseCost * Math.pow(1.48, Math.max(0, purchaseCount))));
+  return Math.max(1, Math.round(item.baseCost * Math.pow(1.75, Math.max(0, purchaseCount))));
 }
 
 export function applyUpgrade(player, id) {
