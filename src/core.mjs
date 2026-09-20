@@ -206,6 +206,31 @@ export const MAX_BUILD_LINES = 4;
 export const MAX_PICKS_PER_VISIT = 2;
 export const UTILITY_UPGRADES = Object.freeze(['reinforcements', 'extraLife']);
 
+// Item cap (Aston playtest, Sep 20): a run holds at most MAX_BUILD_ITEMS_BASE
+// non-utility items, and every boss defeated raises the cap by
+// ITEM_CAP_PER_BOSS. Utility buys (squad, reserves) are exempt, and the free
+// boss-reward tier is exempt - bosses are the cap-release valve, so build
+// depth is earned at the bridge, not just bought in the shop.
+export const MAX_BUILD_ITEMS_BASE = 6;
+export const ITEM_CAP_PER_BOSS = 2;
+
+export function itemCapFor(session) {
+  return MAX_BUILD_ITEMS_BASE + ITEM_CAP_PER_BOSS * Math.max(0, Math.floor(session?.bossesDefeated || 0));
+}
+
+export function buildItemCount(session) {
+  const tiers = session?.upgradeTiers || session?.purchaseCounts || {};
+  return Object.keys(tiers).reduce((sum, id) => {
+    if (!SHOP_BY_ID[id] || UTILITY_UPGRADES.includes(id)) return sum;
+    return sum + Math.max(0, Math.floor(tiers[id] || 0));
+  }, 0);
+}
+
+export function isItemCapped(session, id) {
+  if (UTILITY_UPGRADES.includes(id)) return false;
+  return buildItemCount(session) >= itemCapFor(session);
+}
+
 export function buildLines(session) {
   const tiers = session?.upgradeTiers || session?.purchaseCounts || {};
   return Object.keys(tiers).filter(id => (tiers[id] || 0) > 0 && SHOP_BY_ID[id] && !UTILITY_UPGRADES.includes(id));
@@ -330,6 +355,7 @@ export function purchaseUpgrade(session, id) {
   if (!item) return { session, ok: false, reason: 'unknown' };
   if (isUpgradeCapped(session, id)) return { session, ok: false, reason: 'capped' };
   if (isLineLocked(session, id)) return { session, ok: false, reason: 'line-capped' };
+  if (isItemCapped(session, id)) return { session, ok: false, reason: 'item-capped' };
   if ((session.armoryPicks || 0) >= MAX_PICKS_PER_VISIT) return { session, ok: false, reason: 'visit-capped' };
   const count = Math.max(0, session.purchaseCounts?.[id] || 0);
   const availablePoints = Number.isFinite(session.points) ? session.points : (session.skillPoints || 0);

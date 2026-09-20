@@ -15,6 +15,10 @@ import {
   applyTroopDamage,
   isUpgradeCapped,
   isLineLocked,
+  isItemCapped,
+  itemCapFor,
+  buildItemCount,
+  ITEM_CAP_PER_BOSS,
   buildLines,
   squadRoleForSlot,
   MAX_BUILD_LINES,
@@ -1260,7 +1264,7 @@ function showBossRewards() {
     ? 'Spend Points while the run is frozen. Your build carries through the run.'
     : armoryMode === 'reward'
       ? 'Pick a free upgrade. Your build carries through the run.'
-      : `Build ${buildLines(run).length}/${MAX_BUILD_LINES} lines - ${Math.max(0, MAX_PICKS_PER_VISIT - (run.armoryPicks || 0))}/${MAX_PICKS_PER_VISIT} picks left. Your build carries through the run.`);
+      : `Build ${buildLines(run).length}/${MAX_BUILD_LINES} lines - ${buildItemCount(run)}/${itemCapFor(run)} items - ${Math.max(0, MAX_PICKS_PER_VISIT - (run.armoryPicks || 0))}/${MAX_PICKS_PER_VISIT} picks left. Your build carries through the run.`);
   const shopOpen = armoryMode !== 'reward';
   dom.rewardBalance.hidden = !shopOpen;
   if (shopOpen) setText(dom.rewardBalanceValue, format(run.points));
@@ -1296,12 +1300,13 @@ function showBossRewards() {
     const cost = shopPrice(item.id, run.purchaseCounts[item.id] || 0);
     const capped = isUpgradeCapped(run, item.id);
     const lineLocked = isLineLocked(run, item.id);
+    const itemCapped = isItemCapped(run, item.id);
     const visitCapped = (run.armoryPicks || 0) >= MAX_PICKS_PER_VISIT;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-card tone-${item.tone}`;
     button.dataset.upgrade = item.id;
-    button.disabled = capped || lineLocked || visitCapped || run.points < cost;
+    button.disabled = capped || lineLocked || itemCapped || visitCapped || run.points < cost;
     const image = document.createElement('img'); image.src = item.asset; image.alt = '';
     const title = document.createElement('b'); title.textContent = item.title;
     const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
@@ -1310,6 +1315,7 @@ function showBossRewards() {
     synergy.className = 'synergy';
     if (capped) synergy.textContent = item.id === 'veteranTraining' ? 'NEEDS 6+ SQUAD' : 'Fully upgraded';
     else if (lineLocked) { synergy.textContent = `BUILD FULL - ${MAX_BUILD_LINES}/${MAX_BUILD_LINES} LINES`; synergy.classList.add('short'); }
+    else if (itemCapped) { synergy.textContent = `ITEM CAP ${buildItemCount(run)}/${itemCapFor(run)} - BOSS +${ITEM_CAP_PER_BOSS}`; synergy.classList.add('short'); }
     else if (visitCapped) { synergy.textContent = 'PICKS USED - NEXT WAVE'; synergy.classList.add('short'); }
     else if (run.points < cost) { synergy.textContent = `${format(cost)} POINTS · NEED ${format(cost - run.points)} MORE`; synergy.classList.add('short'); }
     else synergy.textContent = `${format(cost)} POINTS · ${format(run.points - cost)} LEFT`;

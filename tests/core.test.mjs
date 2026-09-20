@@ -31,6 +31,11 @@ import {
   SHOP_BY_ID,
   squadRoleForSlot,
   MAX_BUILD_LINES,
+  MAX_BUILD_ITEMS_BASE,
+  ITEM_CAP_PER_BOSS,
+  itemCapFor,
+  buildItemCount,
+  isItemCapped,
   UTILITY_UPGRADES,
   resolveGateEncounter,
   reviveSession,
@@ -159,7 +164,9 @@ test('shop prices rise, spending is atomic, and insufficient points do nothing',
 });
 
 test('v2 shop: polynomial stats are uncapped, design caps hold for multishot/crit/lives', () => {
-  let session = { ...createCleanRun(3), points: 100_000_000 };
+  // bossesDefeated simulates a long run: each boss raises the item cap by
+  // ITEM_CAP_PER_BOSS, so a veteran run can hold this many items at all.
+  let session = { ...createCleanRun(3), points: 100_000_000, bossesDefeated: 30 };
   // Build caps allow at most MAX_BUILD_LINES distinct build lines; utility lines
   // (reinforcements, extraLife) are exempt. Each armory visit grants
   // MAX_PICKS_PER_VISIT purchases, so the loop resets armoryPicks to simulate
@@ -219,6 +226,30 @@ test('squad roles follow owned build lines, weighted by tier', () => {
   assert.equal(squadRoleForSlot(session, 2), 'heavy');
   assert.equal(squadRoleForSlot(session, 3), 'gunner');
   assert.equal(squadRoleForSlot(session, 4), 'heavy');
+});
+
+test('item cap: base six items, bosses raise it, utility and free boss tiers exempt', () => {
+  const fresh = createCleanRun(4);
+  assert.equal(itemCapFor(fresh), MAX_BUILD_ITEMS_BASE);
+  assert.equal(itemCapFor({ ...fresh, bossesDefeated: 3 }), MAX_BUILD_ITEMS_BASE + 3 * ITEM_CAP_PER_BOSS);
+  // Utility tiers never count toward the item cap.
+  const stocked = { ...fresh, upgradeTiers: { reinforcements: 9, extraLife: 2, damage: 3, fireRate: 3 } };
+  assert.equal(buildItemCount(stocked), 6);
+  assert.equal(isItemCapped(stocked, 'damage'), true);
+  assert.equal(isItemCapped(stocked, 'reinforcements'), false);
+  // At the cap, shop purchases of build lines are item-capped...
+  const full = { ...stocked, purchaseCounts: { damage: 3, fireRate: 3 }, points: 100_000, armoryPicks: 0 };
+  const blocked = purchaseUpgrade(full, 'damage');
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.reason, 'item-capped');
+  // ...but utility buys still go through.
+  assert.equal(purchaseUpgrade(full, 'reinforcements').ok, true);
+  // A boss kill reopens the build.
+  const afterBoss = { ...full, bossesDefeated: 1 };
+  assert.equal(purchaseUpgrade(afterBoss, 'damage').ok, true);
+  // The free boss-reward tier is exempt from the item cap.
+  const rewarded = applyBossReward(full, 'piercing');
+  assert.equal(rewarded.upgradeTiers.piercing, 1);
 });
 
 test('veteranize converts two bodies into one double-fire veteran', () => {
