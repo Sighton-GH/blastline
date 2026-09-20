@@ -2645,13 +2645,17 @@ function drawGate(gate, foreground = false) {
     const textAlpha = clamp((gate.encounter.y - .06) / .08, 0, 1);
     if (textAlpha > 0) {
       ctx.globalAlpha *= textAlpha;
-      let fontSize = Math.min(64, visual.panelHeight * .46);
-      ctx.font = `1000 ${fontSize}px system-ui`;
-      const limit = gateWidth - postWidth * 2.3;
-      while (fontSize > 9 && ctx.measureText(gateText(gate)).width > limit) {
-        fontSize -= 1;
+      // Compound gates carry one unit per part ("+16 SQUAD / −12% FIRE RATE"); split
+      // on the slash so each effect reads as its own line instead of bare numbers
+      // the player has to map to units by position.
+      const lines = gateText(gate).includes(' / ') ? gateText(gate).split(' / ') : [gateText(gate)];
+      let fontSize = Math.min(64, visual.panelHeight * (lines.length > 1 ? .3 : .46));
+      const limit = gateWidth - postWidth * 2.8;
+      while (fontSize > 9 && lines.some(line => {
         ctx.font = `1000 ${fontSize}px system-ui`;
-      }
+        return ctx.measureText(line).width > limit;
+      })) fontSize -= 1;
+      ctx.font = `1000 ${fontSize}px system-ui`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round';
@@ -2659,15 +2663,19 @@ function drawGate(gate, foreground = false) {
       ctx.strokeStyle = 'rgba(20,23,28,.78)';
       ctx.fillStyle = '#fff';
       const textY = lerp(panelTop, panelBottom, .47);
-      ctx.strokeText(gateText(gate), visual.center.x, textY);
-      ctx.fillText(gateText(gate), visual.center.x, textY);
+      lines.forEach((line, index) => {
+        const lineY = lines.length > 1 ? textY + (index - .5) * fontSize * 1.02 : textY;
+        ctx.strokeText(line, visual.center.x, lineY);
+        ctx.fillText(line, visual.center.x, lineY);
+      });
       // At long range a second text line turns into overlapping shimmer. Keep the
       // decision value readable first, then reveal the explanatory subtitle as the
       // gate approaches and has enough physical pixels to support it.
       if (fontSize >= 13) {
         ctx.font = `950 ${Math.max(7, fontSize * .3)}px system-ui`;
         ctx.fillStyle = '#eaf9ff';
-        ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, textY + fontSize * .55);
+        const subY = lines.length > 1 ? textY + fontSize * .86 : textY + fontSize * .55;
+        ctx.fillText(gate.subtitle || 'TRADEOFF', visual.center.x, subY);
       }
     }
   }

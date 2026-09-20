@@ -280,13 +280,13 @@ export function purchaseUpgrade(session, id) {
 }
 
 export const GATE_LIBRARY = Object.freeze([
-  { id: 'ranks', title: '+10', subtitle: 'SQUAD', tone: 'blue', effects: [{ stat: 'troops', mode: 'add', value: 10 }] },
-  { id: 'loss', title: '−6', subtitle: 'SQUAD', tone: 'red', effects: [{ stat: 'troops', mode: 'add', value: -6 }] },
-  { id: 'rapid-ranks', title: '+16 / −12%', subtitle: 'SQUAD / RATE', tone: 'cyan', effects: [{ stat: 'troops', mode: 'add', value: 16 }, { stat: 'fireRate', mode: 'multiply', value: 0.88 }] },
-  { id: 'glass-cannon', title: '+1 / WIDE', subtitle: 'POWER / FORM', tone: 'gold', effects: [{ stat: 'power', mode: 'add', value: 1 }, { stat: 'formationDensity', mode: 'add', value: -1 }] },
-  { id: 'fortify', title: '+6 / −2', subtitle: 'ARMOR / SQUAD', tone: 'steel', effects: [{ stat: 'armor', mode: 'add', value: 6 }, { stat: 'troops', mode: 'add', value: -2 }] },
-  { id: 'overclock', title: '+22% / −3', subtitle: 'RATE / ARMOR', tone: 'purple', effects: [{ stat: 'fireRate', mode: 'multiply', value: 1.22 }, { stat: 'armor', mode: 'add', value: -3 }] },
-  { id: 'velocity-trade', title: '+25% / −4', subtitle: 'SPEED / SQUAD', tone: 'cyan', effects: [{ stat: 'bulletSpeed', mode: 'multiply', value: 1.25 }, { stat: 'troops', mode: 'add', value: -4 }] },
+  { id: 'ranks', title: '+10 SQUAD', subtitle: 'REINFORCEMENTS', tone: 'blue', effects: [{ stat: 'troops', mode: 'add', value: 10 }] },
+  { id: 'loss', title: '−6 SQUAD', subtitle: 'CASUALTIES', tone: 'red', effects: [{ stat: 'troops', mode: 'add', value: -6 }] },
+  { id: 'rapid-ranks', title: '+16 SQUAD / −12% FIRE RATE', subtitle: 'BIGGER, SLOWER', tone: 'cyan', effects: [{ stat: 'troops', mode: 'add', value: 16 }, { stat: 'fireRate', mode: 'multiply', value: 0.88 }] },
+  { id: 'glass-cannon', title: '+1 POWER / WIDE FORM', subtitle: 'HARDER, SPREAD OUT', tone: 'gold', effects: [{ stat: 'power', mode: 'add', value: 1 }, { stat: 'formationDensity', mode: 'add', value: -1 }] },
+  { id: 'fortify', title: '+6 ARMOR / −2 SQUAD', subtitle: 'TOUGHER, FEWER', tone: 'steel', effects: [{ stat: 'armor', mode: 'add', value: 6 }, { stat: 'troops', mode: 'add', value: -2 }] },
+  { id: 'overclock', title: '+22% FIRE RATE / −3 ARMOR', subtitle: 'FASTER, FRAGILE', tone: 'purple', effects: [{ stat: 'fireRate', mode: 'multiply', value: 1.22 }, { stat: 'armor', mode: 'add', value: -3 }] },
+  { id: 'velocity-trade', title: '+25% SHOT SPEED / −4 SQUAD', subtitle: 'HARDER SHOTS, FEWER', tone: 'cyan', effects: [{ stat: 'bulletSpeed', mode: 'multiply', value: 1.25 }, { stat: 'troops', mode: 'add', value: -4 }] },
 ]);
 
 export function applyGate(player, gate) {
