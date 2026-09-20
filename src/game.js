@@ -11,6 +11,7 @@ import {
   applyBossReward,
   applyGate,
   applyTroopDamage,
+  isUpgradeCapped,
   UNCAPPED_UPGRADES,
   enemyHitPoints,
   enemyContactDamage,
@@ -982,7 +983,7 @@ function showBossRewards() {
   for (const item of SHOP_CATALOG) {
     const tier = upgradeTier(run, item.id);
     const cost = shopPrice(item.id, run.purchaseCounts[item.id] || 0);
-    const capped = item.id === 'extraLife' ? run.lives >= 2 : tier >= item.maxTier;
+    const capped = isUpgradeCapped(run, item.id);
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-card tone-${item.tone}`;
@@ -990,7 +991,7 @@ function showBossRewards() {
     button.disabled = capped || run.points < cost;
     const image = document.createElement('img'); image.src = item.asset; image.alt = '';
     const title = document.createElement('b'); title.textContent = item.title;
-    const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : `TIER ${tier}/${item.maxTier}`;
+    const rank = document.createElement('span'); rank.className = 'tier'; rank.textContent = capped ? 'MAXIMUM' : (UNCAPPED_UPGRADES.includes(item.id) ? `TIER ${tier}` : `TIER ${tier}/${item.maxTier}`);
     const description = document.createElement('span'); description.className = 'description'; description.textContent = item.short;
     const synergy = document.createElement('span'); synergy.className = 'synergy'; synergy.textContent = capped ? 'Fully upgraded' : `${cost} POINTS`;
     button.append(image, title, rank, description, synergy);
