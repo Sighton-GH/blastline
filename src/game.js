@@ -810,8 +810,27 @@ function spawnBoss() {
   updateHud(true);
 }
 
+const BOSS_ARCHETYPES = [
+  { id: 'juggernaut', name: 'REDLINE JUGGERNAUT', hint: 'ARMORED HULL - PIERCE + CRIT PUNCH THROUGH',
+    gate: p => Math.min(1, .35 + (p.pierce || 0) * .14 + (p.criticalChance || 0) * 1.4) },
+  { id: 'reaper', name: 'BRIDGE REAPER', hint: 'FAST HULL - RATE + VELOCITY KEEP UP',
+    gate: p => Math.min(1, .3 + (p.fireRate || 0) / 45 + (p.bulletSpeed || 1) / 14) },
+  { id: 'marshal', name: 'IRON MARSHAL', hint: 'REFLECT SHIELD - SPREAD FIRE THINS THE RETURN',
+    gate: p => Math.min(1, .5 + (p.projectiles || 1) * .09) },
+  { id: 'engine', name: 'SCARLET ENGINE', hint: 'SIEGE PLATING - PLATES ABSORB THE BARRAGE',
+    gate: p => Math.min(1, .5 + (p.plates || 0) * .04) },
+];
+
+function bossIndexForWave(wave) {
+  return Math.max(1, Math.round(wave / 3));
+}
+
+function bossArchetypeForWave(wave) {
+  return BOSS_ARCHETYPES[(bossIndexForWave(wave) - 1) % BOSS_ARCHETYPES.length];
+}
+
 function bossNameForWave(wave) {
-  return ['REDLINE JUGGERNAUT', 'BRIDGE REAPER', 'IRON MARSHAL', 'SCARLET ENGINE'][wave % 4];
+  return bossArchetypeForWave(wave).name;
 }
 
 function updateBossPhase() {
@@ -1109,7 +1128,15 @@ function collidePlayerBullets() {
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
       if (crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
-        boss.hp -= bullet.power; // v2: no invuln window - sustained fire always lands
+        const gate = boss.dmgGate ?? 1;
+        boss.hp -= bullet.power * gate; // v2: no invuln window; archetype gate resists uncountered builds
+        if (boss.archetype === 'marshal') {
+          boss.reflectCount = (boss.reflectCount || 0) + 1;
+          if (boss.reflectCount % 5 === 0) {
+            spawnEnemyProjectile(boss, { kind: 'reflect', lane: nearestLane(run.player.x), x: bullet.x, y: boss.y + .03, damage: 1, color: '#ffd56a', vy: .52 * config.pressure });
+            if (!stressMode) burst(bullet.x, boss.y, '#ffd56a', 4);
+          }
+        }
 
         boss.hitFlash = .085;
         awardPoints(bullet.critical ? 4 : 2);
@@ -1256,6 +1283,7 @@ function update(dt) {
   if (run.boss) {
     run.boss.previousY = run.boss.y;
     run.boss.y = Math.min(.68, run.boss.y + dt * .19);
+    if (run.boss.archetype === 'reaper') run.boss.x = Math.sin(run.bossTime * 1.1) * .42;
     if (run.boss.invulnTimer > 0) run.boss.invulnTimer = Math.max(0, run.boss.invulnTimer - dt);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
@@ -1264,7 +1292,8 @@ function update(dt) {
       if (run.boss.attackTimer <= 0) {
         spawnBossAttack();
         const enrage = run.boss.phase === 3 ? .92 : run.boss.phase === 2 ? 1.02 : 1.12;
-        run.boss.attackTimer = config.bossCadence * enrage + (run.boss.attackSerial % 3) * .07;
+        const archetypePace = run.boss.archetype === 'engine' ? .78 : run.boss.archetype === 'reaper' ? .9 : 1;
+        run.boss.attackTimer = config.bossCadence * enrage * archetypePace + (run.boss.attackSerial % 3) * .07;
       }
     }
   }
