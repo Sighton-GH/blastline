@@ -50,8 +50,8 @@ test('wave generation is endless, bounded, and numerically stable', () => {
       assert.ok(Number.isFinite(config.bossHp));
       assert.ok(config.duration >= 26 && config.duration <= 38);
       assert.ok(config.activeTarget > 0 && config.activeTarget <= MAX_ACTIVE_ENEMIES);
-      assert.ok(config.hordeSize > 0 && config.hordeSize <= 54);
-      assert.ok(config.spawnInterval >= .5);
+      assert.ok(config.hordeSize > 0 && config.hordeSize <= 58); // 58 = tightened 2026-09-19 pressure curve horde cap
+      assert.ok(config.spawnInterval >= .65); // tightened floor, 2026-09-19 pressure curve
       assert.ok(config.enemySpeed > 0 && config.enemySpeed < .1);
       const compositionTotal = Object.values(config.composition).reduce((sum, chance) => sum + chance, 0);
       assert.ok(Math.abs(compositionTotal - 1) < 1e-9);

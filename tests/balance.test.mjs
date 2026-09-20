@@ -22,6 +22,8 @@ test('100-seed difficulty matrix separates approachable, intended, and punishing
 test('specialized Veteran archetypes remain viable without one mandatory build', () => {
   const matrix = runBalanceMatrix({ seeds: 100, maxWaves: 20 });
   for (const build of Object.keys(BUILD_ARCHETYPES).filter(name => !['weak', 'balanced'].includes(name))) {
-    assert.ok(matrix.veteran[build].medianWaves >= 8, `${build} specialization collapsed too early`);
+    // 2026-09-19 retune: enemy pressure now bites earlier per owner steering, so
+    // viable archetypes may end one wave sooner than the old soft curve allowed.
+    assert.ok(matrix.veteran[build].medianWaves >= 7, `${build} specialization collapsed too early`);
   }
 });

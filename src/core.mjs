@@ -31,7 +31,7 @@ export const ACTIVE_STATES = Object.freeze([
 export const DIFFICULTIES = Object.freeze({
   recruit: Object.freeze({
     id: 'recruit', label: 'Recruit', tagline: 'Room to recover',
-    density: 0.8, pressure: 0.8, cadence: 0.82, recoveryTroops: 16,
+    density: 0.72, pressure: 0.78, cadence: 0.76, recoveryTroops: 16,
   }),
   veteran: Object.freeze({
     id: 'veteran', label: 'Veteran', tagline: 'The intended fight',
@@ -94,11 +94,11 @@ export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
   const duration = Math.min(38, 26 + (wave - 1) * 0.65);
   const activeTarget = Math.min(
     MAX_ACTIVE_ENEMIES,
-    Math.round((32 + (wave - 1) * 8.5) * mode.density),
+    Math.round((38 + (wave - 1) * 9.5) * mode.density),
   );
-  const hordeSize = Math.min(54, Math.max(24, Math.round((28 + wave * 1.35) * mode.density)));
-  const spawnInterval = Math.max(0.72, 2.7 - logScale * 0.32) / mode.cadence;
-  const enemySpeed = Math.min(0.069, 0.047 + logScale * 0.0032) * (0.97 + (mode.pressure - 1) * 0.12);
+  const hordeSize = Math.min(58, Math.max(26, Math.round((30 + wave * 1.45) * mode.density)));
+  const spawnInterval = Math.max(0.65, (2.5 - logScale * 0.3) / mode.cadence);
+  const enemySpeed = Math.min(0.071, 0.048 + logScale * 0.0034) * (0.97 + (mode.pressure - 1) * 0.12);
   const bossEscalation = wave >= 3 ? 1 + (wave - 3) * 0.08 : 1;
   const bossHp = Math.round(Math.min(14_000, (210 + wave * 48 + logScale * 85) * (0.92 + mode.pressure * 0.08) * bossEscalation));
   const composition = {
@@ -135,6 +135,9 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'multishot', title: 'Multishot', short: '+1 round', baseCost: 720, maxTier: 3, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Covers more lanes' },
   { id: 'armor', title: 'Armor', short: '+4 plates', baseCost: 260, maxTier: 10, tone: 'steel', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Absorbs incoming fire' },
   { id: 'extraLife', title: 'Reserve', short: '+1 reserve', baseCost: 950, maxTier: MAX_LIVES, tone: 'red', asset: 'assets/blastline/ui/upgrade-armor.webp', synergy: 'Redeploys the squad' },
+  { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: MAX_PIERCE, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations' },
+  { id: 'criticalChance', title: 'Critical', short: '+5% crit', baseCost: 380, maxTier: 6, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder' },
+  { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 5, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner' },
 ]);
 
 export const SHOP_BY_ID = Object.freeze(Object.fromEntries(SHOP_CATALOG.map(item => [item.id, item])));
