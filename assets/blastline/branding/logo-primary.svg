@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Blastline</title><desc id="desc">Blastline wordmark with a fortified bridge shield and twin fire lanes.</desc>
+  <defs>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset=".44" stop-color="#bdeeff"/><stop offset="1" stop-color="#48bfea"/></linearGradient>
+    <linearGradient id="fire" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff4e23"/><stop offset=".32" stop-color="#ffc62b"/><stop offset=".7" stop-color="#ffc62b"/><stop offset="1" stop-color="#ff4e23"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="180%"><feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#00101d" flood-opacity=".8"/></filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M74 231 170 190h648l68 41-72 18H156Z" fill="#071a2c" stroke="#36bde9" stroke-width="5"/>
+    <path d="M164 225h656" stroke="url(#fire)" stroke-width="9" stroke-linecap="round"/>
+    <g transform="translate(18 20) scale(1.72)">
+      <path d="M64 4 113 23v36c0 31-19 52-49 65C34 111 15 90 15 59V23Z" fill="#071725" stroke="#7ee4ff" stroke-width="4"/>
+      <path d="M32 89 52 67h24l20 22" fill="none" stroke="#1a6395" stroke-width="15" stroke-linecap="round"/>
+      <path d="M35 91 54 70h20l19 21" fill="none" stroke="#8be8ff" stroke-width="5" stroke-linecap="round"/>
+      <path d="M43 75V31h13v13h16V31h13v44" fill="none" stroke="#9feaff" stroke-width="9" stroke-linejoin="round"/>
+      <path d="M48 54h32" stroke="#fff" stroke-width="6"/>
+      <path d="M26 97 48 84 43 102 54 96 51 111Z" fill="#ff9d1f"/>
+      <path d="M102 97 80 84 85 102 74 96 77 111Z" fill="#ff9d1f"/>
+    </g>
+    <text x="224" y="180" fill="#05111d" stroke="#05111d" stroke-width="18" paint-order="stroke" font-family="Arial Black,Impact,sans-serif" font-size="112" font-style="italic" font-weight="900" letter-spacing="-8">BLASTLINE</text>
+    <text x="224" y="180" fill="url(#ink)" stroke="#22a6dd" stroke-width="4" paint-order="stroke" font-family="Arial Black,Impact,sans-serif" font-size="112" font-style="italic" font-weight="900" letter-spacing="-8">BLASTLINE</text>
+    <path d="m851 75 55 28-37 7 25 20-59-21 22-8-32-11Z" fill="url(#fire)"/>
+  </g>
+</svg>
