@@ -12,21 +12,25 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasT
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 await page.goto(`http://127.0.0.1:${port}/?qa&diff=veteran`, { waitUntil: 'load' });
-await page.waitForTimeout(500);
+await page.waitForTimeout(600);
 await page.evaluate(() => { const b = document.querySelectorAll('#difficultyPicker button'); if (b[1]) b[1].click(); });
-await page.waitForTimeout(200); await page.tap('#playBtn');
-// wait until mid wave 3 with plenty of enemies on the visible field
-for (let i = 0; i < 240; i++) {
-  const s = await page.evaluate(() => { const st = __blastlineTest.getState(); return { state: st.state, wave: st.wave, engaged: (st.sampleEnemies||[]).filter(e=>e.y>0.04).length }; });
-  if (s.state === 'armory') { const c = await page.$('.armory-continue'); if (c && await c.isEnabled()) await c.tap(); await page.waitForTimeout(300); continue; }
-  if (s.wave >= 3 && s.engaged >= 8) break;
-  await page.waitForTimeout(300);
-}
-for (let k = 0; k < 4; k++) {
-  await page.screenshot({ path: `/home/sandbox/c6-evidence/v2-melt-${k}.png` });
-  await page.waitForTimeout(700);
-}
-const kv = await page.evaluate(() => __blastlineTest.getState().killViz);
-console.log('KILLVIZ', JSON.stringify(kv && { kills: kv.kills, onScreen: kv.onScreen, mean: +(kv.visibleSum/Math.max(1,kv.kills)).toFixed(2), max: kv.visibleMax }));
+await page.waitForTimeout(150); await page.tap('#playBtn'); await page.waitForTimeout(400);
+const out = await page.evaluate(() => {
+  __blastlineTest.setBuild({ power: 2, fireRate: 6, projectiles: 4, pierce: 0, plating: 0, bulletSpeed: 1, criticalChance: 0 });
+  __blastlineTest.setTroops(30);
+  __blastlineTest.setWave(9);
+  __blastlineTest.setWaveTime(__blastlineTest.getWaveConfig().duration + 1);
+  __blastlineTest.advance(0.2);
+  __blastlineTest.setWaveTime(0);
+  const st0 = __blastlineTest.getState();
+  __blastlineTest.advance(2.2); // march past BOSS_ENGAGEMENT_Y
+  __blastlineTest.fireNow(8);
+  __blastlineTest.advance(1.5);
+  const st = __blastlineTest.getState();
+  return { archetype: st.bossArchetype, gate: st.bossDmgGate, bossHp: st.boss && st.boss.hp,
+    reflects: st.sampleEnemyBullets ? st.sampleEnemyBullets.filter(b => b.kind === 'reflect').length : 'n/a',
+    enemyBullets: st.enemyBullets, state: st.state };
+});
+console.log('MARSHAL', JSON.stringify(out));
 console.log('JS ERRORS:', errors.length ? errors.slice(0,3) : 'none');
 await browser.close(); server.close(); process.exit(0);

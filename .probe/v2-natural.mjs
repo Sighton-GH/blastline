@@ -43,4 +43,4 @@ while ((Date.now()-t0)/1000 < 420) {
   await page.waitForTimeout(350);
 }
 console.log('JS ERRORS:', errors.length ? errors.slice(0,5) : 'none');
-await browser.close();
+await browser.close(); server.close(); process.exit(0);

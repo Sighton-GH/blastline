@@ -5,6 +5,7 @@ import {
   LANE_CENTERS,
   LANE_HALF_WIDTH,
   LANE_LIMIT,
+  BOSS_ENGAGEMENT_Y,
   ENGAGEMENT_Y,
   MAX_ACTIVE_ENEMIES,
   MAX_TROOPS,
@@ -91,7 +92,7 @@ const canvas = document.querySelector('#game');
 const stageElement = document.querySelector('#stage');
 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
-  'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
+  'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards',
   'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
@@ -607,6 +608,7 @@ function updateHud(force = false) {
   if (run.boss) {
     const hp = Math.max(0, run.boss.hp);
     setText(dom.bossName, run.boss.name);
+    setText(dom.bossHint, bossArchetypeForWave(run.wave).hint);
     setText(dom.bossPhaseText, `PHASE ${['I', 'II', 'III'][run.boss.phase - 1]}`);
     setText(dom.bossHealthText, `${formatCompact(hp)} / ${formatCompact(run.boss.maxHp)}`);
     setWidth(dom.bossHealthFill, `${(clamp(hp / run.boss.maxHp, 0, 1) * 100).toFixed(1)}%`);
@@ -621,9 +623,9 @@ function updateHud(force = false) {
   hudUpdateTimer = .1;
 }
 
-function addFloater(x, y, text, color = '#fff', size = 22) {
+function addFloater(x, y, text, color = '#fff', size = 22, life = 1) {
   if (run.floaters.length >= 35) return;
-  run.floaters.push(pools.floaters.take({ x, y, text, color, size, life: 1, dead: false }));
+  run.floaters.push(pools.floaters.take({ x, y, text, color, size, life, dead: false }));
 }
 
 function burst(x, y, color, count = 8) {
@@ -840,6 +842,7 @@ function addTelegraph(lane, time, kind, source = null, options = {}) {
 }
 
 function spawnBoss() {
+  const archetype = bossArchetypeForWave(run.wave);
   releaseAll(run.enemies, pools.enemies);
   releaseAll(run.bullets, pools.bullets);
   releaseAll(run.enemyBullets, pools.enemyBullets);
@@ -848,14 +851,16 @@ function spawnBoss() {
   run.hazards.length = 0;
   run.bossTime = 0;
   run.boss = {
-    id: ++enemySerial, type: 'boss', name: bossNameForWave(run.wave),
+    id: ++enemySerial, type: 'boss', name: archetype.name, archetype: archetype.id,
+    dmgGate: archetype.gate(run.player),
     lane: 1, x: 0, y: -.12, previousY: -.12,
     hp: config.bossHp, maxHp: config.bossHp,
     phase: 1, attackTimer: 1.05, attackSerial: 0, hitFlash: 0, shotFlash: 0, invulnTimer: 0,
     rewarded: false,
   };
   setState(GAME_STATE.BOSS);
-  addFloater(0, .39, `WAVE ${run.wave} BOSS`, '#ffd56a', 28);
+  addFloater(0, .42, `WAVE ${run.wave} BOSS`, '#ffd56a', 30, 2.2);
+  setText(dom.bossHint, archetype.hint);
   updateHud(true);
 }
 
@@ -1225,7 +1230,7 @@ function collidePlayerBullets() {
     if (!bullet.dead && run.boss) {
       const boss = run.boss;
       const crossed = bullet.previousY >= boss.y && bullet.y <= boss.y;
-      if (boss.y >= ENGAGEMENT_Y && crossed && Math.abs(bullet.x - boss.x) < .13) {
+      if (boss.y >= BOSS_ENGAGEMENT_Y && crossed && Math.abs(bullet.x - boss.x) < .13) {
         bullet.dead = true;
         const gate = boss.dmgGate ?? 1;
         boss.hp -= bullet.power * gate; // v2: no invuln window; archetype gate resists uncountered builds
@@ -2657,6 +2662,7 @@ function getStateSnapshot() {
   const activeEnemies = run.enemies.filter(enemy => !enemy.dead);
   return {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
+    bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
     score: run.score, skillPoints: run.points, lives: run.lives, kills: run.kills, killViz: run.killViz || null,
