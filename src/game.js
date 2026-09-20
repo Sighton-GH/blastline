@@ -1022,7 +1022,9 @@ function gameOver() {
   setText(dom.finalDifficulty, DIFFICULTIES[run.difficulty].label);
   setText(dom.finalBestCombo, `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
   const recordsHit = commitRunRecords();
-  setText(dom.recordCallout, recordsHit.score ? 'NEW HIGH SCORE' : recordsHit.wave ? 'NEW BEST WAVE' : `BEST COMBO ×${Math.max(1, run.bestCombo)}`);
+  const callout = recordsHit.score ? 'NEW HIGH SCORE' : recordsHit.wave ? 'NEW BEST WAVE' : recordsHit.combo ? 'NEW BEST COMBO' : '';
+  setText(dom.recordCallout, callout);
+  dom.recordCallout.hidden = !callout;
   setState(GAME_STATE.GAME_OVER);
   updateHud(true);
 }

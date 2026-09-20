@@ -176,6 +176,7 @@ button:disabled { cursor: not-allowed; filter: saturate(.42) brightness(.7); }
 .career-strip span { display: grid; padding: 6px; border: 1px solid rgba(107,205,242,.28); border-radius: 8px; background: rgba(2,25,41,.65); }
 .career-strip small { color: #91b9cb; font-size: 6px; font-weight: 950; letter-spacing: .11em; }
 .career-strip b { color: #fff1a0; font-size: 13px; }
+.record-callout[hidden] { display: none; }
 .record-callout { margin: -7px 0 3px; color: #ffd15c; font-size: 11px; font-weight: 1000; letter-spacing: .13em; text-align: center; }
 .final-best-combo { margin: 0 0 13px; color: #ffae62; font-size: 9px; font-weight: 950; letter-spacing: .1em; text-align: center; }
 
