@@ -119,7 +119,7 @@ const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName', 'bossHint',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardKind', 'rewardCards', 'upgradeInfo', 'upgradeInfoTitle', 'upgradeInfoTier', 'upgradeInfoBody', 'upgradeInfoClose',
   'rewardWave', 'rewardFooter', 'rewardBalance', 'rewardBalanceValue', 'recoveryPanel', 'recoveryCount', 'recoveryReserves', 'gameOverPanel', 'playBtn', 'playDifficulty',
-  'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
+  'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseShopBtn', 'pauseHomeBtn', 'rewardSub', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn', 'metaPanel', 'cacheBanner',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints', 'runBrief',
   'comboBadge', 'comboLabel', 'comboTimerLabel', 'homeBestScore', 'homeBestWave', 'homeBestCombo', 'recordCallout',
@@ -3850,6 +3850,7 @@ dom.resumeBtn.onclick = () => { audio.uiClick(); resumeGame(); };
 dom.restartBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
 dom.retryBtn.onclick = () => { audio.uiClick(); startRun(Date.now() >>> 0, run.difficulty); };
 dom.gameOverHomeBtn.onclick = () => { audio.uiClick(); returnHome(); };
+dom.pauseHomeBtn.onclick = () => { audio.uiClick(); returnHome(); };
 // Reflect the persisted mute preference on load, before any click.
 if (audio.isMuted()) {
   dom.muteBtn.textContent = '🔇';
