@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T00:51:39.118Z",
+  "generatedAt": "2026-09-20T05:06:25.529Z",
   "fullSoak": false,
   "durations": {
     "normalMs": 3000,
@@ -31,7 +31,7 @@
       "deviceScaleFactor": 1
     }
   },
-  "pass": true,
+  "pass": false,
   "checks": {
     "portrait-home:safeArea": true,
     "portrait-home:hudOverlap": true,
@@ -384,13 +384,17 @@
     "resumeFromDashboard": true,
     "armoryPurchaseSpendsPoints": true,
     "armoryContinuesRun": true,
+    "bossRewardOffersThreeFreeUniqueCards": true,
+    "bossRewardPickUnlocksArmoryShop": false,
+    "bossRewardContinueAdvancesWave": true,
     "laneLockedTradeoffGate": true,
     "enemyFormationLaneOwnership": true,
     "laneTelegraphedEnemyFire": true,
     "comboScoringAndBadge": true,
     "comboExpiresCleanly": true,
     "bossPhasesAndDamage": true,
-    "sixArmoryChoices": true,
+    "threeFreeBossRewards": true,
+    "sixArmoryChoices": false,
     "bossArmoryTransition": true,
     "extraLifeStartsProtectedRecovery": true,
     "recoveryReturnsToRun": true,
@@ -404,8 +408,8 @@
     "mobileP95AtMost16_7ms": true,
     "desktopP95AtMost16_7ms": true,
     "stressSceneEntityMinimums": true,
-    "stress4xP95AtMost33_3ms": true,
-    "stressFramesOver50Below1Percent": true,
+    "stress4xP95AtMost33_3ms": false,
+    "stressFramesOver50Below1Percent": false,
     "soakHeapGrowthAtMost15Percent": true,
     "soakEntitiesRemainBounded": true,
     "noConsoleErrors": true,
@@ -413,12 +417,56 @@
     "noSourceMastersAtRuntime": true,
     "generatedOceanRuntimeAsset": true
   },
-  "failures": [],
+  "failures": [
+    {
+      "name": "bossRewardPickUnlocksArmoryShop",
+      "details": {
+        "shopCount": 9,
+        "continueEnabled": true
+      }
+    },
+    {
+      "name": "sixArmoryChoices",
+      "details": [
+        "reinforcements",
+        "damage",
+        "fireRate",
+        "multishot",
+        "armor",
+        "extraLife",
+        "piercing",
+        "criticalChance",
+        "projectileSpeed"
+      ]
+    },
+    {
+      "name": "stress4xP95AtMost33_3ms",
+      "details": {
+        "samples": 372,
+        "p50": 16.699999999999818,
+        "p95": 49.899999999999636,
+        "max": 99.89999999999964,
+        "over50": 0.026881720430107527,
+        "refreshNormalizedP95": 49.899999999999636
+      }
+    },
+    {
+      "name": "stressFramesOver50Below1Percent",
+      "details": {
+        "samples": 372,
+        "p50": 16.699999999999818,
+        "p95": 49.899999999999636,
+        "max": 99.89999999999964,
+        "over50": 0.026881720430107527,
+        "refreshNormalizedP95": 49.899999999999636
+      }
+    }
+  ],
   "performance": {
     "mobile": {
       "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.799999999999727,
+      "p95": 16.700000000000273,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
@@ -426,60 +474,60 @@
     "desktop": {
       "samples": 176,
       "p50": 16.699999999999818,
-      "p95": 16.700000000000728,
+      "p95": 16.799999999999727,
       "max": 16.800000000000182,
       "over50": 0,
       "refreshNormalizedP95": 16.666666666666668
     },
     "stressBenchmarks1x": {
-      "drawMs": 0.504999999993015,
-      "updateMs": 0.25666666666511445
+      "drawMs": 0.5599999999976717,
+      "updateMs": 0.28000000000077613
     },
     "stressBenchmarks4x": {
-      "drawMs": 1.7249999999961194,
-      "updateMs": 1.05,
+      "drawMs": 2.6583333333255723,
+      "updateMs": 1.1233333333317812,
       "layers": {
-        "foregroundClear": 0.10000000000582077,
-        "environmentMotion": 0.28750000000582077,
-        "telegraphs": 0.1374999999825377,
-        "enemiesAndBoss": 1.3249999999825377,
-        "hostileProjectiles": 0.0625,
-        "squadProjectiles": 0.27499999999417923,
-        "squad": 0.9000000000232831,
-        "effects": 0.36249999998835847
+        "foregroundClear": 0.012500000011641532,
+        "environmentMotion": 0.04999999998835847,
+        "telegraphs": 0.037500000005820766,
+        "enemiesAndBoss": 0.22500000000582077,
+        "hostileProjectiles": 0.024999999994179234,
+        "squadProjectiles": 0.04999999998835847,
+        "squad": 0.13750000001164153,
+        "effects": 0.47500000000582077
       }
     },
     "stress4x": {
-      "samples": 429,
+      "samples": 372,
       "p50": 16.699999999999818,
-      "p95": 33.30000000000109,
-      "max": 50,
-      "over50": 0,
-      "refreshNormalizedP95": 33.333333333333336
+      "p95": 49.899999999999636,
+      "max": 99.89999999999964,
+      "over50": 0.026881720430107527,
+      "refreshNormalizedP95": 49.899999999999636
     },
     "soak": {
       "durationMs": 15000,
-      "initialHeap": 3329156,
-      "finalHeap": 3291420,
-      "heapGrowth": -0.011335005028301468,
+      "initialHeap": 3385976,
+      "finalHeap": 3466768,
+      "heapGrowth": 0.023860771606177954,
       "entitySamples": [
         {
           "enemies": 180,
-          "bullets": 696,
-          "enemyBullets": 4,
+          "bullets": 672,
+          "enemyBullets": 8,
           "particles": 0,
           "created": {
             "enemies": {
-              "created": 189,
-              "free": 4
+              "created": 187,
+              "free": 2
             },
             "bullets": {
               "created": 720,
-              "free": 24
+              "free": 48
             },
             "enemyBullets": {
-              "created": 11,
-              "free": 7
+              "created": 12,
+              "free": 4
             },
             "particles": {
               "created": 80,
@@ -487,30 +535,30 @@
             },
             "floaters": {
               "created": 35,
-              "free": 19
+              "free": 24
             },
             "telegraphs": {
               "created": 9,
-              "free": 6
+              "free": 8
             }
           }
         },
         {
           "enemies": 180,
-          "bullets": 648,
-          "enemyBullets": 8,
+          "bullets": 696,
+          "enemyBullets": 9,
           "particles": 0,
           "created": {
             "enemies": {
-              "created": 189,
-              "free": 8
+              "created": 188,
+              "free": 7
             },
             "bullets": {
               "created": 720,
-              "free": 72
+              "free": 24
             },
             "enemyBullets": {
-              "created": 11,
+              "created": 12,
               "free": 3
             },
             "particles": {
@@ -519,31 +567,31 @@
             },
             "floaters": {
               "created": 35,
-              "free": 18
+              "free": 15
             },
             "telegraphs": {
-              "created": 10,
-              "free": 5
+              "created": 9,
+              "free": 7
             }
           }
         },
         {
           "enemies": 180,
-          "bullets": 696,
-          "enemyBullets": 11,
+          "bullets": 672,
+          "enemyBullets": 8,
           "particles": 0,
           "created": {
             "enemies": {
               "created": 189,
-              "free": 8
+              "free": 9
             },
             "bullets": {
               "created": 720,
-              "free": 24
+              "free": 48
             },
             "enemyBullets": {
-              "created": 11,
-              "free": 0
+              "created": 12,
+              "free": 4
             },
             "particles": {
               "created": 80,
@@ -551,10 +599,10 @@
             },
             "floaters": {
               "created": 35,
-              "free": 14
+              "free": 21
             },
             "telegraphs": {
-              "created": 10,
+              "created": 9,
               "free": 5
             }
           }
@@ -583,7 +631,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.07777777777907129
+        "synchronousDrawMeanMs": 0.14722222222351572
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -694,7 +742,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3111111111098176
+        "synchronousDrawMeanMs": 0.4027777777777778
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -704,10 +752,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -715,27 +763,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.375,
               "y": 7,
-              "width": 178,
+              "width": 192.625,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.375
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           }
         ],
@@ -845,7 +893,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4000000000006467
+        "synchronousDrawMeanMs": 0.45555555555296856
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -855,10 +903,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -866,27 +914,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.375,
               "y": 7,
-              "width": 178,
+              "width": 192.625,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.375
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           }
         ],
@@ -996,7 +1044,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5444444444437977
+        "synchronousDrawMeanMs": 0.7861111111059371
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1006,10 +1054,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1017,27 +1065,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.0625,
               "y": 7,
-              "width": 178,
+              "width": 192.9375,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.0625
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           }
         ],
@@ -1147,7 +1195,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3444444444450912
+        "synchronousDrawMeanMs": 0.4638888888875954
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1157,10 +1205,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1168,46 +1216,46 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.375,
               "y": 7,
-              "width": 178,
+              "width": 192.625,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.375
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           },
           {
             "id": "frenzyBadge",
             "rect": {
-              "x": 147.2890625,
-              "y": 91,
+              "x": 12,
+              "y": 142,
               "width": 95.421875,
               "height": 32,
-              "top": 91,
-              "right": 242.7109375,
-              "bottom": 123,
-              "left": 147.2890625
+              "top": 142,
+              "right": 107.421875,
+              "bottom": 174,
+              "left": 12
             }
           }
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 80.04166666666669,
+        "maxWaterJump": 77.12500000000004,
         "projection": {
           "horizon": -84.4,
           "deckBottom": 865.0999999999999,
@@ -1311,7 +1359,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.24722222222286896
+        "synchronousDrawMeanMs": 0.730555555556849
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1321,10 +1369,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1332,27 +1380,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.375,
               "y": 7,
-              "width": 178,
+              "width": 192.625,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.375
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           }
         ],
@@ -1462,7 +1510,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.20000000000194026
+        "synchronousDrawMeanMs": 0.33055555555943605
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1573,7 +1621,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.20833333333333334
+        "synchronousDrawMeanMs": 0.3527777777764843
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1583,10 +1631,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1594,27 +1642,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 178.40625,
               "y": 7,
-              "width": 178,
+              "width": 204.59375,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 178.40625
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           }
         ],
@@ -1724,7 +1772,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.20833333333333334
+        "synchronousDrawMeanMs": 0.47499999999611947
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1734,10 +1782,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1745,27 +1793,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 192.375,
               "y": 7,
-              "width": 178,
+              "width": 190.625,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 192.375
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           },
           {
@@ -1888,7 +1936,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.399999999997413
+        "synchronousDrawMeanMs": 0.4305555555555556
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -1898,10 +1946,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -1909,27 +1957,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.0625,
               "y": 7,
-              "width": 178,
+              "width": 192.9375,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.0625
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.5,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.5,
-              "bottom": 85.390625,
-              "left": 102.5
+              "top": 58,
+              "right": 197,
+              "bottom": 87.390625,
+              "left": 12
             }
           },
           {
@@ -2052,7 +2100,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5222222222202819
+        "synchronousDrawMeanMs": 0.7083333333333334
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2062,10 +2110,10 @@
             "rect": {
               "x": 7,
               "y": 7,
-              "width": 80,
+              "width": 149.5,
               "height": 44,
               "top": 7,
-              "right": 87,
+              "right": 156.5,
               "bottom": 51,
               "left": 7
             }
@@ -2073,27 +2121,27 @@
           {
             "id": "hud-cluster hud-run",
             "rect": {
-              "x": 205,
+              "x": 190.0625,
               "y": 7,
-              "width": 178,
+              "width": 192.9375,
               "height": 44,
               "top": 7,
               "right": 383,
               "bottom": 51,
-              "left": 205
+              "left": 190.0625
             }
           },
           {
             "id": "floatingStats",
             "rect": {
-              "x": 102.2265625,
-              "y": 56,
+              "x": 12,
+              "y": 58,
               "width": 185.546875,
               "height": 29.390625,
-              "top": 56,
-              "right": 287.7734375,
-              "bottom": 85.390625,
-              "left": 102.2265625
+              "top": 58,
+              "right": 197.546875,
+              "bottom": 87.390625,
+              "left": 12
             }
           },
           {
@@ -2216,7 +2264,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.07222222222157547
+        "synchronousDrawMeanMs": 0.09444444444832495
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2327,7 +2375,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.11666666666860692
+        "synchronousDrawMeanMs": 0.1916666666705472
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2438,7 +2486,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3249999999987065
+        "synchronousDrawMeanMs": 0.40555555555167505
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2448,10 +2496,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -2473,12 +2521,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           }
@@ -2589,7 +2637,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6305555555574958
+        "synchronousDrawMeanMs": 0.8638888888850084
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2599,10 +2647,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -2624,12 +2672,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           }
@@ -2740,7 +2788,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.6027777777764842
+        "synchronousDrawMeanMs": 1.0277777777777777
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2750,10 +2798,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -2775,12 +2823,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           }
@@ -2891,7 +2939,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.4083333333320398
+        "synchronousDrawMeanMs": 0.6472222222235158
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -2901,10 +2949,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -2926,32 +2974,32 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           },
           {
             "id": "frenzyBadge",
             "rect": {
-              "x": 1232.9375,
-              "y": 76,
+              "x": 18,
+              "y": 64,
               "width": 114.0625,
               "height": 38,
-              "top": 76,
-              "right": 1347,
-              "bottom": 114,
-              "left": 1232.9375
+              "top": 64,
+              "right": 132.0625,
+              "bottom": 102,
+              "left": 18
             }
           }
         ],
         "overlaps": [],
         "safeArea": true,
-        "maxWaterJump": 87.1111111111111,
+        "maxWaterJump": 80.08333333333336,
         "projection": {
           "horizon": -122.88,
           "deckBottom": 787.1999999999999,
@@ -3055,7 +3103,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.33888888889082913
+        "synchronousDrawMeanMs": 0.4444444444444444
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3065,10 +3113,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -3090,12 +3138,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           }
@@ -3206,7 +3254,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3111111111098176
+        "synchronousDrawMeanMs": 0.42777777777519077
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3317,7 +3365,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.3611111111111111
+        "synchronousDrawMeanMs": 0.3666666666653732
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3327,10 +3375,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -3352,12 +3400,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           }
@@ -3468,7 +3516,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.34444444444832495
+        "synchronousDrawMeanMs": 0.3055555555555556
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3478,10 +3526,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -3503,12 +3551,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           },
@@ -3632,7 +3680,7 @@
         "telegraphs": 1
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.5138888888888888
+        "synchronousDrawMeanMs": 0.29999999999482596
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3642,10 +3690,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -3667,12 +3715,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 245,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 263,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           },
@@ -3796,7 +3844,7 @@
         "telegraphs": 3
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.7888888888927694
+        "synchronousDrawMeanMs": 0.7472222222196352
       },
       "runtimeAssetCount": 21,
       "audit": {
@@ -3806,10 +3854,10 @@
             "rect": {
               "x": 303.5,
               "y": 11,
-              "width": 176,
+              "width": 294,
               "height": 54,
               "top": 11,
-              "right": 479.5,
+              "right": 597.5,
               "bottom": 65,
               "left": 303.5
             }
@@ -3831,12 +3879,12 @@
             "id": "floatingStats",
             "rect": {
               "x": 18,
-              "y": 72,
+              "y": 12,
               "width": 248.421875,
               "height": 37.796875,
-              "top": 72,
+              "top": 12,
               "right": 266.421875,
-              "bottom": 109.796875,
+              "bottom": 49.796875,
               "left": 18
             }
           },
@@ -3960,7 +4008,7 @@
         "telegraphs": 0
       },
       "frameTimeSummary": {
-        "synchronousDrawMeanMs": 0.2361111111111111
+        "synchronousDrawMeanMs": 0.2138888888940629
       },
       "runtimeAssetCount": 21,
       "audit": {
