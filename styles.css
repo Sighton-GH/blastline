@@ -301,19 +301,20 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .control-note span { padding: 0 5px; }
 
 .reward-overlay { background: radial-gradient(circle at 50% 28%, rgba(53,186,237,.23), rgba(2,14,24,.84) 65%); backdrop-filter: blur(4px); }
-.reward-shell { width: min(920px, 96vw); border-color: rgba(255,211,76,.72); }
-.reward-shell h2 { font-size: clamp(30px, 5vw, 48px); }
-.reward-sub { margin: 8px auto 14px; }
-.reward-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.reward-card { --tone: #45d9ff; position: relative; min-height: 250px; padding: 16px 13px 42px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--tone) 74%, white); border-radius: 16px; color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 66%, #17415d) 0 44%, color-mix(in srgb, var(--tone) 25%, #071b2a) 44%); box-shadow: 0 5px 0 color-mix(in srgb, var(--tone) 32%, #03111c), 0 13px 24px rgba(0,9,16,.35), inset 0 2px rgba(255,255,255,.25); cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
+.reward-shell { display: flex; width: min(780px, 94vw); max-height: calc(100vh - 30px); max-height: calc(100dvh - 30px); padding: 18px 20px 14px; flex-direction: column; border-color: rgba(255,211,76,.72); overflow: hidden; }
+.reward-shell h2 { font-size: clamp(24px, 3.4vw, 34px); }
+.reward-shell .eyebrow { margin-bottom: 4px; }
+.reward-sub { margin: 5px auto 10px; font-size: 12px; }
+.reward-grid { display: grid; flex: 1 1 auto; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; overflow-y: auto; }
+.reward-card { --tone: #45d9ff; position: relative; min-height: 148px; padding: 10px 10px 30px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--tone) 74%, white); border-radius: 16px; color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 66%, #17415d) 0 44%, color-mix(in srgb, var(--tone) 25%, #071b2a) 44%); box-shadow: 0 5px 0 color-mix(in srgb, var(--tone) 32%, #03111c), 0 13px 24px rgba(0,9,16,.35), inset 0 2px rgba(255,255,255,.25); cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
 .reward-card::before { position: absolute; inset: 0; content: ""; background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.27), transparent 37%), repeating-linear-gradient(115deg, transparent 0 25px, rgba(255,255,255,.045) 26px 27px); }
 .reward-card:hover { z-index: 2; filter: brightness(1.1); transform: translateY(-5px) scale(1.014); }
 .reward-card > * { position: relative; }
-.reward-card img { display: block; width: 88px; height: 88px; object-fit: contain; margin: -2px auto 7px; filter: drop-shadow(0 8px 8px rgba(0,9,16,.34)); }
-.reward-card b { display: block; margin-bottom: 4px; font-size: 19px; }
-.reward-card .tier { display: inline-block; margin-bottom: 8px; padding: 2px 7px; border: 1px solid rgba(255,255,255,.38); border-radius: 10px; color: #fff4b3; font-size: 8px; font-weight: 1000; letter-spacing: .1em; background: rgba(0,0,0,.18); }
-.reward-card .description { display: block; color: #edf9ff; font-size: 11px; }
-.reward-card .synergy { position: absolute; right: 12px; bottom: 10px; left: 12px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.18); color: #ffe17b; font-size: 8px; font-weight: 900; }
+.reward-card img { display: block; width: 52px; height: 52px; object-fit: contain; margin: 0 auto 4px; filter: drop-shadow(0 6px 6px rgba(0,9,16,.34)); }
+.reward-card b { display: block; margin-bottom: 2px; font-size: 15px; }
+.reward-card .tier { display: inline-block; margin-bottom: 5px; padding: 1px 6px; border: 1px solid rgba(255,255,255,.38); border-radius: 10px; color: #fff4b3; font-size: 7px; font-weight: 1000; letter-spacing: .1em; background: rgba(0,0,0,.18); }
+.reward-card .description { display: block; color: #edf9ff; font-size: 9.5px; }
+.reward-card .synergy { position: absolute; right: 10px; bottom: 7px; left: 10px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,.18); color: #ffe17b; font-size: 7.5px; font-weight: 900; }
 
 .recovery-overlay { position: absolute; inset: 0; z-index: 18; display: grid; place-items: center; pointer-events: none; background: radial-gradient(circle, rgba(83,219,255,.13), transparent 48%); }
 .recovery-core { display: grid; width: 172px; height: 172px; place-content: center; border: 6px solid rgba(106,229,255,.9); border-radius: 50%; text-align: center; background: radial-gradient(circle, rgba(11,73,103,.96), rgba(2,25,42,.92)); box-shadow: 0 0 0 8px rgba(45,181,231,.18), 0 0 50px rgba(60,215,255,.38), inset 0 0 25px rgba(65,214,255,.18); }
@@ -358,10 +359,10 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .stat { min-width: 54px; padding: 3px 6px; border-width: 1px; border-radius: 7px; }
   .stat span { font-size: 5.5px; }
   .stat b { font-size: 14px; }
-  #frenzyBadge { top: max(91px, calc(env(safe-area-inset-top) + 84px)); min-width: 86px; height: 32px; padding: 3px 8px; }
+  #frenzyBadge { top: max(142px, calc(env(safe-area-inset-top) + 135px)); min-width: 86px; height: 32px; padding: 3px 8px; }
   #frenzyBadge > b { font-size: 17px; }
   #frenzyBadge > small { font-size: 6px; }
-  #comboBadge { top: max(128px, calc(env(safe-area-inset-top) + 120px)); min-width: 112px; padding: 4px 8px; }
+  #comboBadge { top: max(186px, calc(env(safe-area-inset-top) + 179px)); min-width: 112px; padding: 4px 8px; }
   #comboBadge b { font-size: 18px; }
   .career-strip { margin-top: 7px; }
   .career-strip span { padding: 4px; }
@@ -406,16 +407,16 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
   .control-note { max-width: 38%; font-size: 7px; }
   .pause-footer .primary, .pause-footer .secondary { min-height: 41px; padding: 8px 12px; font-size: 12px; }
 
-  .reward-shell { padding: 18px 11px; }
-  .reward-shell h2 { font-size: 28px; }
-  .reward-sub { margin: 7px auto 10px; font-size: 11px; }
+  .reward-shell { padding: 12px 10px 10px; }
+  .reward-shell h2 { font-size: 24px; }
+  .reward-sub { margin: 4px auto 8px; font-size: 10px; }
   .reward-grid { gap: 6px; }
-  .reward-card { min-height: 207px; padding: 10px 6px 37px; border-radius: 12px; }
-  .reward-card img { width: 64px; height: 64px; }
-  .reward-card b { font-size: 13px; }
-  .reward-card .tier { margin-bottom: 6px; font-size: 6px; }
+  .reward-card { min-height: 128px; padding: 8px 6px 25px; border-radius: 12px; }
+  .reward-card img { width: 42px; height: 42px; }
+  .reward-card b { font-size: 12px; }
+  .reward-card .tier { margin-bottom: 4px; font-size: 6px; }
   .reward-card .description { font-size: 8px; }
-  .reward-card .synergy { right: 5px; bottom: 7px; left: 5px; font-size: 6px; }
+  .reward-card .synergy { right: 5px; bottom: 6px; left: 5px; padding-top: 4px; font-size: 6px; }
 
   .end-card { padding: 21px 14px; }
   .results { gap: 5px; margin: 16px 0; }
@@ -446,25 +447,33 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .wave-pill { min-width: 142px; padding: 7px 13px 10px; }
 .lives-pill { height: 54px; min-width: 70px; }
 .icon-btn { width: 48px; height: 54px; border-color: rgba(111,205,244,.18); }
-#floatingStats { top: 72px; gap: 1px; overflow: hidden; border: 1px solid rgba(111,205,244,.25); border-radius: 9px; background: rgba(3,22,36,.76); }
+#floatingStats { top: 72px; left: 18px; gap: 1px; overflow: hidden; border: 1px solid rgba(111,205,244,.25); border-radius: 9px; background: rgba(3,22,36,.76); transform: none; }
 .stat { min-width: 60px; padding: 4px 9px; }
+#frenzyBadge { top: 122px; left: 18px; right: auto; transform: none; }
+#comboBadge { top: 168px; left: 18px; transform: none; }
 #bossHud { top: 82px; width: min(560px, 72vw); }
-.armory-continue { grid-column: 1 / -1; min-height: 54px; margin-top: 8px; }
 .reward-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.reward-footer { flex: 0 0 auto; padding-top: 10px; }
+.armory-continue { width: 100%; min-height: 48px; margin-top: 0; font-size: 15px; }
+/* On wide screens the squad stats sit flush with the top HUD bar; Frenzy and the
+   hot-streak popup stack on the left below it. */
+@media (min-width: 1340px) {
+  #floatingStats { top: 12px; }
+  #frenzyBadge { top: 64px; }
+  #comboBadge { top: 112px; }
+}
+@media (orientation: portrait), (max-width: 650px) {
+  #frenzyBadge { top: max(142px, calc(env(safe-area-inset-top) + 135px)); left: 12px; }
+  #comboBadge { top: max(186px, calc(env(safe-area-inset-top) + 179px)); left: 12px; }
+}
 @media (orientation: portrait), (max-width: 650px) {
   #hud { top: 6px; width: calc(100% - 12px); }
   #portrait { display:none; }
   .metric { min-width: 80px; height: 44px; padding-left: 34px; }
   .wave-pill { min-width: 102px; }
   .icon-btn { width: 38px; height: 44px; }
-  #floatingStats { top: 56px; }
+  #floatingStats { top: 58px; left: 12px; transform: none; }
   .stat { min-width: 45px; padding: 3px 5px; }
   #bossHud { top: 91px; width: 92vw; }
   .reward-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-}
-/* Keep transient combat status outside the centered boss bar in landscape. */
-@media (min-width: 651px) {
-  #floatingStats { left: 18px; transform: none; }
-  #frenzyBadge { right: 18px; left: auto; transform: none; }
-  #comboBadge { left: 18px; transform: none; }
 }

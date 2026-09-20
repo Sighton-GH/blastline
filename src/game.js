@@ -85,7 +85,7 @@ const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
 const dom = Object.fromEntries([
   'menu', 'hud', 'floatingStats', 'frenzyBadge', 'frenzyTimeLabel', 'bossHud', 'bossName',
   'bossPhaseText', 'bossHealthText', 'bossHealthFill', 'pausePanel', 'rewardPanel', 'rewardCards',
-  'rewardWave', 'recoveryPanel', 'recoveryCount', 'gameOverPanel', 'playBtn', 'playDifficulty',
+  'rewardWave', 'rewardFooter', 'recoveryPanel', 'recoveryCount', 'gameOverPanel', 'playBtn', 'playDifficulty',
   'pauseBtn', 'resumeBtn', 'restartBtn', 'retryBtn', 'gameOverHomeBtn', 'difficultyPicker', 'muteBtn',
   'waveLabel', 'difficultyLabel', 'phaseLabel', 'waveProgress', 'troopsLabel', 'powerLabel',
   'rateLabel', 'armorLabel', 'scoreLabel', 'pointsLabel', 'livesLabel', 'livesHud', 'pausePoints',
@@ -866,7 +866,7 @@ function showBossRewards() {
   continueButton.type = 'button'; continueButton.className = 'primary armory-continue';
   continueButton.textContent = run.wave % 3 === 0 ? 'START NEXT CHAPTER' : 'START NEXT WAVE';
   continueButton.onclick = continueFromArmory;
-  dom.rewardCards.append(continueButton);
+  dom.rewardFooter.replaceChildren(continueButton);
 }
 
 function chooseBossReward(id) {
@@ -1389,44 +1389,50 @@ function selectDifficulty(value) {
   updateDifficultyPicker();
 }
 
-function traceGroundStrip(target, innerHalfWidth, outerHalfWidth, yEnd = 1.04) {
-  const segments = 48;
+// Far end of the drawn bridge, in world units. Negative worldY sits beyond the
+// gameplay plane; depthScale floors at .02, which projects above the top edge of
+// the screen for both camera profiles, so the deck reads as truly endless instead
+// of stopping at a visible cutoff against the water.
+const BRIDGE_FAR = -12;
+
+function traceGroundStrip(target, innerHalfWidth, outerHalfWidth, yEnd = 1.04, yStart = 0) {
+  const segments = 96;
   target.beginPath();
   for (let index = 0; index <= segments; index += 1) {
-    const y = yEnd * index / segments;
+    const y = yStart + (yEnd - yStart) * index / segments;
     const x = W / 2 - outerHalfWidth(y);
     index ? target.lineTo(x, perspectiveY(y)) : target.moveTo(x, perspectiveY(y));
   }
   for (let index = segments; index >= 0; index -= 1) {
-    const y = yEnd * index / segments;
+    const y = yStart + (yEnd - yStart) * index / segments;
     target.lineTo(W / 2 - innerHalfWidth(y), perspectiveY(y));
   }
   target.closePath();
 }
 
-function traceDeck(target, halfWidth, yEnd = 1.04) {
-  const segments = 56;
+function traceDeck(target, halfWidth, yEnd = 1.04, yStart = 0) {
+  const segments = 96;
   target.beginPath();
   for (let index = 0; index <= segments; index += 1) {
-    const y = yEnd * index / segments;
+    const y = yStart + (yEnd - yStart) * index / segments;
     const x = W / 2 - halfWidth(y);
-    index ? target.lineTo(x, perspectiveY(y)) : target.moveTo(x, perspectiveY(0));
+    index ? target.lineTo(x, perspectiveY(y)) : target.moveTo(x, perspectiveY(yStart));
   }
   for (let index = segments; index >= 0; index -= 1) {
-    const y = yEnd * index / segments;
+    const y = yStart + (yEnd - yStart) * index / segments;
     target.lineTo(W / 2 + halfWidth(y), perspectiveY(y));
   }
   target.closePath();
 }
 
 function traceWaterRegions(target) {
-  const segments = 48;
+  const segments = 96;
   const horizon = sceneHorizon();
   target.beginPath();
   target.moveTo(0, horizon);
   target.lineTo(W / 2, horizon);
   for (let index = 1; index <= segments; index += 1) {
-    const y = 1.04 * index / segments;
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
     target.lineTo(W / 2 - bridgeHalfWidth(y) * 1.025, perspectiveY(y));
   }
   target.lineTo(0, H * 1.08);
@@ -1434,7 +1440,7 @@ function traceWaterRegions(target) {
   target.moveTo(W, horizon);
   target.lineTo(W / 2, horizon);
   for (let index = 1; index <= segments; index += 1) {
-    const y = 1.04 * index / segments;
+    const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * index / segments;
     target.lineTo(W / 2 + bridgeHalfWidth(y) * 1.025, perspectiveY(y));
   }
   target.lineTo(W, H * 1.08);
@@ -1559,31 +1565,38 @@ function drawTower(target, tower, { red, mid, dark, deep, light }) {
 const towerColors = { red: '#e54a38', mid: '#c74329', dark: '#7e2823', deep: '#4a1a16', light: '#ff9772' };
 
 function drawBridgeStructure(target, geometry) {
-  const railHeight = y => H * .032 * depthCurve(y);
+  // Taller safety fence than the original thin handrail, and lamp posts with real
+  // presence -- both taper with the shared depth curve so they shrink into the fog.
+  const railHeight = y => H * .052 * depthCurve(y);
   const edgePoint = (side, y, factor = 1.02) => ({ x: W / 2 + side * bridgeHalfWidth(y) * factor, y: perspectiveY(y) });
+  const railSegments = 120;
   for (const side of [-1, 1]) {
     target.lineCap = 'round';
-    for (const level of [1, .42]) {
-      target.beginPath();
-      for (let i = 0; i <= 64; i += 1) {
-        const y = i / 64 * 1.04, p = edgePoint(side, y);
-        const yy = p.y - railHeight(y) * level;
-        i ? target.lineTo(p.x, yy) : target.moveTo(p.x, yy);
+    for (const [level, nearWidth, color] of [[1, 7, '#d94b3f'], [.45, 3.4, '#6b2a2a']]) {
+      let previous = null;
+      for (let i = 0; i <= railSegments; i += 1) {
+        const y = BRIDGE_FAR + (1.04 - BRIDGE_FAR) * i / railSegments;
+        const p = edgePoint(side, y);
+        const point = { x: p.x, y: p.y - railHeight(y) * level, w: Math.max(.5, projectedPixels(sceneProjection, y, nearWidth)) };
+        if (previous) {
+          target.strokeStyle = color;
+          target.lineWidth = point.w;
+          target.beginPath(); target.moveTo(previous.x, previous.y); target.lineTo(point.x, point.y); target.stroke();
+        }
+        previous = point;
       }
-      target.strokeStyle = level === 1 ? '#d94b3f' : '#6b2a2a';
-      target.lineWidth = level === 1 ? 3 : 1.5; target.stroke();
     }
-    for (let i = 3; i < 29; i += 1) {
-      const y = i / 29, p = edgePoint(side, y);
+    for (let y = .05; y < 1; y += .04) {
+      const p = edgePoint(side, y);
       target.strokeStyle = 'rgba(67,40,39,.78)';
-      target.lineWidth = Math.max(.6, projectedPixels(sceneProjection, y, 2));
+      target.lineWidth = Math.max(.8, projectedPixels(sceneProjection, y, 3.4));
       target.beginPath(); target.moveTo(p.x, p.y); target.lineTo(p.x, p.y - railHeight(y)); target.stroke();
     }
-    for (const y of [.24,.56,.88]) {
-      const p=edgePoint(side,y,1.055), h=projectedPixels(sceneProjection,y,34);
-      target.strokeStyle='#34434a'; target.lineWidth=Math.max(1,projectedPixels(sceneProjection,y,3));
+    for (const y of [.2,.44,.68,.9]) {
+      const p=edgePoint(side,y,1.055), h=projectedPixels(sceneProjection,y,96);
+      target.strokeStyle='#34434a'; target.lineWidth=Math.max(1.4,projectedPixels(sceneProjection,y,5.5));
       target.beginPath(); target.moveTo(p.x,p.y); target.lineTo(p.x,p.y-h); target.stroke();
-      target.fillStyle='#ffd772'; target.beginPath(); target.arc(p.x,p.y-h,Math.max(1.2,projectedPixels(sceneProjection,y,3)),0,Math.PI*2); target.fill();
+      target.fillStyle='#ffd772'; target.beginPath(); target.arc(p.x,p.y-h,Math.max(2,projectedPixels(sceneProjection,y,6.5)),0,Math.PI*2); target.fill();
     }
   }
 }
@@ -1623,12 +1636,12 @@ function drawStaticEnvironment(target) {
   // The bridge and its shadow converge to the same single vanishing point.
   target.save();
   target.translate(projectedPixels(sceneProjection, .7, 26), projectedPixels(sceneProjection, .7, 18));
-  traceDeck(target, y => bridgeHalfWidth(y) * 1.075);
+  traceDeck(target, y => bridgeHalfWidth(y) * 1.075, 1.04, BRIDGE_FAR);
   target.fillStyle = 'rgba(13,54,67,.24)';
   target.fill();
   target.restore();
 
-  traceDeck(target, y => bridgeHalfWidth(y) * 1.045);
+  traceDeck(target, y => bridgeHalfWidth(y) * 1.045, 1.04, BRIDGE_FAR);
   const deckSide = target.createLinearGradient(0, horizon, 0, H);
   deckSide.addColorStop(0, '#999994');
   deckSide.addColorStop(1, '#666b6b');
@@ -1641,6 +1654,8 @@ function drawStaticEnvironment(target) {
       target,
       y => side < 0 ? roadHalfWidth(y) : -bridgeHalfWidth(y) * 1.025,
       y => side < 0 ? bridgeHalfWidth(y) * 1.025 : -roadHalfWidth(y),
+      1.04,
+      BRIDGE_FAR,
     );
     const walk = target.createLinearGradient(0, horizon, 0, H);
     walk.addColorStop(0, '#e2d8d2');
@@ -1649,22 +1664,13 @@ function drawStaticEnvironment(target) {
     target.fill();
   }
 
-  traceDeck(target, roadHalfWidth);
+  traceDeck(target, roadHalfWidth, 1.04, BRIDGE_FAR);
   const road = target.createLinearGradient(W * .25, horizon, W * .72, H);
   road.addColorStop(0, '#5b626e');
   road.addColorStop(.55, '#4d5462');
   road.addColorStop(1, '#454c5b');
   target.fillStyle = road;
   target.fill();
-  if (runtimeAssets.asphalt) {
-    target.save();
-    target.clip();
-    target.globalAlpha = .21;
-    target.globalCompositeOperation = 'multiply';
-    const pattern = target.createPattern(runtimeAssets.asphalt, 'repeat');
-    if (pattern) { target.fillStyle = pattern; target.fillRect(0, horizon, W, H - horizon); }
-    target.restore();
-  }
 
   // Tapered fill ribbon instead of a constant-width stroke: the edge line converges
   // to the vanishing point exactly like everything else instead of staying one width
@@ -1672,8 +1678,8 @@ function drawStaticEnvironment(target) {
   for (const side of [-1, 1]) {
     const left = [];
     const right = [];
-    for (let index = 0; index <= 48; index += 1) {
-      const y = index / 48 * 1.03;
+    for (let index = 0; index <= 160; index += 1) {
+      const y = BRIDGE_FAR + (1.03 - BRIDGE_FAR) * index / 160;
       const point = worldToScreen(side, y);
       const halfWidth = Math.max(.6, projectedPixels(sceneProjection, y, 1.9));
       left.push({ x: point.x - halfWidth, y: point.y });
@@ -1685,18 +1691,6 @@ function drawStaticEnvironment(target) {
     target.closePath();
     target.fillStyle = '#faf6f3';
     target.fill();
-  }
-
-  // Transverse seams narrow into the distance and reinforce the shared plane.
-  for (let y = .12; y < 1; y += .12) {
-    const left = worldToScreen(-.98, y);
-    const right = worldToScreen(.98, y);
-    target.strokeStyle = `rgba(29,39,41,${lerp(.08, .2, y)})`;
-    target.lineWidth = Math.max(.45, projectedPixels(sceneProjection, y, 1.6));
-    target.beginPath();
-    target.moveTo(left.x, left.y);
-    target.lineTo(right.x, right.y);
-    target.stroke();
   }
 
   cachedGeometry = buildBridgeGeometry(sceneProjection);
