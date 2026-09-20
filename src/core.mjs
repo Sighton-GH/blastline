@@ -208,6 +208,7 @@ export const SHOP_CATALOG = Object.freeze([
   { id: 'piercing', title: 'Pierce', short: '+1 pierce', baseCost: 540, maxTier: 24, tone: 'purple', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Rounds carry through formations', info: "+1 pierce. Rounds punch through one more enemy before stopping, carving through packed formations instead of stopping at the front rank. Scales: +1 pierce per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'criticalChance', title: 'Critical', short: '+3% crit', baseCost: 380, maxTier: 17, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Heavy hits land harder', info: "+3% chance for any hit to crit. Critical hits deal double damage. Scales: +3% per tier, up to 17 tiers - crit chance is capped at 50% overall." },
   { id: 'projectileSpeed', title: 'Velocity', short: '+15% velocity', baseCost: 300, maxTier: 7, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Rounds arrive sooner', info: "+15% bullet velocity. Rounds cross the bridge sooner, so less fire is wasted on enemies that are already dead and hits land earlier. Scales: +15% per tier, up to 7 tiers." },
+  { id: 'logistics', title: 'Logistics', short: '+4% supply on banked points', baseCost: 300, maxTier: 5, tone: 'green', asset: 'assets/blastline/ui/upgrade-rate.webp', synergy: 'Eco build - bank to earn', info: "Eco line: at every wave clear, gain bonus supply worth 4% of your banked points per tier (20% at max). The camp crew stockpiles while you hold the bridge. No combat stats at all - it buys future flexibility instead of current power, and it still takes one of your 4 build lines: an economy identity costs a combat line. Scales: +4% interest per tier, up to 5 tiers." },
   { id: 'veteranTraining', title: 'Veteranize', short: '2 squad -> 1 veteran', baseCost: 340, maxTier: 99, tone: 'gold', asset: 'assets/blastline/ui/upgrade-troops.webp', synergy: 'Veterans fire double and hold the line', info: "Two soldiers combine into one veteran: a bigger unit that fires two rounds per volley at slightly higher power and is always the last to fall. Concentrates your fire into fewer bodies - you cover fewer lanes per body, so positioning matters more. Requires at least 6 squad. Scales: one conversion per tier, no tier cap - the point cost rises with each purchase." },
   { id: 'ricochet', title: 'Ricochet', short: '+1 bounce', baseCost: 460, maxTier: 3, tone: 'cyan', asset: 'assets/blastline/ui/upgrade-spread.webp', synergy: 'Hits bounce to a nearby target at 60% damage - every multishot round bounces on its own', info: "+1 bounce. After a hit, the round jumps to a nearby enemy at 60% damage - and every Multishot round bounces on its own. Scales: +1 bounce per tier, up to 3 tiers." },
   { id: 'shock', title: 'Shock Rounds', short: '12% arc chance, lighter rounds', baseCost: 520, maxTier: 3, tone: 'gold', asset: 'assets/blastline/ui/upgrade-power.webp', synergy: 'Rounds arc to a second enemy and halt it - but every round is 7% lighter per tier', info: "+12% chance per tier that a round arcs on impact: lightning jumps to the nearest visible enemy for 60% of the hit and halts its march for a beat. Tradeoff: charged coils make every round 7% lighter per tier. Scales: +12% arc chance per tier, up to 3 tiers." },
@@ -261,6 +262,10 @@ export function buildLines(session) {
 // job, different shape (steady scaling vs heavy burst). Owning a tier in one
 // locks the other exactly like a full build does.
 export const EXCLUSIVE_LINES = Object.freeze({ damage: 'heavyOrdnance', heavyOrdnance: 'damage' });
+// Eco line (Aston: eco/taming and defensive builds): banked points earn
+// supply at every wave clear. Pure economy - no combat stats, but it eats a
+// build line, so running it is a real identity choice.
+export const ECO_INTEREST_PER_TIER = 0.04;
 export function exclusiveLockFor(session, id) {
   const partner = EXCLUSIVE_LINES[id];
   return partner && upgradeTier(session, partner) > 0 ? partner : null;
@@ -315,12 +320,13 @@ export function isUpgradeCapped(session, id) {
   if (id === 'ricochet') return upgradeTier(session, id) >= 3;
   if (id === 'shock' || id === 'frost') return upgradeTier(session, id) >= 3;
   if (id === 'heavyOrdnance') return upgradeTier(session, id) >= 8;
+  if (id === 'logistics') return upgradeTier(session, id) >= 5;
   if (id === 'veteranTraining') return (session?.player?.troops ?? 0) < 6; // never merge the line below viability
   return false; // v2: power, fireRate, troops, pierce, velocity grow polynomially, uncapped
 }
 
 export const SHOP_PRICE_EXPONENTS = Object.freeze({
-  damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, veteranTraining: 1.55,
+  damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, veteranTraining: 1.55, logistics: 1.35,
 });
 
 export function shopPrice(id, purchaseCount = 0) {

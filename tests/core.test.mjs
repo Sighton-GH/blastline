@@ -300,6 +300,25 @@ test('heavy ordnance sidegrade: burst form of the damage line, mutually exclusiv
   assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { heavyOrdnance: 8 } }, 'heavyOrdnance'), true);
 });
 
+test('logistics eco line: tiers to 5, takes a build line, no combat stats', () => {
+  let session = { ...createCleanRun(5), points: 100_000, armoryPicks: 0 };
+  const before = session.player;
+  const buy = purchaseUpgrade(session, 'logistics');
+  assert.equal(buy.ok, true);
+  session = buy.session;
+  assert.equal(upgradeTier(session, 'logistics'), 1);
+  // Eco identity costs a build line like any combat line.
+  assert.ok(buildLines(session).includes('logistics'));
+  // The purchase changes no combat stat.
+  assert.equal(session.player.power, before.power);
+  assert.equal(session.player.fireRate, before.fireRate);
+  assert.equal(session.player.troops, before.troops);
+  assert.equal(isUpgradeCapped({ ...session, upgradeTiers: { logistics: 5 } }, 'logistics'), true);
+  // Free boss rewards can offer it (it is a real pick, not a hidden modifier).
+  const pools = Array.from({ length: 40 }, (_, i) => pickBossRewards(mulberry32(i + 1), { ...createCleanRun(5), points: 0 }).map(p => p.id));
+  assert.ok(pools.some(ids => ids.includes('logistics')), 'logistics appears in seeded reward pools');
+});
+
 test('grunt curve: early waves stay readable, late grunts outgrow the generic slope (Bryan 2026-09-20)', () => {
   // Early game untouched: wave 1 one-hit, wave 2 two-hit, wave 3 light.
   assert.equal(enemyHitPoints('grunt', 1), 1);

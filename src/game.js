@@ -27,6 +27,7 @@ import {
   enemyHitPoints,
   GENERIC_HP_GROWTH,
   exclusiveLockFor,
+  ECO_INTEREST_PER_TIER,
   enemyContactDamage,
   projectileDamageFactor,
   PLATE_REGEN_SECONDS,
@@ -1183,6 +1184,7 @@ function spawnBossAttack() {
 }
 
 function finishBoss() {
+  awardEcoInterest();
   const boss = run.boss;
   if (!boss || boss.rewarded) return;
   boss.rewarded = true;
@@ -1216,6 +1218,19 @@ function openBossRewards() {
   setState(stateAfterBossDefeat());
   showBossRewards();
   updateHud(true);
+}
+
+// Eco line payout: banked points earn supply when a wave is truly cleared
+// (field empty - never off-screen cleanup) or a boss goes down. Visible as a
+// floater so the income is felt, not hidden in the total.
+function awardEcoInterest() {
+  const tier = upgradeTier(run, 'logistics');
+  if (tier <= 0) return;
+  const interest = Math.floor(run.points * ECO_INTEREST_PER_TIER * tier);
+  if (interest <= 0) return;
+  awardPoints(interest);
+  run.debugEco = (run.debugEco || 0) + interest;
+  if (!stressMode) addFloater(0, .52, `+${interest} SUPPLY`, '#8be28b', 17, 1.1);
 }
 
 let armoryMode = 'shop';
@@ -1838,6 +1853,7 @@ function update(dt) {
       // the armory or boss may start. No off-screen cleanup, no early banner.
       const remaining = run.enemies.reduce((total, enemy) => total + (!enemy.dead ? 1 : 0), 0);
       if (remaining === 0) {
+        awardEcoInterest();
         if (run.wave % 3 === 0) spawnBoss();
         else openArmory();
         return;
@@ -4005,6 +4021,7 @@ if (qaMode) {
     debugEnemies() { return run.enemies.filter(enemy => !enemy.dead).map(enemy => ({ type: enemy.type, hp: Math.round(enemy.hp * 10) / 10, y: +(enemy.y).toFixed(2), chillUntil: +(enemy.chillUntil || 0).toFixed(2), haltUntil: +(enemy.haltUntil || 0).toFixed(2), chillFactor: enemy.chillFactor ?? 1 })); },
     arcFlashCount() { return (run.arcFlashes || []).length; },
     spillCount() { return run.debugSpills || 0; },
+    ecoTotal() { return run.debugEco || 0; },
     enemyBulletList() { return run.enemyBullets.filter(b => !b.dead).map(b => ({ x: +b.x.toFixed(3), y: +b.y.toFixed(3), lane: b.lane, kind: b.kind, damage: b.damage })); },
     setPlayerX(value) { run.player.x = run.player.targetX = clamp(Number(value) || 0, -LANE_LIMIT, LANE_LIMIT); updateHud(); return run.player.x; },
     fireNow(times = 1) { const counts = []; for (let index = 0; index < clamp(Math.round(times), 1, 100); index += 1) counts.push(fireBurst()); return counts; },
