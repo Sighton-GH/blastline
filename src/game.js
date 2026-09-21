@@ -189,7 +189,7 @@ const pools = {
   enemies: new Pool(MAX_ACTIVE_ENEMIES + 40),
   bullets: new Pool(MAX_PLAYER_BULLETS),
   enemyBullets: new Pool(MAX_ENEMY_BULLETS),
-  particles: new Pool(260),
+  particles: new Pool(320),
   floaters: new Pool(40),
   telegraphs: new Pool(30),
 };
@@ -564,6 +564,7 @@ function clearTransient({ keepBoss = false } = {}) {
   run.gates.length = 0;
   run.hazards.length = 0;
   run.muzzleFlashes.length = 0;
+  if (run.decals) run.decals.length = 0;
   run.events = [];
   run.delayedStrikes = [];
   if (!keepBoss) run.boss = null;
@@ -774,6 +775,34 @@ function burst(x, y, color, count = 8) {
       life: .38 + rng() * .32, size: 2 + rng() * 4, color, dead: false,
     }));
   }
+}
+
+// Kill debris: armor chunks that hop off the deck with gravity, bounce once,
+// and skid. z/vz are optional particle fields (near-pixel units).
+function debrisBurst(x, y, color, heavy = false) {
+  const room = Math.max(0, (stressMode ? 100 : 210) - run.particles.length);
+  const count = heavy ? 9 : 6;
+  const palette = [color, color, '#2b3238', '#1d2226', '#ff9a4a'];
+  for (let index = 0; index < Math.min(count, room); index += 1) {
+    const angle = rng() * Math.PI * 2;
+    const speed = .06 + rng() * (heavy ? .2 : .14);
+    run.particles.push(pools.particles.take({
+      x, y, previousX: x, previousY: y,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed * .7,
+      z: 2, vz: 80 + rng() * 95,
+      life: .55 + rng() * .4, size: 1.6 + rng() * (heavy ? 3.2 : 2.4),
+      color: palette[index % palette.length], dead: false,
+    }));
+  }
+}
+
+// Scorched deck where something died. Fades over ~9s; capped so a long
+// grind never accumulates more than one screen of marks.
+const DECAL_CAP = 48;
+function addScorch(x, y, heavy = false) {
+  if (!run.decals) run.decals = [];
+  if (run.decals.length >= DECAL_CAP) run.decals.shift();
+  run.decals.push({ x, y, r: (heavy ? 19 : 12) * (.85 + rng() * .3), life: 9, maxLife: 9, seed: rng() });
 }
 
 const squadLayoutCache = new Map();
@@ -1369,6 +1398,16 @@ function showBossRewards() {
     continueButton.onclick = continueFromArmory;
   }
   dom.rewardFooter.replaceChildren(continueButton);
+  updateRewardScrollHint();
+}
+
+// The armory grid scrolls when the catalog outgrows the shell; fade the
+// grid's bottom edge until the player has scrolled to the end so hidden
+// cards are discoverable (A1).
+function updateRewardScrollHint() {
+  const grid = dom.rewardCards;
+  if (!grid) return;
+  grid.classList.toggle('at-end', grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 6);
 }
 
 function chooseBossReward(id) {
@@ -1437,7 +1476,12 @@ function defeatEnemy(enemy) {
     for (const victim of chained) defeatEnemy(victim);
   }
   enemy.deathLife = stressMode ? 0 : enemy.type === 'grunt' || enemy.type === 'gunner' ? .24 : .36;
-  if (!stressMode) burst(enemy.x, enemy.y, enemy.type === 'shield' ? '#8fd8ff' : enemy.type === 'heavy' || enemy.type === 'demolition' ? '#ffb02f' : enemy.type === 'sprinter' ? '#9fffc8' : enemy.type === 'reflector' || enemy.type === 'gunner' ? '#ffd56a' : enemy.type === 'swarmer' ? '#e59bff' : '#ff8a5c', enemy.type === 'heavy' || enemy.type === 'demolition' ? 12 : 7);
+  const heavyKill = enemy.type === 'heavy' || enemy.type === 'demolition' || enemy.type === 'shield' || enemy.type === 'transport' || enemy.type === 'sapper';
+  if (!stressMode) {
+    burst(enemy.x, enemy.y, enemy.type === 'shield' ? '#8fd8ff' : enemy.type === 'heavy' || enemy.type === 'demolition' ? '#ffb02f' : enemy.type === 'sprinter' ? '#9fffc8' : enemy.type === 'reflector' || enemy.type === 'gunner' ? '#ffd56a' : enemy.type === 'swarmer' ? '#e59bff' : '#ff8a5c', enemy.type === 'heavy' || enemy.type === 'demolition' ? 12 : 7);
+    debrisBurst(enemy.x, enemy.y, enemy.type === 'shield' ? '#8fd8ff' : enemy.type === 'heavy' || enemy.type === 'demolition' ? '#ffb02f' : enemy.type === 'sprinter' ? '#9fffc8' : enemy.type === 'reflector' || enemy.type === 'gunner' ? '#ffd56a' : enemy.type === 'swarmer' ? '#e59bff' : '#ff8a5c', heavyKill);
+    addScorch(enemy.x, enemy.y, heavyKill);
+  }
   if (!stressMode && (enemy.type === 'heavy' || enemy.type === 'demolition')) {
     addTrauma(.12);
     audio.explosion();
@@ -2121,8 +2165,17 @@ function updateEffects(dt) {
     particle.life -= dt;
     particle.vx *= .975;
     particle.vy *= .975;
+    if (particle.z !== undefined) {
+      particle.z += particle.vz * dt;
+      particle.vz -= 520 * dt;
+      if (particle.z < 0) { particle.z = 0; particle.vz *= -.32; particle.vx *= .6; particle.vy *= .6; }
+    }
   }
   compactEntities(run.particles, pools.particles, particle => particle.life > 0);
+  if (run.decals) {
+    for (const decal of run.decals) decal.life -= dt;
+    compactPlain(run.decals, decal => decal.life > 0);
+  }
   for (const floater of run.floaters) { floater.y -= dt * .055; floater.life -= dt; }
   compactEntities(run.floaters, pools.floaters, floater => floater.life > 0);
   for (const flash of run.muzzleFlashes) flash.life -= dt;
@@ -3501,6 +3554,22 @@ function drawEnemies() {
   drawBoss();
 }
 
+function drawDecals() {
+  if (!run.decals || !run.decals.length) return;
+  for (const decal of run.decals) {
+    const screen = projectToScreen(decal.x, decal.y, projectionScratchA);
+    if (!screen.visible) continue;
+    const t = decal.life / decal.maxLife;
+    ctx.globalAlpha = .38 * t * horizonFade(sceneProjection, decal.y);
+    ctx.fillStyle = '#0c0a09';
+    const rx = projectedPixels(sceneProjection, decal.y, decal.r);
+    ctx.beginPath();
+    ctx.ellipse(screen.x, screen.y, rx, rx * .42, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 function drawTelegraphs() {
   for (const warning of run.telegraphs) {
     const bounds = laneBounds(warning.lane, .012);
@@ -3660,6 +3729,26 @@ function drawPlayerBullets() {
   const BANDS = 8;
   for (let band = 0; band < BANDS; band += 1) {
     ctx.lineWidth = Math.max(.45, projectedPixels(sceneProjection, (band + .5) / BANDS, 2.4) * (frenzy ? 1.7 : 1));
+    // Bloom underlay: a wide, faint additive stroke under the two nearest bands
+    // makes close tracers glow without paying shadowBlur per bullet.
+    if (!stressMode && band >= BANDS - 2) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = .16;
+      ctx.lineWidth *= 2.6;
+      ctx.beginPath();
+      for (let index = 0; index < run.bullets.length; index += stride) {
+        const bullet = run.bullets[index];
+        const y = lerp(bullet.previousY, bullet.y, renderAlpha);
+        if (y <= 0 || Math.min(BANDS - 1, Math.floor(y * BANDS)) !== band) continue;
+        const head = projectToScreen(lerp(bullet.previousX, bullet.x, renderAlpha), y, projectionScratchA);
+        const tail = projectToScreen(lerp(bullet.previousX, bullet.x, .1), lerp(bullet.previousY, bullet.y, .1), projectionScratchB);
+        ctx.moveTo(tail.x, tail.y);
+        ctx.lineTo(head.x, head.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.beginPath();
     for (let index = 0; index < run.bullets.length; index += stride) {
       const bullet = run.bullets[index];
@@ -3710,11 +3799,70 @@ function drawPlayerBullets() {
   ctx.restore();
 }
 
+let muzzleGlowSprite = null;
+function getMuzzleGlow() {
+  if (muzzleGlowSprite) return muzzleGlowSprite;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 2, 32, 32, 31);
+  grad.addColorStop(0, 'rgba(255,244,190,.95)');
+  grad.addColorStop(.28, 'rgba(255,196,90,.5)');
+  grad.addColorStop(1, 'rgba(255,150,40,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  muzzleGlowSprite = c;
+  return c;
+}
+
 function drawPlayer() {
   if (run.player.troops <= 0) return;
   const slots = squadLogicalSlots();
   const veteranSlotsForDraw = veteranSlotSet(slots, run.player.veterans);
   const activeFlashes = new Set(run.muzzleFlashes.map(flash => flash.slot));
+  const flashPower = new Map(run.muzzleFlashes.map(flash => [flash.slot, clamp(flash.life / .075, 0, 1)]));
+  // Additive pass first: deck light pools + muzzle glow halos sit UNDER the
+  // soldier sprites so the flash lights the squad instead of covering it.
+  if (!stressMode && run.muzzleFlashes.length) {
+    const glow = getMuzzleGlow();
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    // One soft warm wash under the whole squad (not per-soldier pools, which
+    // overlap into a heavy carpet), flickering with the strongest live flash.
+    let squadPower = 0;
+    let cx = 0, cy = 0, n = 0;
+    for (const slot of slots) {
+      const power = flashPower.get(slot.index);
+      if (!power) continue;
+      squadPower = Math.max(squadPower, power);
+      const screen = projectToScreen(squadSlotWorldX(slot), slot.y, projectionScratchA);
+      cx += screen.x; cy += screen.y; n += 1;
+    }
+    if (n && squadPower > 0) {
+      cx /= n; cy /= n;
+      const washR = Math.max(60, W * .16);
+      const wash = ctx.createRadialGradient(cx, cy, washR * .1, cx, cy, washR);
+      const a = .2 * squadPower * (run.frenzyTimer > 0 ? 1.5 : 1);
+      wash.addColorStop(0, `rgba(255,176,80,${a})`);
+      wash.addColorStop(1, 'rgba(255,150,40,0)');
+      ctx.fillStyle = wash;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, washR, washR * .42, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (const slot of slots) {
+      const power = flashPower.get(slot.index);
+      if (!power) continue;
+      const worldX = squadSlotWorldX(slot);
+      const screen = projectToScreen(worldX, slot.y, projectionScratchA);
+      const height = soldierHeightAt(slot.y) * (veteranSlotsForDraw.has(slot.index) ? 1.38 : 1);
+      // Halo at the weapon tip, scaled down as the flash decays.
+      const r = height * (run.frenzyTimer > 0 ? .34 : .24) * (0.7 + 0.3 * power);
+      ctx.globalAlpha = .7 * power;
+      ctx.drawImage(glow, screen.x - height * .25 - r, screen.y - height * .55 - r, r * 2, r * 2);
+    }
+    ctx.restore();
+  }
   for (const slot of slots) {
     const worldX = squadSlotWorldX(slot);
     const screen = projectToScreen(worldX, slot.y, projectionScratchA);
@@ -3743,10 +3891,10 @@ function drawPlayer() {
           ctx.fill();
         }
         drawSprite(image, screen.x, baseline, height);
-        if (shooting) {
+        if (shooting && stressMode) {
           ctx.fillStyle = '#fff3a8';
           ctx.beginPath();
-          ctx.arc(screen.x - height * .25, baseline - height * .55, height * (run.frenzyTimer > 0 ? .075 : .045), 0, Math.PI * 2);
+          ctx.arc(screen.x - height * .25, baseline - height * .55, height * .045, 0, Math.PI * 2);
           ctx.fill();
         }
       } else {
@@ -3884,7 +4032,7 @@ function drawEffects() {
     ctx.globalAlpha = clamp(particle.life * 2.2, 0, 1) * horizonFade(sceneProjection, y);
     ctx.fillStyle = particle.color;
     ctx.beginPath();
-    ctx.arc(screen.x, screen.y, projectedPixels(sceneProjection, y, particle.size), 0, Math.PI * 2);
+    ctx.arc(screen.x, particle.z ? screen.y - projectedPixels(sceneProjection, y, particle.z) : screen.y, projectedPixels(sceneProjection, y, particle.size), 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -3917,6 +4065,7 @@ function draw() {
     drawHomeHero();
     return;
   }
+  drawDecals();
   drawTelegraphs();
   drawGates();
   drawEnemies();
@@ -3953,6 +4102,7 @@ addEventListener('keydown', event => {
   }
 });
 addEventListener('keyup', event => { keys[event.key] = false; });
+dom.rewardCards.addEventListener('scroll', updateRewardScrollHint, { passive: true });
 canvas.addEventListener('pointerdown', event => {
   if (!ACTIVE_STATES.includes(state)) return;
   pointerActive = true;

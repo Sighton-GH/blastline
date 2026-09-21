@@ -316,15 +316,16 @@ h1, h2 { margin: 0; color: #fff; font-size: clamp(36px, 6vw, 58px); font-weight:
 .control-note span { padding: 0 5px; }
 
 .reward-overlay { background: radial-gradient(circle at 50% 28%, rgba(53,186,237,.23), rgba(2,14,24,.84) 65%); backdrop-filter: blur(4px); }
-.reward-shell { display: flex; width: min(780px, 94vw); max-height: calc(100vh - 30px); max-height: calc(100dvh - 30px); padding: 18px 20px 14px; flex-direction: column; border-color: rgba(255,211,76,.72); overflow: hidden; }
-.reward-shell h2 { font-size: clamp(24px, 3.4vw, 34px); }
+.reward-shell { display: flex; width: min(780px, 94vw); max-height: calc(100vh - 18px); max-height: calc(100dvh - 18px); padding: 14px 20px 10px; flex-direction: column; border-color: rgba(255,211,76,.72); overflow: hidden; }
+.reward-shell h2 { font-size: clamp(24px, 3.2vw, 32px); }
 .reward-shell .eyebrow { margin-bottom: 4px; }
-.reward-sub { margin: 5px auto 10px; font-size: 12px; }
-.reward-balance { display: table; margin: -3px auto 7px; padding: 4px 14px; border: 1px solid rgba(255,225,123,.55); border-radius: 999px; color: #ffe17b; font-size: 11px; font-weight: 1000; letter-spacing: .12em; background: rgba(10,26,38,.72); box-shadow: 0 2px 10px rgba(0,9,16,.3); }
+.reward-sub { margin: 3px auto 6px; font-size: 12px; }
+.reward-balance { display: table; margin: -2px auto 5px; padding: 3px 14px; border: 1px solid rgba(255,225,123,.55); border-radius: 999px; color: #ffe17b; font-size: 11px; font-weight: 1000; letter-spacing: .12em; background: rgba(10,26,38,.72); box-shadow: 0 2px 10px rgba(0,9,16,.3); }
 .reward-balance b { margin-left: 6px; color: #fff; font-size: 14px; letter-spacing: .02em; }
 .reward-card .synergy.short { color: #ff847d; }
-.reward-grid { display: grid; flex: 1 1 auto; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; overflow-y: auto; overflow-x: clip; padding: 8px 3px 12px; }
-.reward-card { --tone: #45d9ff; position: relative; min-height: 148px; padding: 10px 10px 30px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--tone) 74%, white); border-radius: 16px; color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 66%, #17415d) 0 44%, color-mix(in srgb, var(--tone) 25%, #071b2a) 44%); box-shadow: 0 5px 0 color-mix(in srgb, var(--tone) 32%, #03111c), 0 13px 24px rgba(0,9,16,.35), inset 0 2px rgba(255,255,255,.25); cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
+.reward-grid { display: grid; flex: 1 1 auto; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; overflow-y: auto; overflow-x: clip; padding: 8px 3px 12px; -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 34px), transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 34px), transparent 100%); }
+.reward-grid.at-end { -webkit-mask-image: none; mask-image: none; }
+.reward-card { --tone: #45d9ff; position: relative; min-height: 140px; padding: 10px 10px 26px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--tone) 74%, white); border-radius: 16px; color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 66%, #17415d) 0 44%, color-mix(in srgb, var(--tone) 25%, #071b2a) 44%); box-shadow: 0 5px 0 color-mix(in srgb, var(--tone) 32%, #03111c), 0 13px 24px rgba(0,9,16,.35), inset 0 2px rgba(255,255,255,.25); cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
 .reward-card::before { position: absolute; inset: 0; content: ""; background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.27), transparent 37%), repeating-linear-gradient(115deg, transparent 0 25px, rgba(255,255,255,.045) 26px 27px); }
 .reward-card:hover { z-index: 2; transform: translateY(-5px) scale(1.014); }
 .reward-card:hover:not(:disabled) { filter: brightness(1.1); }
