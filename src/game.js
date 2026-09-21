@@ -831,7 +831,7 @@ function veteranSlotSet(slots, veterans) {
 function fireBurst() {
   const slots = squadLogicalSlots();
   const remaining = MAX_PLAYER_BULLETS - run.bullets.length;
-  if (remaining < slots.length) return 0;
+  if (remaining < slots.length) { run.debugVolleyDrops = (run.debugVolleyDrops || 0) + 1; return 0; }
   const origins = slots.map(slot => {
     return {
       slot: slot.index,
@@ -4004,7 +4004,7 @@ function getStateSnapshot() {
   const activeEnemies = run.enemies.filter(enemy => !enemy.dead);
   return {
     state, phase: state, paused: state === GAME_STATE.PAUSED, resumeState,
-    bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null, bossX: run.boss ? run.boss.x : null, bossHp: run.boss ? Math.round(run.boss.hp) : null,
+    bossArchetype: run.boss ? run.boss.archetype : null, bossDmgGate: run.boss ? run.boss.dmgGate : null, bossX: run.boss ? run.boss.x : null, bossHp: run.boss ? Math.round(run.boss.hp) : null, volleyDrops: run.debugVolleyDrops || 0, bulletsInFlight: run.bullets.length,
     seed: run.seed, difficulty: run.difficulty, wave: run.wave,
     waveTime: run.waveTime, waveDuration: config.duration, bossTime: run.bossTime,
     score: run.score, skillPoints: run.points, ecoUnspent: run.ecoUnspent || 0, lives: run.lives, kills: run.kills, killViz: run.killViz || null,
