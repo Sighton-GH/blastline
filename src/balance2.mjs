@@ -52,6 +52,9 @@ export const MECHANICS_V2 = Object.freeze({
     if (kind === 2) return Math.min(1, .5 + player.projectiles * .09);
     return Math.min(1, .5 + player.plating * .04);
   },
+  // Boss time-enrage (mirrors core.mjs BOSS_ENRAGE_*): past 45s of bossTime the
+  // attack cadence ramps to .25x over 60s, so unendable fights resolve in
+  // visible deaths instead of stalling. Healthy fights end well under 45s.
   price: (item, count) => {
     const exp = { damage: 2, heavyOrdnance: 2, fireRate: 1.8, reinforcements: 1.35, piercing: 1.9, logistics: 1.35, taming: 1.9 }[item.id] || 1.7;
     return Math.max(1, Math.round(item.baseCost * Math.pow(count + 1, exp)));

@@ -32,6 +32,9 @@ import {
   enemyContactDamage,
   projectileDamageFactor,
   PLATE_REGEN_SECONDS,
+  BOSS_ENRAGE_AT,
+  BOSS_ENRAGE_RAMP,
+  BOSS_ENRAGE_MIN,
   MAX_PLATES,
   clamp,
   claimKillReward,
@@ -1976,13 +1979,21 @@ function update(dt) {
     if (run.boss.invulnTimer > 0) run.boss.invulnTimer = Math.max(0, run.boss.invulnTimer - dt);
     if (run.boss.hitFlash > 0) run.boss.hitFlash = Math.max(0, run.boss.hitFlash - dt);
     if (run.boss.shotFlash > 0) run.boss.shotFlash = Math.max(0, run.boss.shotFlash - dt);
+    if (!run.boss.enraged && run.bossTime >= BOSS_ENRAGE_AT) {
+      run.boss.enraged = true;
+      addFloater(run.boss.x, Math.min(.8, run.boss.y + .12), 'ENRAGED', '#ff5a4e', 30, 2.4);
+      addTrauma(.5);
+      if (!stressMode) audio.bossPhase();
+    }
     if (run.boss.y >= .725) {
       run.boss.attackTimer -= dt;
       if (run.boss.attackTimer <= 0) {
         spawnBossAttack();
         const enrage = run.boss.phase === 3 ? .92 : run.boss.phase === 2 ? 1.02 : 1.12;
         const archetypePace = run.boss.archetype === 'engine' ? .78 : run.boss.archetype === 'reaper' ? .9 : 1;
-        run.boss.attackTimer = config.bossCadence * enrage * archetypePace + (run.boss.attackSerial % 3) * .07;
+        const over = Math.max(0, run.bossTime - BOSS_ENRAGE_AT);
+        const timeEnrage = Math.max(BOSS_ENRAGE_MIN, 1 - over / BOSS_ENRAGE_RAMP);
+        run.boss.attackTimer = config.bossCadence * enrage * archetypePace * timeEnrage + (run.boss.attackSerial % 3) * .07;
       }
     }
   }

@@ -146,6 +146,14 @@ export function projectileDamageFactor(projectiles = 1) {
 // v2: plating - each plate absorbs up to PLATE_CAPACITY damage then breaks.
 export const PLATE_CAPACITY = 4;
 export const PLATE_REGEN_SECONDS = 20;
+// Boss time-enrage: a healthy fight ends well inside BOSS_ENRAGE_AT seconds of
+// bossTime. Past it the attack cadence ramps linearly to BOSS_ENRAGE_MIN over
+// BOSS_ENRAGE_RAMP seconds, so a fight that cannot end on damage (parked squad
+// the player never steers) resolves in visible deaths instead of stalling
+// forever behind boat reinforcements.
+export const BOSS_ENRAGE_AT = 45;
+export const BOSS_ENRAGE_RAMP = 60;
+export const BOSS_ENRAGE_MIN = .25;
 export const MAX_PLATES = 40;
 
 export function getWaveConfig(waveIndex = 1, difficulty = 'veteran') {
